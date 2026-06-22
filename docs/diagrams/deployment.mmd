@@ -1,0 +1,46 @@
+%% Deployment topology (Phase 4 target) — Docker Compose locally, container
+%% orchestrator in staging/prod. Reflects ADR-002 (Postgres-only) + ADR-003 (Celery).
+flowchart TB
+    subgraph edge[Edge]
+        cdn[CDN / Static]
+        lb[Load Balancer / TLS]
+    end
+
+    subgraph clients[Clients]
+        webapp[Web Consoles SPA]
+        driverapp[Driver App<br/>Expo build]
+    end
+
+    subgraph app_tier[Application Tier - containers]
+        api1[api replica 1<br/>FastAPI + Uvicorn]
+        api2[api replica 2]
+        worker1[celery worker]
+        beat[celery beat<br/>scheduled SLA/ETA]
+    end
+
+    subgraph data_tier[Data Tier]
+        pg[(PostgreSQL<br/>primary + PITR backups)]
+        redis[(Redis<br/>broker + cache)]
+    end
+
+    subgraph obs[Observability]
+        prom[Prometheus]
+        graf[Grafana]
+        logs[Structured Logs / Loki]
+    end
+
+    webapp --> cdn
+    webapp --> lb
+    driverapp --> lb
+    lb --> api1
+    lb --> api2
+    api1 --> pg
+    api2 --> pg
+    api1 --> redis
+    worker1 --> redis
+    worker1 --> pg
+    beat --> redis
+    api1 -. metrics .-> prom
+    worker1 -. metrics .-> prom
+    prom --> graf
+    api1 -. logs .-> logs

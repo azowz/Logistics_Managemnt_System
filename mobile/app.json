@@ -1,0 +1,51 @@
+{
+  "expo": {
+    "name": "مسار",
+    "slug": "mesaar-driver",
+    "version": "1.0.0",
+    "scheme": "mesaar",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#090D14",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#090D14"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "sa.mesaar.driver",
+      "infoPlist": {
+        "CFBundleAllowMixedLocalizations": true,
+        "UIViewControllerBasedStatusBarAppearance": false
+      }
+    },
+    "android": {
+      "package": "sa.mesaar.driver",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#090D14"
+      }
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#090D14"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

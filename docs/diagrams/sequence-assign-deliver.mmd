@@ -1,0 +1,32 @@
+%% Sequence — dispatch assignment through delivery
+%% Maps to: POST /shipments/{id}/assign, /status, /events (shipment_service.py)
+sequenceDiagram
+    autonumber
+    actor Dispatcher
+    participant API as FastAPI /v1
+    participant SVC as ShipmentService
+    participant DB as PostgreSQL
+    participant BUS as Event Bus
+    actor Driver as Driver App
+
+    Dispatcher->>API: POST /shipments/{id}/assign {driver_id, vehicle_id}
+    API->>SVC: assign_driver_and_vehicle()
+    SVC->>DB: validate driver eligible + not busy
+    SVC->>DB: validate vehicle ACTIVE + capacity
+    SVC->>DB: set driver_id, vehicle_id, assigned_at, status=assigned
+    SVC-->>BUS: ShipmentAssigned
+    BUS-->>Driver: push "new assignment"
+    API-->>Dispatcher: 200 ShipmentRead
+
+    Driver->>API: POST /shipments/{id}/status {status: in_transit}
+    API->>SVC: transition_status()  (guard: assigned->in_transit)
+    SVC->>DB: status=in_transit
+    SVC-->>BUS: ShipmentPickedUp
+
+    Driver->>API: POST /shipments/{id}/events {proof_of_delivery, status: delivered}
+    API->>SVC: create_tracking_event()
+    SVC->>DB: assert event_time >= last event_time (monotonic)
+    SVC->>DB: append event + status=delivered, delivered_at
+    SVC-->>BUS: ShipmentDelivered
+    BUS-->>API: update control-tower projection
+    API-->>Driver: 201 TrackingEventRead

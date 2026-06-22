@@ -1,0 +1,810 @@
+openapi: 3.1.0
+info:
+  title: Mesaar Logistics Operations API
+  version: "1.0.0-draft"
+  description: >
+    Phase 2 contract draft. Reflects the EXISTING routes in `app/api/routes/*`
+    remounted under the `/v1` prefix (ADR-005), plus clearly-tagged
+    `driver-self (planned)` endpoints the delivered driver app needs
+    (see docs/api-gap-analysis.md). Schemas mirror `app/schemas/*` and
+    `app/models/*`. This file is hand-curated and is diffed in CI against the
+    FastAPI-generated schema.
+servers:
+  - url: /v1
+    description: Versioned base path
+security:
+  - bearerAuth: []
+tags:
+  - name: auth
+  - name: shipments
+  - name: drivers
+  - name: vehicles
+  - name: warehouses
+  - name: users
+  - name: driver-self (planned)
+
+paths:
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Authenticate with email/password and receive a JWT.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Authenticated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TokenResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /auth/me:
+    get:
+      tags: [auth]
+      summary: Return the authenticated user's profile.
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserRead' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /shipments:
+    post:
+      tags: [shipments]
+      summary: Create a shipment (admin, manager).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ShipmentCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ShipmentRead' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    get:
+      tags: [shipments]
+      summary: List shipments (admin, manager).
+      parameters:
+        - { name: offset, in: query, schema: { type: integer, default: 0 } }
+        - { name: limit, in: query, schema: { type: integer, default: 100 } }
+      responses:
+        '200':
+          description: Page of shipments
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ShipmentRead' }
+
+  /shipments/{shipment_id}:
+    parameters:
+      - { name: shipment_id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [shipments]
+      summary: Get a shipment with tracking history.
+      responses:
+        '200':
+          description: Shipment with events
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ShipmentWithEvents' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [shipments]
+      summary: Update non-lifecycle shipment fields.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ShipmentUpdate' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ShipmentRead' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /shipments/{shipment_id}/assign:
+    post:
+      tags: [shipments]
+      summary: Assign driver and vehicle (admin, manager).
+      parameters:
+        - { name: shipment_id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AssignmentRequest' }
+      responses:
+        '200':
+          description: Assigned
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ShipmentRead' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /shipments/{shipment_id}/status:
+    post:
+      tags: [shipments]
+      summary: Transition shipment status (lifecycle-guarded).
+      parameters:
+        - { name: shipment_id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StatusUpdateRequest' }
+      responses:
+        '200':
+          description: Transitioned
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ShipmentRead' }
+        '400':
+          description: Illegal transition (StatusTransitionError)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /shipments/{shipment_id}/events:
+    post:
+      tags: [shipments]
+      summary: Append a tracking event (admin, manager, driver).
+      parameters:
+        - { name: shipment_id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TrackingEventCreate' }
+      responses:
+        '201':
+          description: Event appended
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TrackingEventRead' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /drivers:
+    post:
+      tags: [drivers]
+      summary: Create a driver profile (admin, manager).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DriverCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DriverRead' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    get:
+      tags: [drivers]
+      summary: List drivers (admin, manager).
+      parameters:
+        - { name: offset, in: query, schema: { type: integer, default: 0 } }
+        - { name: limit, in: query, schema: { type: integer, default: 100 } }
+      responses:
+        '200':
+          description: Page of drivers
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/DriverRead' }
+
+  /drivers/{driver_id}:
+    parameters:
+      - { name: driver_id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [drivers]
+      summary: Get a driver by ID (admin, manager).
+      responses:
+        '200':
+          description: Driver
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DriverRead' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [drivers]
+      summary: Update a driver (admin, manager).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DriverUpdate' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DriverRead' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [drivers]
+      summary: Delete a driver (admin, manager).
+      responses:
+        '204': { description: Deleted }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /vehicles:
+    post:
+      tags: [vehicles]
+      summary: Create a vehicle (admin, manager).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VehicleCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VehicleRead' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    get:
+      tags: [vehicles]
+      summary: List vehicles (admin, manager).
+      parameters:
+        - { name: offset, in: query, schema: { type: integer, default: 0 } }
+        - { name: limit, in: query, schema: { type: integer, default: 100 } }
+      responses:
+        '200':
+          description: Page of vehicles
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/VehicleRead' }
+
+  /vehicles/{vehicle_id}:
+    parameters:
+      - { name: vehicle_id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [vehicles]
+      summary: Get a vehicle by ID (admin, manager).
+      responses:
+        '200':
+          description: Vehicle
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VehicleRead' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [vehicles]
+      summary: Update a vehicle (admin, manager).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/VehicleUpdate' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VehicleRead' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [vehicles]
+      summary: Delete a vehicle (admin, manager).
+      responses:
+        '204': { description: Deleted }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /warehouses:
+    post:
+      tags: [warehouses]
+      summary: Create a warehouse (admin, manager).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WarehouseCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WarehouseRead' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    get:
+      tags: [warehouses]
+      summary: List warehouses (admin, manager).
+      parameters:
+        - { name: offset, in: query, schema: { type: integer, default: 0 } }
+        - { name: limit, in: query, schema: { type: integer, default: 100 } }
+      responses:
+        '200':
+          description: Page of warehouses
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/WarehouseRead' }
+
+  /warehouses/{warehouse_id}:
+    parameters:
+      - { name: warehouse_id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [warehouses]
+      summary: Get a warehouse by ID (admin, manager).
+      responses:
+        '200':
+          description: Warehouse
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WarehouseRead' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [warehouses]
+      summary: Update a warehouse (admin, manager).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WarehouseUpdate' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WarehouseRead' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [warehouses]
+      summary: Delete a warehouse (admin, manager).
+      responses:
+        '204': { description: Deleted }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /users:
+    post:
+      tags: [users]
+      summary: Create a user (admin).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserCreate' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserRead' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  /users/{user_id}:
+    parameters:
+      - { name: user_id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [users]
+      summary: Get a user by ID (admin, manager).
+      responses:
+        '200':
+          description: User
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserRead' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [users]
+      summary: Update a user (admin).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UserUpdate' }
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserRead' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [users]
+      summary: Delete a user (admin).
+      responses:
+        '204': { description: Deleted }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # --- driver-self (planned) — see docs/api-gap-analysis.md ---
+  /drivers/me:
+    get:
+      tags: [driver-self (planned)]
+      summary: "[PLANNED] Profile of the authenticated driver."
+      responses:
+        '200':
+          description: Driver profile
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DriverRead' }
+    patch:
+      tags: [driver-self (planned)]
+      summary: "[PLANNED] Toggle own availability (online/offline)."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: { is_available: { type: boolean } }
+              required: [is_available]
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DriverRead' }
+
+  /drivers/me/stats:
+    get:
+      tags: [driver-self (planned)]
+      summary: "[PLANNED] Today's KPIs for the authenticated driver."
+      responses:
+        '200':
+          description: Daily stats
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DriverDailyStats' }
+
+  /shipments/nearby:
+    get:
+      tags: [driver-self (planned)]
+      summary: "[PLANNED] Ready shipments offered near the driver."
+      responses:
+        '200':
+          description: Offer list
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ShipmentOffer' }
+
+  /shipments/{shipment_id}/accept:
+    post:
+      tags: [driver-self (planned)]
+      summary: "[PLANNED] Driver self-accepts an offer (assigns self + default vehicle)."
+      parameters:
+        - { name: shipment_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Accepted/assigned
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ShipmentRead' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    Unauthorized:
+      description: Missing/invalid token
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    Forbidden:
+      description: Insufficient role
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    NotFound:
+      description: Resource not found
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    BadRequest:
+      description: Validation/business-rule error
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        detail: { type: string }
+      required: [detail]
+
+    UserRole:
+      type: string
+      enum: [admin, manager, driver, client]
+    ShipmentStatus:
+      type: string
+      enum: [created, ready, assigned, in_transit, delivered, cancelled, returned, failed]
+    VehicleStatus:
+      type: string
+      enum: [active, maintenance, decommissioned]
+    TrackingEventType:
+      type: string
+      enum: [status_update, location_update, proof_of_delivery, exception]
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, minLength: 8 }
+    TokenResponse:
+      type: object
+      required: [access_token, token_type, expires_in, user]
+      properties:
+        access_token: { type: string }
+        token_type: { type: string, default: bearer }
+        expires_in: { type: integer, description: seconds }
+        user: { $ref: '#/components/schemas/UserRead' }
+
+    UserRead:
+      type: object
+      required: [id, email, role, is_active, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        full_name: { type: string, nullable: true }
+        role: { $ref: '#/components/schemas/UserRole' }
+        is_active: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    DriverRead:
+      type: object
+      required: [id, user_id, license_number, is_available, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        license_number: { type: string }
+        license_class: { type: string, nullable: true }
+        phone_number: { type: string, nullable: true }
+        is_available: { type: boolean }
+        home_warehouse_id: { type: string, format: uuid, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    DriverCreate:
+      type: object
+      required: [user_id, license_number]
+      properties:
+        user_id: { type: string, format: uuid }
+        license_number: { type: string, minLength: 3, maxLength: 64 }
+        license_class: { type: string, maxLength: 32, nullable: true }
+        phone_number: { type: string, maxLength: 32, nullable: true }
+        home_warehouse_id: { type: string, format: uuid, nullable: true }
+    DriverUpdate:
+      type: object
+      properties:
+        license_number: { type: string, minLength: 3, maxLength: 64 }
+        license_class: { type: string, maxLength: 32, nullable: true }
+        phone_number: { type: string, maxLength: 32, nullable: true }
+        is_available: { type: boolean }
+        home_warehouse_id: { type: string, format: uuid, nullable: true }
+
+    VehicleRead:
+      type: object
+      required: [id, plate_number, status, capacity_weight_kg, capacity_volume_m3, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        plate_number: { type: string }
+        vin: { type: string, nullable: true }
+        status: { $ref: '#/components/schemas/VehicleStatus' }
+        capacity_weight_kg: { type: number }
+        capacity_volume_m3: { type: number }
+        home_warehouse_id: { type: string, format: uuid, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    VehicleCreate:
+      type: object
+      required: [plate_number, capacity_weight_kg, capacity_volume_m3]
+      properties:
+        plate_number: { type: string, minLength: 2, maxLength: 32 }
+        vin: { type: string, maxLength: 64, nullable: true }
+        status: { $ref: '#/components/schemas/VehicleStatus' }
+        capacity_weight_kg: { type: number, exclusiveMinimum: 0 }
+        capacity_volume_m3: { type: number, exclusiveMinimum: 0 }
+        home_warehouse_id: { type: string, format: uuid, nullable: true }
+    VehicleUpdate:
+      type: object
+      properties:
+        plate_number: { type: string, minLength: 2, maxLength: 32 }
+        vin: { type: string, maxLength: 64, nullable: true }
+        status: { $ref: '#/components/schemas/VehicleStatus' }
+        capacity_weight_kg: { type: number, exclusiveMinimum: 0 }
+        capacity_volume_m3: { type: number, exclusiveMinimum: 0 }
+        home_warehouse_id: { type: string, format: uuid, nullable: true }
+
+    WarehouseBase:
+      type: object
+      required: [code, name, address_line1, city, country, capacity_weight_kg, capacity_volume_m3]
+      properties:
+        code: { type: string, minLength: 2, maxLength: 32 }
+        name: { type: string, minLength: 2, maxLength: 255 }
+        address_line1: { type: string, maxLength: 255 }
+        address_line2: { type: string, maxLength: 255, nullable: true }
+        city: { type: string, maxLength: 128 }
+        state: { type: string, maxLength: 128, nullable: true }
+        country: { type: string, maxLength: 128 }
+        postal_code: { type: string, maxLength: 32, nullable: true }
+        latitude: { type: number, minimum: -90, maximum: 90, nullable: true }
+        longitude: { type: number, minimum: -180, maximum: 180, nullable: true }
+        capacity_weight_kg: { type: number, exclusiveMinimum: 0 }
+        capacity_volume_m3: { type: number, exclusiveMinimum: 0 }
+        max_daily_shipments: { type: integer, minimum: 1, nullable: true }
+    WarehouseCreate:
+      $ref: '#/components/schemas/WarehouseBase'
+    WarehouseRead:
+      allOf:
+        - $ref: '#/components/schemas/WarehouseBase'
+        - type: object
+          required: [id, created_at, updated_at]
+          properties:
+            id: { type: string, format: uuid }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+    WarehouseUpdate:
+      type: object
+      properties:
+        name: { type: string, maxLength: 255 }
+        address_line1: { type: string, maxLength: 255 }
+        address_line2: { type: string, maxLength: 255, nullable: true }
+        city: { type: string, maxLength: 128 }
+        state: { type: string, maxLength: 128, nullable: true }
+        country: { type: string, maxLength: 128 }
+        postal_code: { type: string, maxLength: 32, nullable: true }
+        latitude: { type: number, minimum: -90, maximum: 90, nullable: true }
+        longitude: { type: number, minimum: -180, maximum: 180, nullable: true }
+        capacity_weight_kg: { type: number, exclusiveMinimum: 0 }
+        capacity_volume_m3: { type: number, exclusiveMinimum: 0 }
+        max_daily_shipments: { type: integer, minimum: 1, nullable: true }
+
+    UserCreate:
+      type: object
+      required: [email, password, role]
+      properties:
+        email: { type: string, format: email }
+        full_name: { type: string, nullable: true }
+        password: { type: string, minLength: 8 }
+        role: { $ref: '#/components/schemas/UserRole' }
+    UserUpdate:
+      type: object
+      properties:
+        full_name: { type: string, nullable: true }
+        password: { type: string, minLength: 8 }
+        is_active: { type: boolean }
+
+    ShipmentCreate:
+      type: object
+      required: [reference_code, client_id, origin_warehouse_id, destination_warehouse_id, weight_kg, volume_m3]
+      properties:
+        reference_code: { type: string, minLength: 3, maxLength: 64 }
+        client_id: { type: string, format: uuid }
+        origin_warehouse_id: { type: string, format: uuid }
+        destination_warehouse_id: { type: string, format: uuid }
+        weight_kg: { type: number, exclusiveMinimum: 0 }
+        volume_m3: { type: number, exclusiveMinimum: 0 }
+        pickup_at: { type: string, format: date-time, nullable: true }
+        delivery_due_at: { type: string, format: date-time, nullable: true }
+    ShipmentUpdate:
+      type: object
+      properties:
+        reference_code: { type: string, minLength: 3, maxLength: 64 }
+        driver_id: { type: string, format: uuid, nullable: true }
+        vehicle_id: { type: string, format: uuid, nullable: true }
+        status: { $ref: '#/components/schemas/ShipmentStatus' }
+        pickup_at: { type: string, format: date-time, nullable: true }
+        delivery_due_at: { type: string, format: date-time, nullable: true }
+        delivered_at: { type: string, format: date-time, nullable: true }
+        cancelled_at: { type: string, format: date-time, nullable: true }
+        failure_reason: { type: string, maxLength: 255, nullable: true }
+    ShipmentRead:
+      type: object
+      required: [id, reference_code, client_id, origin_warehouse_id, destination_warehouse_id, status, weight_kg, volume_m3, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        reference_code: { type: string }
+        client_id: { type: string, format: uuid }
+        origin_warehouse_id: { type: string, format: uuid }
+        destination_warehouse_id: { type: string, format: uuid }
+        driver_id: { type: string, format: uuid, nullable: true }
+        vehicle_id: { type: string, format: uuid, nullable: true }
+        status: { $ref: '#/components/schemas/ShipmentStatus' }
+        weight_kg: { type: number }
+        volume_m3: { type: number }
+        pickup_at: { type: string, format: date-time, nullable: true }
+        delivery_due_at: { type: string, format: date-time, nullable: true }
+        delivered_at: { type: string, format: date-time, nullable: true }
+        assigned_at: { type: string, format: date-time, nullable: true }
+        cancelled_at: { type: string, format: date-time, nullable: true }
+        failure_reason: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    ShipmentWithEvents:
+      allOf:
+        - $ref: '#/components/schemas/ShipmentRead'
+        - type: object
+          properties:
+            tracking_events:
+              type: array
+              items: { $ref: '#/components/schemas/TrackingEventRead' }
+
+    AssignmentRequest:
+      type: object
+      required: [driver_id, vehicle_id]
+      properties:
+        driver_id: { type: string, format: uuid }
+        vehicle_id: { type: string, format: uuid }
+    StatusUpdateRequest:
+      type: object
+      required: [status]
+      properties:
+        status: { $ref: '#/components/schemas/ShipmentStatus' }
+
+    TrackingEventCreate:
+      type: object
+      required: [shipment_id, event_type, event_time]
+      properties:
+        shipment_id: { type: string, format: uuid }
+        event_type: { $ref: '#/components/schemas/TrackingEventType' }
+        status: { $ref: '#/components/schemas/ShipmentStatus', nullable: true }
+        event_time: { type: string, format: date-time }
+        latitude: { type: number, minimum: -90, maximum: 90, nullable: true }
+        longitude: { type: number, minimum: -180, maximum: 180, nullable: true }
+        notes: { type: string, nullable: true }
+        recorded_by_user_id: { type: string, format: uuid, nullable: true }
+        evidence_url: { type: string, maxLength: 512, nullable: true }
+    TrackingEventRead:
+      type: object
+      required: [id, shipment_id, event_type, event_time, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        shipment_id: { type: string, format: uuid }
+        event_type: { $ref: '#/components/schemas/TrackingEventType' }
+        status: { $ref: '#/components/schemas/ShipmentStatus', nullable: true }
+        event_time: { type: string, format: date-time }
+        latitude: { type: number, nullable: true }
+        longitude: { type: number, nullable: true }
+        notes: { type: string, nullable: true }
+        recorded_by_user_id: { type: string, format: uuid, nullable: true }
+        evidence_url: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    # --- planned projection-backed shapes for the driver app ---
+    DriverDailyStats:
+      type: object
+      description: "[PLANNED] Backed by proj_driver_daily_stats (ADR-006)."
+      properties:
+        earnings_sar: { type: number }
+        trips: { type: integer }
+        online_hours: { type: number }
+        distance_km: { type: number }
+        date: { type: string, format: date }
+    ShipmentOffer:
+      type: object
+      description: "[PLANNED] Enriched ready-shipment offer for drivers."
+      properties:
+        id: { type: string, format: uuid }
+        reference_code: { type: string }
+        origin_city: { type: string }
+        destination_city: { type: string }
+        cargo_type: { type: string }
+        distance_km: { type: number }
+        weight_kg: { type: number }
+        price_sar: { type: number }
+        required_vehicle_label: { type: string }

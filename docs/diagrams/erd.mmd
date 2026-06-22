@@ -1,0 +1,93 @@
+%% Entity-Relationship Diagram — generated from app/models/*.py
+%% Every column/constraint below exists in the SQLAlchemy models today.
+erDiagram
+    USERS ||--o| DRIVERS : "has profile (role=driver)"
+    USERS ||--o{ SHIPMENTS : "client owns"
+    USERS ||--o{ SHIPMENT_TRACKING_EVENTS : "recorded_by"
+    WAREHOUSES ||--o{ VEHICLES : "home base"
+    WAREHOUSES ||--o{ DRIVERS : "home base"
+    WAREHOUSES ||--o{ SHIPMENTS : "origin"
+    WAREHOUSES ||--o{ SHIPMENTS : "destination"
+    DRIVERS ||--o{ SHIPMENTS : "assigned (nullable)"
+    VEHICLES ||--o{ SHIPMENTS : "assigned (nullable)"
+    SHIPMENTS ||--o{ SHIPMENT_TRACKING_EVENTS : "append-only history"
+
+    USERS {
+        uuid id PK
+        string email UK "indexed, not null"
+        string full_name
+        string hashed_password "not null"
+        enum role "admin|manager|driver|client"
+        bool is_active "default true"
+        datetime created_at
+        datetime updated_at
+    }
+
+    DRIVERS {
+        uuid id PK
+        uuid user_id FK "UK, cascade"
+        string license_number "UK, not null"
+        string license_class
+        string phone_number
+        bool is_available "default true"
+        uuid home_warehouse_id FK "set null"
+    }
+
+    VEHICLES {
+        uuid id PK
+        string plate_number "UK, not null"
+        string vin "UK"
+        enum status "active|maintenance|decommissioned"
+        numeric capacity_weight_kg "not null"
+        numeric capacity_volume_m3 "not null"
+        uuid home_warehouse_id FK "set null"
+    }
+
+    WAREHOUSES {
+        uuid id PK
+        string code "UK, not null"
+        string name "not null"
+        string address_line1 "not null"
+        string address_line2
+        string city "not null"
+        string state
+        string country "not null"
+        string postal_code
+        numeric latitude
+        numeric longitude
+        numeric capacity_weight_kg "not null"
+        numeric capacity_volume_m3 "not null"
+        int max_daily_shipments
+    }
+
+    SHIPMENTS {
+        uuid id PK
+        string reference_code "UK, not null"
+        uuid client_id FK "restrict, not null"
+        uuid origin_warehouse_id FK "restrict, not null"
+        uuid destination_warehouse_id FK "restrict, not null"
+        uuid driver_id FK "set null"
+        uuid vehicle_id FK "set null"
+        enum status "created..failed, default created"
+        numeric weight_kg "CK > 0"
+        numeric volume_m3 "CK > 0"
+        datetime pickup_at
+        datetime delivery_due_at
+        datetime delivered_at
+        datetime assigned_at
+        datetime cancelled_at
+        string failure_reason
+    }
+
+    SHIPMENT_TRACKING_EVENTS {
+        uuid id PK
+        uuid shipment_id FK "cascade, not null"
+        enum event_type "status_update|location_update|proof_of_delivery|exception"
+        enum status "nullable shipment status"
+        datetime event_time "not null, monotonic"
+        numeric latitude
+        numeric longitude
+        text notes
+        uuid recorded_by_user_id FK "set null"
+        string evidence_url
+    }

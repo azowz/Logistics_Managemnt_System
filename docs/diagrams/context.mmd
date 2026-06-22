@@ -1,0 +1,47 @@
+%% C4-style System Context — Mesaar Logistics Operations Platform
+flowchart TB
+    subgraph actors[Actors]
+        admin([Admin])
+        ops([Operations / Manager])
+        dispatcher([Dispatcher / Manager])
+        driver([Driver])
+        client([Customer / Client])
+    end
+
+    subgraph platform[Mesaar Platform]
+        direction TB
+        web[Web Consoles<br/>Admin · Ops · Dispatch · Customer<br/>React, WCAG 2.2 AA]
+        mobile[Driver Mobile App<br/>Expo / React Native · Arabic RTL<br/>DELIVERED]
+        api[FastAPI Core API<br/>/v1 · JWT · RBAC · DDD/Clean]
+        worker[Async Workers<br/>Celery: ETA · SLA · settlement]
+        projections[Read Models / Projections<br/>control-tower, KPIs]
+        db[(PostgreSQL<br/>aggregates + append-only events)]
+        bus{{Domain Event Bus}}
+    end
+
+    subgraph external[External Systems]
+        maps[Maps / Routing Provider]
+        nafath[Nafath National SSO]
+        sms[SMS / Push Notifications]
+        erp[ERP / Billing Settlement]
+    end
+
+    admin --> web
+    ops --> web
+    dispatcher --> web
+    client --> web
+    driver --> mobile
+
+    web --> api
+    mobile --> api
+    api --> db
+    api --> bus
+    bus --> worker
+    bus --> projections
+    projections --> db
+    worker --> db
+
+    mobile -. routing/ETA .-> maps
+    mobile -. SSO .-> nafath
+    api -. notifications .-> sms
+    worker -. freight settlement .-> erp

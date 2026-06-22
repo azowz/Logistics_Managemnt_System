@@ -1,0 +1,35 @@
+%% Shipment lifecycle — generated from app/services/shipment_service.py::_is_transition_allowed
+%% This is the AUTHORITATIVE transition map currently enforced in code.
+stateDiagram-v2
+    [*] --> created : POST /shipments (client_id, warehouses, weight, volume)
+
+    created --> ready : status_update
+    created --> cancelled : status_update
+
+    ready --> assigned : POST /assign (driver+vehicle) OR status_update
+    ready --> cancelled : status_update
+
+    assigned --> in_transit : status_update (pickup confirmed)
+    assigned --> cancelled : status_update
+
+    in_transit --> delivered : status_update (+ POD event)
+    in_transit --> failed : status_update (delivery exception)
+    in_transit --> returned : status_update (return initiated)
+
+    delivered --> [*]
+    cancelled --> [*]
+    returned --> [*]
+    failed --> [*]
+
+    note right of assigned
+      assign_driver_and_vehicle() sets assigned_at and,
+      if status in {created, ready}, promotes to assigned.
+      Exclusivity: a driver/vehicle cannot hold two ACTIVE
+      shipments (created/ready/assigned/in_transit).
+    end note
+
+    note right of delivered
+      Terminal states (no outgoing transitions):
+      delivered, cancelled, returned, failed.
+      delivered_at / cancelled_at stamped on entry.
+    end note

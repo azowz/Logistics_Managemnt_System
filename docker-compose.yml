@@ -1,0 +1,138 @@
+# Mesaar Logistics Operations API — local / staging orchestration.
+#
+# Services:
+#   api    — FastAPI application served by gunicorn+uvicorn (app.main:app)
+#   worker — Celery worker consuming app.workers.celery_app tasks
+#   beat   — Celery beat scheduler for periodic tasks
+#   db     — PostgreSQL 16 primary datastore
+#   redis  — Redis 7 (cache + Celery broker/result backend)
+#
+# All application services share the same image and load configuration from the
+# .env file (copy .env.example -> .env first). The db/redis hostnames below
+# override the localhost defaults from the canonical settings so containers can
+# reach each other on the compose network.
+
+name: mesaar
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mesaar/api:latest
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Container-network service discovery overrides.
+      DATABASE_URL: postgresql+psycopg2://mesaar:mesaar@db:5432/mesaar
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8000/health/live"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  worker:
+    image: mesaar/api:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    command:
+      - celery
+      - -A
+      - app.workers.celery_app
+      - worker
+      - --loglevel=info
+      - --concurrency=4
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://mesaar:mesaar@db:5432/mesaar
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "celery", "-A", "app.workers.celery_app", "inspect", "ping", "-d", "celery@$$HOSTNAME"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  beat:
+    image: mesaar/api:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    command:
+      - celery
+      - -A
+      - app.workers.celery_app
+      - beat
+      - --loglevel=info
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql+psycopg2://mesaar:mesaar@db:5432/mesaar
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    depends_on:
+      redis:
+        condition: service_healthy
+      worker:
+        condition: service_started
+
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mesaar
+      POSTGRES_PASSWORD: mesaar
+      POSTGRES_DB: mesaar
+    ports:
+      - "5432:5432"
+    volumes:
+      - mesaar_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mesaar -d mesaar"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - mesaar_redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  mesaar_pgdata:
+  mesaar_redisdata:

@@ -1,0 +1,15 @@
+%% Vehicle status — from app/models/enums.py::VehicleStatus
+%% No transition guard exists in code yet; this is the PROPOSED machine to
+%% formalize in Phase 4 (ADR-ready). active is the only assignable state.
+stateDiagram-v2
+    [*] --> active : vehicle onboarded
+    active --> maintenance : scheduled / breakdown
+    maintenance --> active : service complete
+    active --> decommissioned : retired
+    maintenance --> decommissioned : write-off
+    decommissioned --> [*]
+
+    note right of active
+      Only ACTIVE vehicles pass _validate_vehicle()
+      in shipment_service.assign_driver_and_vehicle().
+    end note
