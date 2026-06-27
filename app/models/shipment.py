@@ -11,6 +11,7 @@ from sqlalchemy import (
     DateTime,
     Enum as SAEnum,
     ForeignKey,
+    Integer,
     Numeric,
     String,
     UniqueConstraint,
@@ -19,7 +20,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
-from app.db.mixins import TimestampMixin
+from app.db.mixins import AuditMixin, SoftDeleteMixin, TimestampMixin
 from app.models.enums import ShipmentStatus
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -30,20 +31,32 @@ if TYPE_CHECKING:  # pragma: no cover
     from app.models.shipment_tracking_event import ShipmentTrackingEvent
 
 
-class Shipment(TimestampMixin, Base):
+class Shipment(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     """Core shipment record representing the movement of goods."""
 
     __tablename__ = "shipments"
     __table_args__ = (
-        UniqueConstraint("reference_code", name="uq_shipments_reference_code"),
-        CheckConstraint("weight_kg > 0", name="ck_shipments_weight_positive"),
-        CheckConstraint("volume_m3 > 0", name="ck_shipments_volume_positive"),
+        # Reference code is unique PER TENANT (ADR-001 / docs/03 §3.2).
+        UniqueConstraint(
+            "tenant_id", "reference_code", name="uq_shipments_tenant_id_reference_code"
+        ),
+        # Short logical names: the metadata ``ck`` naming convention expands these
+        # to ``ck_shipments_<name>`` (matching the migration-authored DB names).
+        CheckConstraint("weight_kg > 0", name="weight_positive"),
+        CheckConstraint("volume_m3 > 0", name="volume_positive"),
+        CheckConstraint("currency_code ~ '^[A-Z]{3}$'", name="currency_code"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     reference_code: Mapped[str] = mapped_column(String(64), nullable=False)
     client_id: Mapped[uuid.UUID] = mapped_column(
@@ -87,7 +100,13 @@ class Shipment(TimestampMixin, Base):
     # quoting/dispatch). Added in migration 0002 to back the driver offer feed.
     cargo_type: Mapped[Optional[str]] = mapped_column(String(128))
     price_sar: Mapped[Optional[float]] = mapped_column(Numeric(12, 2))
+    # ISO-4217 currency for the price; defaults to SAR for existing rows
+    # (docs/03 §0 multi-market readiness).
+    currency_code: Mapped[str] = mapped_column(String(3), nullable=False, server_default="SAR")
     required_vehicle_type: Mapped[Optional[str]] = mapped_column(String(64))
+    version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
+    # Optimistic concurrency (ADR-004 / docs/03 §0).
+    __mapper_args__ = {"version_id_col": version}
 
     # Owning client.
     client: Mapped["User"] = relationship(

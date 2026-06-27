@@ -1,5 +1,7 @@
 # Domain Event Catalog
 
+> **⚠ SUPERSEDED SLICE (Phase 6.5 — conflicts CF3 / audit W-2).** This file documents only the **implemented Shipment + Fleet/Identity slice**. The **canonical, full event catalog** (all 17 contexts, including `PaymentFailed`, `OrderFulfilmentFailed`, `OrderCancellationFeeApplied`, and the Contract/Equipment/Compliance/Insurance events) is **`docs/04` Part 3 + `docs/06` Phase D + `docs/08` Part 7**, consolidated in **`docs/09-final-domain-model.md`** §5 and closed in **`docs/09a-reconciliation-and-closure.md`**. Per **ADR-007**, persistence is the **unified `event_store` + transactional outbox** — `shipment_tracking_events` is only the user-facing tracking slice (correcting the line-5 claim below). Do not treat this file as authoritative for the full event set or for persistence.
+
 Events are emitted on state transitions (ADR-004). Each is **immutable**, carries an
 **idempotency key** (`event_id`), a `tenant_id` (ADR-001), an `occurred_at`, and a
 `version`. Persisted to `shipment_tracking_events` where a tracking row applies;
@@ -41,4 +43,4 @@ a context boundary, e.g. to ERP/notifications) are suffixed `*IntegrationEvent`.
 - **Ordering:** per-shipment, enforced by monotonic `event_time` in service.
 - **Idempotency:** consumers dedupe on `event_id`.
 - **Compensation:** reversals are *new* events; history is never mutated/deleted
-  (cascade delete only when the parent shipment is hard-deleted).
+  (**Phase 6.5 / CF9:** the former "cascade delete on parent hard-delete" carve-out is **REMOVED** — it violated the append-only / lossless-audit guarantee of BR-H-24 and ADR-007, whose app role holds INSERT/SELECT only. Event history is never deleted; any hard-delete applies to non-event tables only.)

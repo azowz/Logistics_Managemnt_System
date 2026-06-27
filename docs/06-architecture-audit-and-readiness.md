@@ -207,7 +207,7 @@ Multi-Tenant RLS, Event Store, Projection Read Models, AI Readiness.**
 
 | # | Issue | Severity | Detail & recommendation |
 |---|---|---|---|
-| **C-1** | **Order cancellation rule contradicts itself** | **CRITICAL** | `docs/04` §2.8 says Order is "**not** cancellable once `fulfilling`/`completed`"; `docs/04` Part 4 lists `fulfilling → cancelled (OrderCancelled)` as an allowed transition that "compensates in-flight shipments." Pick one. **Recommended:** allow `fulfilling → cancelled` **with compensation** (real-world orders are abandoned mid-fulfilment) and correct §2.8. Resolve **before** building `OrderService`. |
+| **C-1** | ~~Order cancellation rule contradicts itself~~ **RESOLVED (Phase 6.5)** | **RESOLVED** | `fulfilling → cancelled` is now **ALLOWED** with a **compensation workflow** + **cancellation fee** (`OrderCancellationFeeApplied`) + **audit event** + **`NotificationRequestedIntegrationEvent`**, and `OrderFulfilmentFailed` was added. `docs/04` §2.8 prose, §4.2.1/§4.2.2/§4.2.5 tables, and the §4.2.6 diagram were corrected to one consistent rule. See `docs/09a-reconciliation-and-closure.md`. |
 | **W-1** | Tenancy designed everywhere, present nowhere | **WARNING** | Models/migrations are single-tenant; RLS is unbuilt. Not a design conflict — a build-state gap. Blocks multi-tenant claims until M1 done. |
 | **W-2** | Two domain-event catalogs (one stale) | **WARNING** | `docs/event-catalog.md` (shipment/fleet only) vs `docs/04` Part 3 (13 contexts). Designate `docs/04` Part 3 + `docs/06` Phase D as **canonical**; mark `event-catalog.md` superseded. |
 | **W-3** | Vehicle/Driver state machines paper-only | **WARNING** | No `VehicleStatus` transition guard; no driver-status enum (`is_available` + `user.is_active` only). Either build the enums/guards or relabel the machines "derived overlay" consistently. |
@@ -220,7 +220,7 @@ Multi-Tenant RLS, Event Store, Projection Read Models, AI Readiness.**
 | **P-4** | State-name collisions across aggregates | **PASS** | `created`/`cancelled`/`completed` reused across Shipment/Order/Route but always namespaced by aggregate; no ambiguous shared enum. |
 
 ### B.3 Verdict
-- **CRITICAL: 1** (C-1, Order cancel) — must resolve before `OrderService` build.
+- **CRITICAL: 0** — C-1 (Order cancel) **resolved in Phase 6.5** (`docs/09a`): `fulfilling → cancelled` ALLOWED with compensation + fee + audit + notification. *(Remaining `OrderService` work is build-state, not a design conflict.)*
 - **WARNING: 6** (W-1…W-6) — none blocks design approval; all are Phase-5 build/reconciliation tasks.
 - **PASS** on all 10 architectural-decision conformance checks and on circular-dependency,
   naming, and state-collision checks.
@@ -323,8 +323,8 @@ all events: `event_id` (UUIDv7), `tenant_id`, `aggregate_type/id`, `aggregate_ve
 | Type | Finding | Severity | Action |
 |---|---|---|---|
 | **Missing** | No **Contract/Claims/Insurance/Penalty** events at all | **High** | Added in Phase E §E.4 (e.g. `ContractActivated`, `ClaimFiled`, `SLAPenaltyApplied`) |
-| **Missing** | No **payment-failure / settlement-failure** event (`PaymentFailed`) | Med | Add to Billing for the unhappy path |
-| **Missing** | No **`OrderFulfilmentFailed`** (fan-out partial failure) | Med | Needed for the Orders saga compensation path |
+| **Missing → ADDED** | ~~No `PaymentFailed`~~ — **`PaymentFailed` added to Billing (Phase 6.5)** | Med | Done (`docs/09a`; canonical catalog `docs/04` Part 3). |
+| **Missing → ADDED** | ~~No `OrderFulfilmentFailed`~~ — **`OrderFulfilmentFailed` added to Orders (Phase 6.5)** | Med | Done (`docs/09a`; canonical catalog `docs/04` Part 3). |
 | **Duplicate (intentional)** | `ShipmentAssigned` + `DriverAssigned` + `VehicleAssigned` for one act | Low | Mark `ShipmentAssigned` authoritative (W-6); others are P4/P5 reactions |
 | **Near-orphan** | `KpiSnapshotComputed`, `ProjectionRebuilt` have no domain consumer | Low (OK) | Internal ops events; acceptable — document as sink |
 | **Near-orphan** | `PermissionGranted/Revoked` consumed only by RBAC cache | Low (OK) | Acceptable |
@@ -568,7 +568,7 @@ permissions, rbac); `observability/` (logging, metrics, health); `workers/` (cel
 |---|---|---|---|
 | B-1 | **No `tenant_id` + RLS + isolation test** | Every new table inherits the model; building contexts first means a painful retrofit (ADR-001 §8.4 is explicitly "do tenancy first") | M1 |
 | B-2 | **No `event_store` + outbox relay** | CQRS-lite/EDA (ADR-004/006/007) can't function; projections & async consumers depend on it | M2 |
-| B-3 | **C-1 Order-cancel contradiction unresolved** | `OrderService` can't be built against a contradictory spec | M3 (resolve in M0 gate) |
+| B-3 | ~~C-1 Order-cancel contradiction~~ **RESOLVED (Phase 6.5)** | `fulfilling → cancelled` ALLOWED with compensation + fee + audit + notify; specs reconciled (`docs/09a`) | ✅ closed |
 | B-4 | **Heavy-equipment domain undefined** | The stated product can't be built without permits/oversize/equipment model + ADR | M0 design spike → M4 |
 | B-5 | **Pooled-connection `SET LOCAL` unverified** | Silent cross-tenant leakage is catastrophic; must be test-gated | M1 |
 

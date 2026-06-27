@@ -29,6 +29,12 @@ class ShipmentTrackingEvent(TimestampMixin, Base):
         primary_key=True,
         default=uuid.uuid4,
     )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
     shipment_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("shipments.id", ondelete="CASCADE"),

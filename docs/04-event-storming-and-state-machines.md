@@ -392,15 +392,15 @@ Event names are canonical (`<Aggregate><PastTenseVerb>`; integration events `*In
 |---|---|---|---|
 | Identity & Access | User/Role/Permission, Tenant | `UserRegistered`, `UserActivated`, `UserDeactivated`, `RoleAssigned`, `RoleRevoked`, `PermissionGranted`, `PermissionRevoked`, `TenantProvisioned`, `TenantSuspended` | — |
 | Customer Management | Customer | `CustomerCreated`, `CustomerUpdated`, `CustomerDeactivated`, `CustomerCreditLimitChanged` | `UserRegistered`, `TenantProvisioned` |
-| Orders | Order, OrderLine | `OrderCreated`, `OrderSubmitted`, `OrderApproved`, `OrderRejected`, `OrderCancelled`, `OrderFulfilmentStarted`, `OrderCompleted` | `CustomerCreditLimitChanged`, `PriceQuoted`, `ShipmentDelivered`, `ShipmentCancelled` |
-| Shipments | Shipment, Assignment | `ShipmentCreated`, `ShipmentMarkedReady`, `ShipmentAssigned`, `ShipmentPickedUp` (assigned→in_transit), `ShipmentDelivered`, `ProofOfDeliveryCaptured`, `ShipmentFailed`, `ShipmentReturned`, `ShipmentCancelled`, `ShipmentDelayed` (SLA overlay), `ShipmentExceptionRaised` | `OrderApproved`, `DriverAssigned`, `VehicleAssigned`, `WarehouseCapacityThresholdReached`, `RouteOptimized`, `PredictionGenerated` |
+| Orders | Order, OrderLine | `OrderCreated`, `OrderSubmitted`, `OrderApproved`, `OrderRejected`, `OrderCancelled`, `OrderFulfilmentStarted`, `OrderFulfilmentFailed`, `OrderCancellationFeeApplied`, `OrderCompleted` | `CustomerCreditLimitChanged`, `PriceQuoted`, `ShipmentDelivered`, `ShipmentFailed`, `ShipmentCancelled` |
+| Shipments | Shipment, Assignment | `ShipmentCreated`, `ShipmentMarkedReady`, `ShipmentAssigned`, `ShipmentPickedUp` (assigned→in_transit), `ShipmentDelivered`, `ShipmentFailed`, `ShipmentReturned`, `ShipmentCancelled`, `ShipmentDelayed` (SLA overlay) | `OrderApproved`, `DriverAssigned`, `VehicleAssigned`, `WarehouseCapacityThresholdReached`, `RouteOptimized`, `PredictionGenerated` |
 | Fleet Management | Vehicle | `VehicleRegistered`, `VehicleAssigned`, `VehicleReleased`, `VehicleStatusChanged`, `VehicleMaintenanceStarted`, `VehicleMaintenanceCompleted`, `VehicleDecommissioned` | `ShipmentAssigned`, `ShipmentDelivered`, `ShipmentCancelled` |
 | Driver Management | Driver | `DriverCreated`, `DriverWentOnline`, `DriverWentOffline`, `DriverAssigned`, `DriverStatusChanged`, `DriverSuspended`, `DriverReinstated` | `ShipmentAssigned`, `ShipmentPickedUp`, `ShipmentDelivered`, `PredictionGenerated` (ranking), `UserDeactivated` |
 | Route Management | Route, RouteStop | `RouteCreated`, `RoutePlanned`, `RouteOptimized`, `RouteStarted`, `RouteStopCompleted`, `RouteCompleted`, `RouteCancelled` | `ShipmentAssigned`, `ShipmentLocationReported`, `PredictionGenerated`, `WarehouseRegistered` |
 | Warehouse Management | Warehouse | `WarehouseRegistered`, `ShipmentReceivedAtWarehouse`, `ShipmentDispatchedFromWarehouse`, `WarehouseCapacityThresholdReached`, `WarehouseCapacityExceeded` | `ShipmentCreated`, `ShipmentAssigned`, `ShipmentDelivered`, `ShipmentCancelled` |
 | Tracking | ShipmentTrackingEvent | `ShipmentLocationReported`, `ProofOfDeliveryCaptured`, `ShipmentExceptionRaised` (+ carries guarded `status_update`) | `ShipmentAssigned`, `ShipmentPickedUp` |
 | Notifications | Notification | `NotificationSent`, `NotificationFailed` | `NotificationRequestedIntegrationEvent` |
-| Billing | Invoice, Settlement, Quote, Payout | `PriceQuoted`, `InvoiceGenerated`, `PaymentCaptured`, `DriverPayoutCalculated` | `OrderSubmitted`, `SettlementRequestedIntegrationEvent`, `ShipmentDelivered`, `ShipmentReturned` |
+| Billing | Invoice, Settlement, Quote, Payout | `PriceQuoted`, `InvoiceGenerated`, `PaymentCaptured`, `PaymentFailed`, `DriverPayoutCalculated` | `OrderSubmitted`, `SettlementRequestedIntegrationEvent`, `ShipmentDelivered`, `ShipmentReturned`, `OrderCancellationFeeApplied` |
 | Analytics | Projection, KPI (read-model) | `ProjectionRebuilt`, `KpiSnapshotComputed` | All domain events (write-side); notably `ShipmentAssigned`, `ShipmentDelivered`, `DriverWentOnline`, `WarehouseCapacityThresholdReached` |
 | AI Operations | Prediction, Embedding, Feature | `PredictionRequested`, `PredictionGenerated`, `ModelFeedbackRecorded`, `AnomalyDetected` | `ShipmentLocationReported`, `ShipmentPickedUp`, `ShipmentDelivered`, `RoutePlanned`, `WarehouseCapacityThresholdReached` |
 
@@ -482,14 +482,14 @@ The full event catalog (payload schema, triggers, consumers) is enumerated in **
 |---|---|
 | Identity | `UserRegistered`, `UserActivated`, `UserDeactivated`, `RoleAssigned`, `RoleRevoked`, `PermissionGranted`, `PermissionRevoked`, `TenantProvisioned`, `TenantSuspended` |
 | Customer | `CustomerCreated`, `CustomerUpdated`, `CustomerDeactivated`, `CustomerCreditLimitChanged` |
-| Orders | `OrderCreated`, `OrderSubmitted`, `OrderApproved`, `OrderRejected`, `OrderCancelled`, `OrderFulfilmentStarted`, `OrderCompleted` |
+| Orders | `OrderCreated`, `OrderSubmitted`, `OrderApproved`, `OrderRejected`, `OrderCancelled`, `OrderFulfilmentStarted`, `OrderFulfilmentFailed`, `OrderCancellationFeeApplied`, `OrderCompleted` |
 | Shipments | `ShipmentCreated`, `ShipmentMarkedReady`, `ShipmentAssigned`, `ShipmentPickedUp` (= entering `in_transit`), `ShipmentLocationReported`, `ShipmentDelayed` (SLA overlay), `ShipmentDelivered`, `ProofOfDeliveryCaptured`, `ShipmentFailed`, `ShipmentReturned`, `ShipmentCancelled`, `ShipmentExceptionRaised` |
 | Driver | `DriverCreated`, `DriverWentOnline`, `DriverWentOffline`, `DriverAssigned`, `DriverStatusChanged`, `DriverSuspended`, `DriverReinstated` |
 | Fleet | `VehicleRegistered`, `VehicleAssigned`, `VehicleReleased`, `VehicleStatusChanged`, `VehicleMaintenanceStarted`, `VehicleMaintenanceCompleted`, `VehicleDecommissioned` |
 | Route | `RouteCreated`, `RoutePlanned`, `RouteOptimized`, `RouteStarted`, `RouteStopCompleted`, `RouteCompleted`, `RouteCancelled` |
 | Warehouse | `WarehouseRegistered`, `ShipmentReceivedAtWarehouse`, `ShipmentDispatchedFromWarehouse`, `WarehouseCapacityThresholdReached`, `WarehouseCapacityExceeded` |
 | Notifications | `NotificationRequestedIntegrationEvent`, `NotificationSent`, `NotificationFailed` |
-| Billing | `PriceQuoted`, `SettlementRequestedIntegrationEvent`, `InvoiceGenerated`, `PaymentCaptured`, `DriverPayoutCalculated` |
+| Billing | `PriceQuoted`, `SettlementRequestedIntegrationEvent`, `InvoiceGenerated`, `PaymentCaptured`, `PaymentFailed`, `DriverPayoutCalculated` |
 | Analytics | `ProjectionRebuilt`, `KpiSnapshotComputed` |
 | AI Ops | `PredictionRequested`, `PredictionGenerated`, `ModelFeedbackRecorded`, `AnomalyDetected` |
 
@@ -564,7 +564,7 @@ The full event catalog (payload schema, triggers, consumers) is enumerated in **
 | Driver completes delivery (+POD) | Driver | `CaptureProofOfDelivery` → `DeliverShipment` | Shipment + ShipmentTrackingEvent | H: transition `in_transit→delivered`; P12 POD required; stamps `delivered_at` | `ProofOfDeliveryCaptured`, `ShipmentDelivered` | P11 Settlement; P4/P5 release; P14 Order-Completion | Shipment `delivered` (terminal) |
 | Delivery fails | Driver | `FailShipment` | Shipment | H: transition `in_transit→failed`; terminal/immutable | `ShipmentFailed`, `ShipmentExceptionRaised` | P16 Exception-Escalation; P4/P5 release | Shipment `failed` (terminal) |
 | Shipment returned | Driver/Dispatcher | `ReturnShipment` | Shipment | H: transition `in_transit→returned`; compensating, not edit | `ShipmentReturned` | P16 Escalation; P11 settlement adjust | Shipment `returned` (terminal) |
-| Customer cancels order/shipment | Client/Dispatcher | `CancelOrder` / `CancelShipment` | Order / Shipment | H (Shipment): cancel only from non-terminal (`created/ready/assigned→cancelled`, `in_transit` **not** cancellable); stamps `cancelled_at`. H (Order): cancel only from `submitted`/`approved` → `cancelled` (Order machine; **not** cancellable once `fulfilling`/`completed`). Both: completed/cancelled immutable | `OrderCancelled`, `ShipmentCancelled` | P6 Warehouse-Load-Sync; notify | Order/shipment `cancelled` (terminal) |
+| Customer cancels order/shipment | Client/Dispatcher | `CancelOrder` / `CancelShipment` | Order / Shipment | H (Shipment): cancel only from non-terminal (`created/ready/assigned→cancelled`, `in_transit` **not** cancellable); stamps `cancelled_at`. H (Order): cancellable from `submitted`/`approved` **and from `fulfilling`** → `cancelled` (**CF1 resolved — Phase 6.5, see `docs/09a`**); a `fulfilling → cancelled` fires the **compensation workflow** (cascade `ShipmentCancelled` to in-flight children; `OrderFulfilmentFailed` where a child cannot be unwound), an **audit event**, an **`OrderCancellationFeeApplied`** charge (Billing), and a **`NotificationRequestedIntegrationEvent`**. Only `completed` is non-cancellable. Both: completed/cancelled immutable | `OrderCancelled`, `OrderFulfilmentFailed`, `OrderCancellationFeeApplied`, `ShipmentCancelled` | P6 Warehouse-Load-Sync; P-CF1 cancellation-compensation; notify | Order/shipment `cancelled` (terminal) |
 | Warehouse receives package | Operator | `ReceiveShipmentAtWarehouse` | Warehouse + Tracking | H: capacity not exceeded; append-only event | `ShipmentReceivedAtWarehouse` | P6 Load-Sync; P7 Threshold-Alert | Inventory load incremented |
 | Warehouse capacity exceeded | System | (any create/assign/receive) | Warehouse | H: weight/volume over ACTIVE > capacity → reject | `WarehouseCapacityExceeded` (attempted) | P8 Capacity-Exceeded-Block → hotspot | Command rejected; dispatcher alerted |
 | Vehicle maintenance start | Maintenance | `StartVehicleMaintenance` | Vehicle | H: transition `active→maintenance`; not on active shipment | `VehicleMaintenanceStarted`, `VehicleStatusChanged` | P5 mark unavailable | Vehicle `maintenance` (temporary OutOfService) |
@@ -1252,7 +1252,7 @@ stateDiagram-v2
 | `rejected` | Approval denied (terminal). | `OrderRejected` emitted. | none (terminal) |
 | `fulfilling` | Shipments being created/executed for the order. | `OrderFulfilmentStarted` emitted; child Shipments spawned. | — |
 | `completed` | All shipments terminal-success; order satisfied (terminal). | `OrderCompleted` emitted; `InvoiceGenerated` may follow (Billing). | none (terminal) |
-| `cancelled` | Order aborted before completion (terminal). | `OrderCancelled` emitted; in-flight shipments cancelled/compensated. | none (terminal) |
+| `cancelled` | Order aborted before completion — from `submitted`, `approved`, **or `fulfilling`** (terminal). | `OrderCancelled` emitted; compensation workflow cascades `ShipmentCancelled` (+ `OrderFulfilmentFailed` if a child cannot be unwound); `OrderCancellationFeeApplied` (Billing); audit + `NotificationRequestedIntegrationEvent`. | none (terminal) |
 
 ### 4.2.2 Allowed Transitions
 
@@ -1265,7 +1265,7 @@ stateDiagram-v2
 | `approved` | `fulfilling` | StartFulfilment / `OrderFulfilmentStarted` | **Must be approved** before any shipments are created. |
 | `approved` | `cancelled` | Cancel / `OrderCancelled` | Allowed pre-fulfilment (or with compensation). |
 | `fulfilling` | `completed` | Complete / `OrderCompleted` | All child Shipments reached terminal success. |
-| `fulfilling` | `cancelled` | Cancel / `OrderCancelled` | Compensates in-flight Shipments (`ShipmentCancelled`). |
+| `fulfilling` | `cancelled` | Cancel / `OrderCancelled` | **ALLOWED (CF1 resolved, Phase 6.5).** Fires the compensation workflow (cascade `ShipmentCancelled`; `OrderFulfilmentFailed` if a child cannot be unwound), an `OrderCancellationFeeApplied` charge (Billing), an audit event, and a `NotificationRequestedIntegrationEvent`. |
 
 ### 4.2.3 Invalid Transitions (explicit)
 
@@ -1289,9 +1289,9 @@ stateDiagram-v2
 
 | Scenario | Mechanism |
 |---|---|
-| Cancel during `fulfilling` | Cascade compensating `ShipmentCancelled` to live child shipments. |
+| Cancel during `fulfilling` (**CF1 — explicitly ALLOWED, Phase 6.5**) | Compensation workflow: cascade `ShipmentCancelled` to live children; emit `OrderFulfilmentFailed` if any child cannot be unwound; apply `OrderCancellationFeeApplied` (Billing); write audit event; emit `NotificationRequestedIntegrationEvent`. |
 | Credit check fails at approval | Route to `rejected` (`OrderRejected`). |
-| Partial shipment failure | Order stays `fulfilling`; failed shipment handled per Shipment machine; re-shipment may spawn. |
+| Partial shipment failure | Order stays `fulfilling`; failed child handled per Shipment machine; re-shipment may spawn. If the fan-out cannot complete, emit **`OrderFulfilmentFailed`** (compensation/abort path). |
 
 ### 4.2.6 Diagram
 
@@ -1305,7 +1305,7 @@ stateDiagram-v2
     approved --> fulfilling : StartFulfilment / OrderFulfilmentStarted
     approved --> cancelled : Cancel / OrderCancelled
     fulfilling --> completed : Complete / OrderCompleted (all shipments delivered)
-    fulfilling --> cancelled : Cancel / OrderCancelled (compensate shipments)
+    fulfilling --> cancelled : Cancel / OrderCancelled (CF1 ALLOWED: compensate + fee + audit + notify)
     rejected --> [*]
     completed --> [*]
     cancelled --> [*]

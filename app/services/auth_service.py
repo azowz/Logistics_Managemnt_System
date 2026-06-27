@@ -31,10 +31,16 @@ class AuthService:
         return user
 
     def create_access_token(self, user: User) -> str:
-        """Issue a signed JWT for the authenticated user."""
+        """Issue a signed JWT for the authenticated user.
+
+        The token carries the user's ``tenant_id`` as the ``tid`` claim so every
+        subsequent request is scoped to that tenant under Row-Level Security
+        (ADR-001) before any database read occurs.
+        """
         expiry = timedelta(minutes=self._settings.access_token_expire_minutes)
         return security.create_access_token(
             subject=str(user.id),
             role=user.role.value,
+            tenant_id=str(user.tenant_id),
             expires_delta=expiry,
         )

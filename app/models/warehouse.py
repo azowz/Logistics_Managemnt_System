@@ -5,12 +5,12 @@ from __future__ import annotations
 import uuid
 from typing import List, Optional, TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, Numeric, String, UniqueConstraint
+from sqlalchemy import ForeignKey, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
-from app.db.mixins import TimestampMixin
+from app.db.mixins import AuditMixin, SoftDeleteMixin, TimestampMixin
 
 if TYPE_CHECKING:  # pragma: no cover
     from app.models.vehicle import Vehicle
@@ -18,16 +18,25 @@ if TYPE_CHECKING:  # pragma: no cover
     from app.models.shipment import Shipment
 
 
-class Warehouse(TimestampMixin, Base):
+class Warehouse(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     """Physical warehouse with capacity controls and geolocation."""
 
     __tablename__ = "warehouses"
-    __table_args__ = (UniqueConstraint("code", name="uq_warehouses_code"),)
+    # Warehouse code is unique PER TENANT (ADR-001 / docs/03 §3.2).
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "code", name="uq_warehouses_tenant_id_code"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     code: Mapped[str] = mapped_column(String(32), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -42,6 +51,9 @@ class Warehouse(TimestampMixin, Base):
     capacity_weight_kg: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
     capacity_volume_m3: Mapped[float] = mapped_column(Numeric(12, 3), nullable=False)
     max_daily_shipments: Mapped[Optional[int]] = mapped_column()
+    version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
+    # Optimistic concurrency (ADR-004 / docs/03 §0).
+    __mapper_args__ = {"version_id_col": version}
 
     # Vehicles based at this warehouse.
     vehicles: Mapped[List["Vehicle"]] = relationship(

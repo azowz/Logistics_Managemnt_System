@@ -81,4 +81,28 @@ def ping(self: Task) -> str:
         raise self.retry(exc=exc, countdown=countdown)
 
 
-__all__ = ["ping"]
+@celery_app.task(name="mesaar.relay_outbox")
+def relay_outbox(batch_size: int = 100) -> dict[str, int]:
+    """Publish one batch of unpublished events from the transactional outbox.
+
+    Thin wrapper over :func:`app.events.relay.run_outbox_relay` (the worker layer
+    holds no business logic). Intended to be scheduled on a short celery-beat
+    interval; each run is idempotent and safe to overlap-guard at the scheduler.
+
+    Returns:
+        A summary dict ``{fetched, published, failed, dead_lettered}``.
+    """
+    # Imported lazily so the event backbone (and its SQLAlchemy models) are not
+    # imported at worker module load unless the task actually runs.
+    from app.events.relay import run_outbox_relay
+
+    result = run_outbox_relay(batch_size=batch_size)
+    return {
+        "fetched": result.fetched,
+        "published": result.published,
+        "failed": result.failed,
+        "dead_lettered": result.dead_lettered,
+    }
+
+
+__all__ = ["ping", "relay_outbox"]

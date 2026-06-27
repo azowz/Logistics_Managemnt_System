@@ -1,6 +1,6 @@
 # ADR-007 — UUIDv7 keys, unified Event Store, and Transactional Outbox
 
-- **Status:** Accepted — **2026-06-20** (finalizes Phase 4; locks the implementation mechanics designed in `docs/03-database-architecture.md` §6–7 and modeled in `docs/04` Part 6)
+- **Status:** Accepted — **2026-06-20** (finalizes Phase 4; locks the implementation mechanics designed in `docs/03-database-architecture.md` §6–7 and modeled in `docs/04` Part 6) · **Amended 2026-06-22 (Phase 6.5): added Migration Plan + Rollback Plan (closes audit gap `docs/06` §C.2).**
 - **Date:** 2026-06-20
 - **Deciders:** Program lead
 - **Builds on:** ADR-002 (partitioning), ADR-004 (CQRS-lite event model), ADR-006 (projections)
@@ -63,4 +63,28 @@ in the same flow as the DB commit.
 - `app/events` (domain event types + publish port) and `app/projections` (ADR-006 builders).
 - Partition pre-create/retention job (celery-beat); outbox-lag metric.
 
-*Companion artifacts:* `docs/03-database-architecture.md` §6–7 · `docs/04-event-storming-and-state-machines.md` Part 6 · ADR-002/004/006.
+## Migration Plan (added 2026-06-22, Phase 6.5)
+
+Additive, **zero-downtime**, Alembic-safe (`app.db.base:Base.metadata` is the target); **no retrofit** of existing `uuid4` PKs. Strictly **after M1** (tenancy: `tenant_id` + RLS + isolation test).
+
+1. **M2.1 — Schema (additive).** Create `event_store` (UUIDv7 PK, full envelope, `UNIQUE(aggregate_id, aggregate_version)`, monthly RANGE partition on `occurred_at`) and `processed_events(consumer, event_id)`; add `published_at` semantics to the outbox path. All new tables are **tenant-scoped + RLS** (ADR-001). New tables only ⇒ no migration of existing rows.
+2. **M2.2 — Dual-write (shadow).** Behind a feature flag (`EVENT_STORE_ENABLED`), command handlers append the event row in the **same local transaction** as the aggregate write; the relay stays **off** (no publish). Validate that event rows land and reconcile counts against `shipment_tracking_events` for tracking-typed events.
+3. **M2.3 — Backfill (optional, bounded).** Replay existing `shipment_tracking_events` into `event_store` as historical events (idempotent on `event_id`) if a complete replay surface is required; tracking rows remain the user-facing slice.
+4. **M2.4 — Relay rollout.** Enable the relay/poller (publishes `published_at IS NULL` → Celery/Redis, ADR-003), **one consumer at a time**, each idempotent via `processed_events`; watch the outbox-lag Prometheus gauge.
+5. **M2.5 — Projection cutover.** Point ADR-006 projection builders at the bus, rebuild projections from the log, then switch console reads to the projections.
+6. **M2.6 — Enforce.** Once stable, make event-store append **non-optional** for new contexts; schedule partition pre-create/retention on celery-beat.
+
+## Rollback Plan (added 2026-06-22, Phase 6.5)
+
+Each step is independently reversible. The **aggregate remains the source of truth** (ADR-004), so disabling the event path never loses business state. **Rollback = stop appending/publishing, never DELETE committed events** (append-only / BR-H-24 / lossless audit).
+
+| Failure | Rollback action | Data-loss risk |
+|---|---|---|
+| Relay failure / lag spike | Stop the relay worker; rows accumulate as `published_at IS NULL`; resume after fix (consumers are at-least-once + idempotent, so replays are safe). | None |
+| Dual-write defect | Flip `EVENT_STORE_ENABLED=false`; handlers revert to aggregate-only writes; `shipment_tracking_events` keeps serving tracking. | None |
+| Schema rollback needed | With the flag off the new tables are unreferenced by live flows; drop `event_store`/`processed_events` via a down-migration; `shipments`/tracking unaffected. | None |
+| Backfill defect | Truncate backfilled historical rows and re-run (idempotent on `event_id`); projections rebuild from the canonical slice. | None (historical only) |
+
+> **Guard:** "rollback" must never mutate or delete committed event history — it only disables publication/append. Hard-delete, if ever required, applies to non-event tables only (see `event-catalog.md` CF9 correction).
+
+*Companion artifacts:* `docs/03-database-architecture.md` §6–7 · `docs/04-event-storming-and-state-machines.md` Part 6 · `docs/09a-reconciliation-and-closure.md` (Phase 6.5) · ADR-002/004/006.

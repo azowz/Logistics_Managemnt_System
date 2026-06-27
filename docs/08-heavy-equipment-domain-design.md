@@ -238,6 +238,8 @@ liability tracking for high-value equipment movements.
 
 ### 5.2 Claims Workflow (state machine)
 
+> **Phase 6.5 reconciliation (canonical).** The **canonical** Claim state machine is now `Created → UnderReview → Approved | Rejected → Settled → Closed` (with a `Closed → UnderReview` reopen), defined in **`docs/09a-reconciliation-and-closure.md`**. The names below (`reported`/`under_assessment`/`settled`/`reopened`) are the earlier draft and **map** to the canonical set: reported ≈ Created, under_assessment ≈ UnderReview, approved/rejected unchanged, settled → **Settled then Closed** (terminal), reopened → a `Closed → UnderReview` reopen. Use `docs/09a` for build.
+
 `reported (FNOL) → under_assessment → {approved | rejected}`; `approved → settled`; any →
 `reopened` (compensating). Driven by events (Part 7). Steps:
 

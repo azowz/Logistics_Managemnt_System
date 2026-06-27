@@ -5,12 +5,12 @@ from __future__ import annotations
 import uuid
 from typing import List, Optional, TYPE_CHECKING
 
-from sqlalchemy import Boolean, ForeignKey, String, UniqueConstraint
+from sqlalchemy import Boolean, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
-from app.db.mixins import TimestampMixin
+from app.db.mixins import AuditMixin, SoftDeleteMixin, TimestampMixin
 
 if TYPE_CHECKING:  # pragma: no cover
     from app.models.user import User
@@ -18,19 +18,28 @@ if TYPE_CHECKING:  # pragma: no cover
     from app.models.shipment import Shipment
 
 
-class Driver(TimestampMixin, Base):
+class Driver(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     """Operational driver profile and eligibility data."""
 
     __tablename__ = "drivers"
+    # Driver natural keys are unique PER TENANT (ADR-001 / docs/03 §3.2).
     __table_args__ = (
-        UniqueConstraint("user_id", name="uq_drivers_user_id"),
-        UniqueConstraint("license_number", name="uq_drivers_license_number"),
+        UniqueConstraint("tenant_id", "user_id", name="uq_drivers_tenant_id_user_id"),
+        UniqueConstraint(
+            "tenant_id", "license_number", name="uq_drivers_tenant_id_license_number"
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
@@ -45,6 +54,9 @@ class Driver(TimestampMixin, Base):
         UUID(as_uuid=True),
         ForeignKey("warehouses.id", ondelete="SET NULL"),
     )
+    version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
+    # Optimistic concurrency (ADR-004 / docs/03 §0).
+    __mapper_args__ = {"version_id_col": version}
 
     # User owning this driver profile.
     user: Mapped["User"] = relationship(

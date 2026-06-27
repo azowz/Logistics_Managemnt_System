@@ -5,12 +5,12 @@ from __future__ import annotations
 import uuid
 from typing import List, Optional, TYPE_CHECKING
 
-from sqlalchemy import Enum as SAEnum, ForeignKey, Numeric, String, UniqueConstraint
+from sqlalchemy import Enum as SAEnum, ForeignKey, Integer, Numeric, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
-from app.db.mixins import TimestampMixin
+from app.db.mixins import AuditMixin, SoftDeleteMixin, TimestampMixin
 from app.models.enums import VehicleStatus
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -18,19 +18,28 @@ if TYPE_CHECKING:  # pragma: no cover
     from app.models.shipment import Shipment
 
 
-class Vehicle(TimestampMixin, Base):
+class Vehicle(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     """Transport vehicle with load limits and operational status."""
 
     __tablename__ = "vehicles"
+    # Vehicle natural keys are unique PER TENANT (ADR-001 / docs/03 §3.2).
     __table_args__ = (
-        UniqueConstraint("plate_number", name="uq_vehicles_plate_number"),
-        UniqueConstraint("vin", name="uq_vehicles_vin"),
+        UniqueConstraint(
+            "tenant_id", "plate_number", name="uq_vehicles_tenant_id_plate_number"
+        ),
+        UniqueConstraint("tenant_id", "vin", name="uq_vehicles_tenant_id_vin"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
+    )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     plate_number: Mapped[str] = mapped_column(String(32), nullable=False)
     vin: Mapped[Optional[str]] = mapped_column(String(64))
@@ -45,6 +54,9 @@ class Vehicle(TimestampMixin, Base):
         UUID(as_uuid=True),
         ForeignKey("warehouses.id", ondelete="SET NULL"),
     )
+    version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
+    # Optimistic concurrency (ADR-004 / docs/03 §0).
+    __mapper_args__ = {"version_id_col": version}
 
     # Warehouse where the vehicle is usually stationed.
     home_warehouse: Mapped[Optional["Warehouse"]] = relationship(

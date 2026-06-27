@@ -99,12 +99,14 @@ def _decorate_access_token(token: str) -> str:
     return jwt.encode(payload, settings.secret_key, algorithm=settings.token_algorithm)
 
 
-def create_refresh_token(subject: str) -> str:
+def create_refresh_token(subject: str, tenant_id: Optional[str] = None) -> str:
     """Create a signed, revocable refresh token for ``subject``.
 
     Carries a unique ``jti`` (used for denylist revocation), ``type=refresh``,
     issuer/audience, and an expiry derived from
-    ``settings.refresh_token_expire_minutes``.
+    ``settings.refresh_token_expire_minutes``. ``tenant_id`` (additive ``tid``
+    claim) is preserved across rotation so refreshed access tokens stay scoped
+    to the same tenant (ADR-001).
     """
 
     settings = get_settings()
@@ -122,16 +124,24 @@ def create_refresh_token(subject: str) -> str:
         "nbf": now,
         "exp": expire,
     }
+    if tenant_id is not None:
+        payload["tid"] = tenant_id
     logger.debug("Issuing refresh token", subject=subject, jti=jti)
     return jwt.encode(payload, settings.secret_key, algorithm=settings.token_algorithm)
 
 
-def create_token_pair(subject: str, role: str) -> TokenPair:
-    """Issue a fresh access+refresh :class:`TokenPair` for ``subject``/``role``."""
+def create_token_pair(subject: str, role: str, tenant_id: Optional[str] = None) -> TokenPair:
+    """Issue a fresh access+refresh :class:`TokenPair` for ``subject``/``role``.
+
+    ``tenant_id`` is carried on both tokens (additive ``tid`` claim) so the
+    authenticated principal is tenant-scoped under RLS (ADR-001).
+    """
 
     settings = get_settings()
-    access_token = _decorate_access_token(create_access_token(subject=subject, role=role))
-    refresh_token = create_refresh_token(subject)
+    access_token = _decorate_access_token(
+        create_access_token(subject=subject, role=role, tenant_id=tenant_id)
+    )
+    refresh_token = create_refresh_token(subject, tenant_id=tenant_id)
     expires_in = settings.access_token_expire_minutes * 60
 
     logger.info("Issued token pair", subject=subject, role=role)
@@ -247,7 +257,12 @@ def rotate_refresh_token(refresh_token: str) -> TokenPair:
     role = payload.get("role")
     role_value = role if isinstance(role, str) else ""
 
-    new_pair = create_token_pair(subject=subject, role=role_value)
+    # Preserve the tenant scope (tid) across rotation so the new access token
+    # remains tenant-scoped under RLS (ADR-001).
+    tid = payload.get("tid")
+    tenant_value = tid if isinstance(tid, str) else None
+
+    new_pair = create_token_pair(subject=subject, role=role_value, tenant_id=tenant_value)
     logger.info("Rotated refresh token", subject=subject, old_jti=jti)
     return new_pair
 

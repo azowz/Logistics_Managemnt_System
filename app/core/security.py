@@ -14,6 +14,7 @@ minted by :func:`create_access_token` continue to validate unchanged.
 
 from __future__ import annotations
 
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 
@@ -25,6 +26,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.db.session import get_session
+from app.db.tenant import set_current_tenant, set_current_user_id
 from app.models.enums import UserRole
 from app.models.user import User
 from app.repositories.user_repository import UserRepository
@@ -47,8 +49,20 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
 
-def create_access_token(*, subject: str, role: str, expires_delta: Optional[timedelta] = None) -> str:
-    """Create a signed JWT access token."""
+def create_access_token(
+    *,
+    subject: str,
+    role: str,
+    tenant_id: Optional[str] = None,
+    expires_delta: Optional[timedelta] = None,
+) -> str:
+    """Create a signed JWT access token.
+
+    ``tenant_id`` is an additive, backward-compatible claim (``tid``): when
+    present it scopes the authenticated principal to a tenant so Row-Level
+    Security can be applied before any database read (ADR-001). Tokens minted
+    without it (legacy / platform) simply omit the claim.
+    """
     settings = get_settings()
     expire = datetime.now(tz=timezone.utc) + (
         expires_delta or timedelta(minutes=settings.access_token_expire_minutes)
@@ -59,6 +73,8 @@ def create_access_token(*, subject: str, role: str, expires_delta: Optional[time
         "exp": expire,
         "iat": datetime.now(tz=timezone.utc),
     }
+    if tenant_id is not None:
+        to_encode["tid"] = tenant_id
     return jwt.encode(to_encode, settings.secret_key, algorithm=settings.token_algorithm)
 
 
@@ -92,6 +108,28 @@ def get_current_user(
             detail="Malformed token.",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    # Bind the tenant from the token BEFORE any query so Row-Level Security
+    # scopes the user lookup (and everything after) to the caller's tenant
+    # (ADR-001). Tokens without a ``tid`` run platform-scoped (e.g. legacy).
+    tenant_claim = payload.get("tid")
+    if tenant_claim is not None:
+        try:
+            set_current_tenant(uuid.UUID(str(tenant_claim)))
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Malformed token.",
+                headers={"WWW-Authenticate": "Bearer"},
+            ) from exc
+    # Bind the acting user for audit/event attribution (app.current_user_id).
+    try:
+        set_current_user_id(uuid.UUID(str(user_id)))
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Malformed token.",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
     repo = UserRepository(session)
     user = repo.get_by_id(user_id)
     if user is None or not user.is_active:

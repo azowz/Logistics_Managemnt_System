@@ -105,6 +105,7 @@ def accept(
 @router.post(
     "/shipments/{shipment_id}/decline",
     status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
     summary="Driver declines an offer.",
 )
 def decline(

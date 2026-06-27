@@ -93,6 +93,7 @@ def update_driver(
 @router.delete(
     "/{driver_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    response_model=None,
     summary="Delete a driver.",
 )
 def delete_driver(

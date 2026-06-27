@@ -1,10 +1,16 @@
-"""Multi-tenancy scope: a request-local current-tenant ContextVar.
+"""Request-local security context: current tenant and current acting user.
 
-The platform is multi-tenant. The *current* tenant for a unit of work is held
-in a :class:`contextvars.ContextVar` so it propagates correctly across async
-tasks and is isolated per request. Middleware sets the tenant at the start of a
-request and resets it in a ``finally`` block; persistence code can read it to
-scope queries or to push a Postgres GUC for Row-Level Security (RLS).
+The platform is multi-tenant. The *current* tenant and *current user* for a unit
+of work are held in :class:`contextvars.ContextVar` objects so they propagate
+correctly across async tasks and stay isolated per request. Middleware/auth set
+them at the start of a request and reset them in a ``finally`` block;
+persistence code reads them to scope queries and to push Postgres GUCs for
+Row-Level Security (RLS) and audit attribution.
+
+GUCs (applied per transaction by :mod:`app.db.session`):
+  * ``app.current_tenant``   — consulted by RLS policies (ADR-001).
+  * ``app.current_user_id``  — the acting principal, used for audit/event
+    attribution (``created_by``/``updated_by``/``actor_user_id``/event ``user_id``).
 
 ``PLATFORM_TENANT_ID`` is the nil UUID and represents platform-level (global,
 cross-tenant) operations such as administrative tooling.
@@ -29,8 +35,12 @@ PLATFORM_TENANT_ID: uuid.UUID = uuid.UUID("00000000-0000-0000-0000-000000000000"
 # Request-local current tenant. ``None`` means "no tenant resolved yet".
 _current_tenant: ContextVar[uuid.UUID | None] = ContextVar("current_tenant", default=None)
 
-# Name of the Postgres run-time parameter consulted by RLS policies.
+# Request-local current acting user. ``None`` means "system / unauthenticated".
+_current_user: ContextVar[uuid.UUID | None] = ContextVar("current_user", default=None)
+
+# Names of the Postgres run-time parameters.
 _TENANT_GUC = "app.current_tenant"
+_USER_GUC = "app.current_user_id"
 
 
 def get_current_tenant() -> uuid.UUID | None:
@@ -51,6 +61,26 @@ def set_current_tenant(tenant_id: uuid.UUID | None) -> Token[uuid.UUID | None]:
 def reset_current_tenant(token: Token[uuid.UUID | None]) -> None:
     """Restore the tenant context to the state captured by ``token``."""
     _current_tenant.reset(token)
+
+
+def get_current_user_id() -> uuid.UUID | None:
+    """Return the acting user bound to the current context, or ``None``."""
+    return _current_user.get()
+
+
+def set_current_user_id(user_id: uuid.UUID | None) -> Token[uuid.UUID | None]:
+    """Bind the acting ``user_id`` to the current context; returns a reset token.
+
+    Mirrors :func:`set_current_tenant`. Used for audit/event attribution; the
+    token SHOULD be reset in a ``finally`` block to avoid leaking the actor
+    across requests served on the same worker task.
+    """
+    return _current_user.set(user_id)
+
+
+def reset_current_user_id(token: Token[uuid.UUID | None]) -> None:
+    """Restore the current-user context to the state captured by ``token``."""
+    _current_user.reset(token)
 
 
 def apply_tenant_guc(session: Session, tenant_id: uuid.UUID) -> None:
@@ -88,5 +118,8 @@ __all__ = [
     "get_current_tenant",
     "set_current_tenant",
     "reset_current_tenant",
+    "get_current_user_id",
+    "set_current_user_id",
+    "reset_current_user_id",
     "apply_tenant_guc",
 ]

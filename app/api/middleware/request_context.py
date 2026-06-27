@@ -30,7 +30,12 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from app.core.config import get_settings
-from app.db.tenant import reset_current_tenant, set_current_tenant
+from app.db.tenant import (
+    reset_current_tenant,
+    reset_current_user_id,
+    set_current_tenant,
+    set_current_user_id,
+)
 from app.db.uuidv7 import uuid7
 from app.observability.logging import bind_request_id, get_logger, reset_request_id
 
@@ -66,6 +71,9 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
 
         rid_token = bind_request_id(request_id)
         tenant_token: "Token[uuid.UUID | None]" = set_current_tenant(tenant_id)
+        # The acting user is resolved later from the JWT (auth dependency); bind
+        # None now so the per-request context is always cleaned up afterwards.
+        user_token: "Token[uuid.UUID | None]" = set_current_user_id(None)
 
         start = time.perf_counter()
         status_code = 500  # Assume failure until a response is produced.
@@ -94,6 +102,7 @@ class RequestContextMiddleware(BaseHTTPMiddleware):
             )
             # Always restore context, even when the handler raised, so state
             # never bleeds into the next request on this task.
+            reset_current_user_id(user_token)
             reset_current_tenant(tenant_token)
             reset_request_id(rid_token)
 

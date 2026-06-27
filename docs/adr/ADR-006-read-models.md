@@ -20,6 +20,8 @@ by event consumers (ADR-003/004). Initial projections:
 | `proj_sla_risk` | Exception center | clock + delivery_due_at |
 | `proj_driver_daily_stats` | Driver app KPIs | Delivered + tracking distance |
 
+> **Tenancy (Phase 6.5 amendment — closes blocker B-5 / conflict CF10).** Every `proj_*` table **carries `tenant_id`** and is created **under RLS** (ADR-001), consistent with `docs/08` ("every new table tenant-scoped + RLS"). Projection builders **`SET LOCAL` the tenant GUC per event** before reading or writing, so a missed predicate cannot surface cross-tenant rows in Ops/control-tower views. The cross-tenant isolation test (Phase-5 M1) **must cover projection reads**, not only aggregate tables. PKs are UUIDv7 per ADR-007. Source-event names in the table above are illustrative; the **canonical `event_type` literals** are `ShipmentAssigned`/`ShipmentPickedUp`/`ShipmentDelivered`/`ShipmentFailed`/`ShipmentCreated`/`DriverWentOnline`/`DriverWentOffline`/`DriverAssigned` (CF14).
+
 ## Consequences
 - (+) Console reads hit a single denormalized row set.
 - (+) Rebuildable from the append-only log (bounded replay).

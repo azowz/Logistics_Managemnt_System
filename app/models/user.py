@@ -5,12 +5,12 @@ from __future__ import annotations
 import uuid
 from typing import List, Optional, TYPE_CHECKING
 
-from sqlalchemy import Boolean, Enum as SAEnum, String
+from sqlalchemy import Boolean, Enum as SAEnum, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
-from app.db.mixins import TimestampMixin
+from app.db.mixins import AuditMixin, SoftDeleteMixin, TimestampMixin
 from app.models.enums import UserRole
 
 if TYPE_CHECKING:  # pragma: no cover - used for type checking only
@@ -19,19 +19,32 @@ if TYPE_CHECKING:  # pragma: no cover - used for type checking only
     from app.models.shipment_tracking_event import ShipmentTrackingEvent
 
 
-class User(TimestampMixin, Base):
+class User(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     """Authenticated system user with a single role."""
 
     __tablename__ = "users"
+    # Email is unique PER TENANT (ADR-001 / docs/03 §3.2), not globally.
+    __table_args__ = (
+        UniqueConstraint("tenant_id", "email", name="uq_users_tenant_id_email"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4,
     )
+    tenant_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
+    )
+    version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
+    # Optimistic concurrency: SQLAlchemy guards every UPDATE with this version and
+    # increments it; concurrent writers raise StaleDataError (ADR-004 / docs/03 §0).
+    __mapper_args__ = {"version_id_col": version}
     email: Mapped[str] = mapped_column(
         String(255),
-        unique=True,
         index=True,
         nullable=False,
     )

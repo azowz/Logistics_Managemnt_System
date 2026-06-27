@@ -17,9 +17,12 @@ from app.db.base import Base
 
 # Import every model module so they register on Base.metadata for autogenerate.
 from app.models import (  # noqa: F401
+    audit_log,
     driver,
+    event_store,
     shipment,
     shipment_tracking_event,
+    tenant,
     user,
     vehicle,
     warehouse,
