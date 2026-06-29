@@ -27,13 +27,14 @@ from app.db.tenant import PLATFORM_TENANT_ID
 from app.events import metrics
 from app.events.bus import EventBus, get_event_bus
 from app.events.envelope import EventEnvelope
-from app.models.event_store import EventStore
+from app.models.event_store import EventStore, OutboxRelayState
 from app.observability.logging import get_logger
 from app.repositories.event_store_repository import EventStoreRepository
 
 logger = get_logger(__name__)
 
 _RELAY_CONSUMER = "__outbox_relay__"
+_RELAY_NAME = "default"
 
 
 @dataclass(slots=True)
@@ -49,6 +50,37 @@ class RelayResult:
 def _publish_backoff_seconds(attempts: int) -> float:
     """Bounded exponential backoff for transport publish retries."""
     return float(min(300, 2 ** max(1, attempts)))
+
+
+def _upsert_relay_state(result: "RelayResult") -> None:
+    """Persist a heartbeat / cursor row for ``_RELAY_NAME`` in ``outbox_relay_state``.
+
+    Upserted under platform scope so it is always visible to monitoring regardless
+    of which tenant's events were being relayed. The row accumulates the total
+    ``published_count`` across runs; ``last_run_at`` is always updated;
+    ``last_published_at`` is updated only when at least one event was published.
+    """
+    now = utcnow()
+    try:
+        with session_scope(PLATFORM_TENANT_ID) as session:
+            stmt = select(OutboxRelayState).where(OutboxRelayState.relay_name == _RELAY_NAME)
+            state = session.scalars(stmt).first()
+            if state is None:
+                session.add(
+                    OutboxRelayState(
+                        relay_name=_RELAY_NAME,
+                        last_run_at=now,
+                        last_published_at=now if result.published > 0 else None,
+                        published_count=result.published,
+                    )
+                )
+            else:
+                state.last_run_at = now
+                state.published_count = (state.published_count or 0) + result.published
+                if result.published > 0:
+                    state.last_published_at = now
+    except Exception as exc:  # noqa: BLE001 - heartbeat must never crash the relay
+        logger.warning("Failed to upsert relay state; continuing", error=str(exc))
 
 
 def run_outbox_relay(
@@ -122,6 +154,10 @@ def run_outbox_relay(
             fetched=result.fetched, published=result.published,
             failed=result.failed, dead_lettered=result.dead_lettered,
         )
+
+    # Persist heartbeat / cursor for lag monitoring (Gap 1 closure).
+    _upsert_relay_state(result)
+
     return result
 
 

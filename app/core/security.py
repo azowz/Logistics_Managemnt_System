@@ -25,11 +25,15 @@ from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
+from app.core.redis import get_redis
 from app.db.session import get_session
 from app.db.tenant import set_current_tenant, set_current_user_id
 from app.models.enums import UserRole
 from app.models.user import User
+from app.observability.logging import get_logger
 from app.repositories.user_repository import UserRepository
+
+logger = get_logger(__name__)
 
 # OAuth2PasswordBearer defines where the client obtains a token.
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -41,7 +45,10 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 def hash_password(password: str) -> str:
     """Return a bcrypt hash for the provided plaintext password."""
     settings = get_settings()
-    return pwd_context.using(rounds=settings.bcrypt_work_factor).hash(password)
+    # passlib requires the scheme-prefixed keyword (``bcrypt__rounds``) on
+    # ``using()``; a bare ``rounds=`` raises KeyError("unknown CryptContext
+    # keyword").
+    return pwd_context.using(bcrypt__rounds=settings.bcrypt_work_factor).hash(password)
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -55,6 +62,7 @@ def create_access_token(
     role: str,
     tenant_id: Optional[str] = None,
     expires_delta: Optional[timedelta] = None,
+    jti: Optional[str] = None,
 ) -> str:
     """Create a signed JWT access token.
 
@@ -75,6 +83,8 @@ def create_access_token(
     }
     if tenant_id is not None:
         to_encode["tid"] = tenant_id
+    if jti is not None:
+        to_encode["jti"] = jti
     return jwt.encode(to_encode, settings.secret_key, algorithm=settings.token_algorithm)
 
 
@@ -101,6 +111,24 @@ def get_current_user(
 ) -> User:
     """Resolve the current authenticated user from the JWT."""
     payload = decode_access_token(token)
+
+    # Reject denylisted tokens (logout revocation path).  Redis errors are
+    # logged and swallowed — the denylist is a defence-in-depth control, not a
+    # hard dependency; a Redis outage must not block authentication.
+    _jti = payload.get("jti")
+    if _jti:
+        try:
+            if get_redis().exists(f"denylist:{_jti}") > 0:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Token has been revoked.",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+        except HTTPException:
+            raise
+        except Exception as _exc:
+            logger.warning("Denylist check skipped — Redis unavailable: {}", _exc)
+
     user_id: Optional[str] = payload.get("sub")
     if user_id is None:
         raise HTTPException(

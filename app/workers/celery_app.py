@@ -60,9 +60,19 @@ celery_app.conf.update(
     enable_utc=True,
     # Result lifecycle: expire stored results after one hour to bound backend growth.
     result_expires=3600,
-    # Routing/scheduling placeholders -- populated by future feature work.
+    # Routing / scheduling.
     task_routes={},
-    beat_schedule={},
+    beat_schedule={
+        # Transactional-outbox relay: runs every 30 s so event lag stays low
+        # (ADR-007; relay is idempotent and safe to run concurrently).
+        "relay-outbox-every-30s": {
+            "task": "mesaar.relay_outbox",
+            "schedule": 30.0,
+            "args": [],
+            "kwargs": {"batch_size": 100},
+            "options": {"expires": 25},  # discard if previous is still running
+        },
+    },
 )
 
 

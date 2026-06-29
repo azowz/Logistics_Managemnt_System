@@ -17,8 +17,10 @@ from fastapi import APIRouter
 
 from app.api.routes import (
     auth,
+    customers,
     driver_self,
     drivers,
+    orders,
     shipments,
     users,
     vehicles,
@@ -56,9 +58,11 @@ def build_v1_router() -> APIRouter:
     router.include_router(vehicles.router)
     router.include_router(warehouses.router)
     router.include_router(shipments.router)
+    router.include_router(customers.router)
+    router.include_router(orders.router)
 
     logger.info(
-        "Built v1 API router (prefix={prefix}, routers=7).",
+        "Built v1 API router (prefix={prefix}, routers=9).",
         prefix=settings.api_v1_prefix,
     )
     return router

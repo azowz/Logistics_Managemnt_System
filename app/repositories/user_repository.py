@@ -18,9 +18,23 @@ class UserRepository:
     def __init__(self, session: Session) -> None:
         self._session = session
 
-    def get_by_email(self, email: str) -> Optional[User]:
-        """Return user by email or None if not found."""
+    def get_by_email(
+        self,
+        email: str,
+        *,
+        tenant_id: Optional[uuid.UUID] = None,
+    ) -> Optional[User]:
+        """Return user by email, optionally scoped to a tenant.
+
+        When ``tenant_id`` is provided, the query adds a ``WHERE tenant_id = ?``
+        predicate in addition to the email filter, making the lookup unambiguous
+        in multi-tenant deployments where two tenants may share the same address.
+        Without it the query relies on Row-Level Security (RLS) to scope the
+        result; on SQLite (tests) it returns the first matching row.
+        """
         statement = select(User).where(User.email == email)
+        if tenant_id is not None:
+            statement = statement.where(User.tenant_id == tenant_id)
         return self._session.scalars(statement).first()
 
     def get_by_id(self, user_id: str) -> Optional[User]:

@@ -219,5 +219,92 @@ class EventStoreRepository:
         stmt = stmt.order_by(EventStore.occurred_at, EventStore.event_id)
         return self._session.scalars(stmt).all()
 
+    # ---- dead-letter replay (M2 brief: "replay capability") -----------
+    def get_dead_letters(
+        self,
+        *,
+        tenant_id: Optional[uuid.UUID] = None,
+        consumer: Optional[str] = None,
+        replayed: Optional[bool] = None,
+        limit: int = 100,
+    ) -> Sequence[DeadLetterEvent]:
+        """List DLQ events for diagnosis; results are newest-failure-first.
+
+        Parameters:
+            tenant_id: Restrict to one tenant (``None`` = all visible tenants).
+            consumer:  Restrict to one consumer name.
+            replayed:  ``True`` → only already-replayed; ``False`` → only pending;
+                       ``None`` → no filter.
+            limit:     Maximum rows returned.
+        """
+        stmt = (
+            select(DeadLetterEvent)
+            .order_by(DeadLetterEvent.last_failed_at.desc())
+            .limit(limit)
+        )
+        if tenant_id is not None:
+            stmt = stmt.where(DeadLetterEvent.tenant_id == tenant_id)
+        if consumer is not None:
+            stmt = stmt.where(DeadLetterEvent.consumer == consumer)
+        if replayed is False:
+            stmt = stmt.where(DeadLetterEvent.replayed_at.is_(None))
+        elif replayed is True:
+            stmt = stmt.where(DeadLetterEvent.replayed_at.is_not(None))
+        return self._session.scalars(stmt).all()
+
+    def mark_dead_letter_replayed(
+        self,
+        dlq_id: uuid.UUID,
+        *,
+        clear_processed: bool = True,
+    ) -> Optional["EventEnvelope"]:
+        """Prepare a DLQ entry for replay and return its original envelope.
+
+        Stamps ``replayed_at`` on the DLQ row.  When ``clear_processed`` is
+        ``True`` (default), also deletes the ``processed_events`` record so
+        the consumer will re-process the event on the next publish.
+
+        Returns the :class:`~app.events.envelope.EventEnvelope` reconstructed
+        from the original ``event_store`` row so the caller can immediately
+        re-publish it to the bus.  Returns ``None`` when the DLQ id is not
+        found or the originating event_store row has been purged.
+
+        The caller is responsible for re-publishing the returned envelope via
+        the bus after this method returns (within the same unit of work or a
+        fresh one).
+        """
+        from app.events.envelope import EventEnvelope  # avoid circular at module level
+
+        dlq = self._session.get(DeadLetterEvent, dlq_id)
+        if dlq is None:
+            return None
+
+        dlq.replayed_at = utcnow()
+
+        if clear_processed:
+            processed = self._session.get(
+                ProcessedEvent, {"consumer": dlq.consumer, "event_id": dlq.event_id}
+            )
+            if processed is not None:
+                self._session.delete(processed)
+
+        event_record = self._session.get(EventStore, dlq.event_id)
+        if event_record is None:
+            logger.warning(
+                "DLQ entry references event_id absent from event_store",
+                dlq_id=str(dlq_id),
+                event_id=str(dlq.event_id),
+            )
+            return None
+
+        logger.info(
+            "DLQ event marked for replay",
+            dlq_id=str(dlq_id),
+            event_id=str(dlq.event_id),
+            event_type=dlq.event_type,
+            consumer=dlq.consumer,
+        )
+        return EventEnvelope.from_record(event_record)
+
 
 __all__ = ["EventStoreRepository"]

@@ -38,3 +38,78 @@ class TrackingEventType(str, Enum):
     LOCATION_UPDATE = "location_update"
     PROOF_OF_DELIVERY = "proof_of_delivery"
     EXCEPTION = "exception"
+
+
+class CustomerType(str, Enum):
+    INDIVIDUAL = "individual"
+    CORPORATE = "corporate"
+    GOVERNMENT = "government"
+    SME = "sme"
+
+
+class CustomerStatus(str, Enum):
+    ACTIVE = "active"
+    SUSPENDED = "suspended"
+    INACTIVE = "inactive"
+
+
+class RiskLevel(str, Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+
+
+class CreditStatus(str, Enum):
+    GOOD = "good"
+    WATCH = "watch"
+    BLOCKED = "blocked"
+
+
+class OrderType(str, Enum):
+    """Classification of a transport order."""
+
+    STANDARD = "standard"
+    EXPRESS = "express"
+    SAME_DAY = "same_day"
+    ECONOMY = "economy"
+    RETURN = "return"
+
+
+class OrderSource(str, Enum):
+    """Channel through which an order originated."""
+
+    WEB = "web"
+    MOBILE = "mobile"
+    API = "api"
+    PHONE = "phone"
+    EMAIL = "email"
+    WALK_IN = "walk_in"
+
+
+class OrderPriority(str, Enum):
+    """Operational priority used for scheduling and dispatch."""
+
+    LOW = "low"
+    NORMAL = "normal"
+    HIGH = "high"
+    URGENT = "urgent"
+
+
+class OrderStatus(str, Enum):
+    """Order lifecycle states (see app.services.order_policies.OrderStateMachine).
+
+    Lifecycle:
+        draft → submitted → approved → scheduled → assigned → in_transit → delivered
+    with ``cancelled`` and ``failed`` as alternative terminal states reachable from
+    the in-progress states.
+    """
+
+    DRAFT = "draft"
+    SUBMITTED = "submitted"
+    APPROVED = "approved"
+    SCHEDULED = "scheduled"
+    ASSIGNED = "assigned"
+    IN_TRANSIT = "in_transit"
+    DELIVERED = "delivered"
+    CANCELLED = "cancelled"
+    FAILED = "failed"

@@ -22,11 +22,14 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
+from pydantic import ValidationError as PydanticValidationError
 
 from app.observability.logging import get_logger
+from app.repositories.errors import NotFoundError as RepositoryNotFoundError
 from app.services.exceptions import (
     AssignmentError,
     CapacityError,
+    ConflictError as DomainConflictError,
     DomainError,
     NotFoundError,
     StatusTransitionError,
@@ -162,6 +165,7 @@ class InternalError(AppError):
 # more specific subclasses must be checked before their base ``DomainError``.
 _DOMAIN_ERROR_MAP: tuple[tuple[type[DomainError], int, str], ...] = (
     (NotFoundError, 404, "not_found"),
+    (DomainConflictError, 409, "conflict"),
     (CapacityError, 409, "capacity_exceeded"),
     (AssignmentError, 409, "assignment_conflict"),
     (StatusTransitionError, 409, "invalid_status_transition"),
@@ -276,6 +280,24 @@ def install_exception_handlers(app: FastAPI) -> None:
             request_id=request_id,
         )
 
+    @app.exception_handler(RepositoryNotFoundError)
+    async def _handle_repository_not_found(
+        request: Request, exc: RepositoryNotFoundError
+    ) -> JSONResponse:
+        # Repository-layer "not found" is a distinct hierarchy from the domain
+        # NotFoundError; both map to HTTP 404 at the API boundary.
+        request_id = _get_request_id(request)
+        message = str(exc) or "The requested resource was not found."
+        logger.bind(request_id=request_id, error_code="not_found").info(
+            "Not found: {}", message
+        )
+        return _build_response(
+            status_code=404,
+            code="not_found",
+            message=message,
+            request_id=request_id,
+        )
+
     @app.exception_handler(RequestValidationError)
     async def _handle_validation_error(
         request: Request, exc: RequestValidationError
@@ -286,6 +308,25 @@ def install_exception_handlers(app: FastAPI) -> None:
         )
         # ``exc.errors()`` may contain non-JSON-native objects (bytes, nested
         # exceptions); coerce them so the response body is serializable.
+        return _build_response(
+            status_code=422,
+            code="validation_error",
+            message="Request validation failed.",
+            request_id=request_id,
+            details=_jsonable(exc.errors()),
+        )
+
+    @app.exception_handler(PydanticValidationError)
+    async def _handle_pydantic_validation_error(
+        request: Request, exc: PydanticValidationError
+    ) -> JSONResponse:
+        # Raised when a handler constructs a Pydantic model directly (e.g. a
+        # ``*ListParams`` from query args). Surface as a 422 like request-body
+        # validation rather than a 500.
+        request_id = _get_request_id(request)
+        logger.bind(request_id=request_id).info(
+            "Model validation failed: {} error(s)", len(exc.errors())
+        )
         return _build_response(
             status_code=422,
             code="validation_error",

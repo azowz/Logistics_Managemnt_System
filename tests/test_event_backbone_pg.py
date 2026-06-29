@@ -172,3 +172,129 @@ def test_rls_isolates_event_store_across_tenants(backbone) -> None:
     with session_scope(other) as s:
         visible = s.execute(text("SELECT count(*) FROM event_store")).scalar_one()
     assert visible == 0, "another tenant must not see tenant A's events"
+
+
+def test_relay_updates_outbox_relay_state(backbone) -> None:
+    """run_outbox_relay must upsert OutboxRelayState after every run."""
+    from sqlalchemy import text
+    from app.db.session import session_scope
+    from app.db.tenant import PLATFORM_TENANT_ID
+    from app.events.relay import run_outbox_relay
+
+    _append(backbone, version=1)
+    r = run_outbox_relay(bus=backbone["bus"])
+    assert r.published == 1
+
+    with session_scope(PLATFORM_TENANT_ID) as s:
+        state = s.execute(
+            text("SELECT relay_name, last_run_at, last_published_at, published_count FROM outbox_relay_state")
+        ).fetchone()
+    assert state is not None, "OutboxRelayState row must exist after relay run"
+    assert state.relay_name == "default"
+    assert state.last_run_at is not None
+    assert state.last_published_at is not None
+    assert state.published_count == 1
+
+
+def test_relay_state_accumulates_across_runs(backbone) -> None:
+    """published_count must accumulate correctly across successive relay runs."""
+    from sqlalchemy import text
+    from app.db.session import session_scope
+    from app.db.tenant import PLATFORM_TENANT_ID
+    from app.events.relay import run_outbox_relay
+
+    _append(backbone, version=1)
+    _append(backbone, version=2, widget_id=uuid.uuid4())
+    _append(backbone, version=3, widget_id=uuid.uuid4())
+
+    run_outbox_relay(bus=backbone["bus"])
+
+    with session_scope(PLATFORM_TENANT_ID) as s:
+        count = s.execute(
+            text("SELECT published_count FROM outbox_relay_state WHERE relay_name='default'")
+        ).scalar_one()
+    assert count == 3
+
+
+def test_dlq_listing_and_replay(backbone) -> None:
+    """get_dead_letters returns DLQ entries; mark_dead_letter_replayed returns the original envelope."""
+    from app.db.session import session_scope
+    from app.db.tenant import PLATFORM_TENANT_ID
+    from app.events.envelope import EventEnvelope
+    from app.repositories.event_store_repository import EventStoreRepository
+
+    env = _append(backbone, version=1)
+
+    # Manually insert a DLQ entry referencing this event (simulates exhausted retries).
+    with session_scope(backbone["tenant_id"]) as s:
+        repo = EventStoreRepository(s)
+        repo.add_dead_letter(
+            event_id=env.event_id,
+            tenant_id=backbone["tenant_id"],
+            consumer="test-consumer",
+            event_type=env.event_type,
+            payload=env.payload,
+            failure_reason="intentional test failure",
+            retry_count=3,
+            first_failed_at=env.occurred_at,
+        )
+        repo.mark_processed("test-consumer", env.event_id)
+
+    # List pending (unreplayed) DLQ entries for this tenant.
+    with session_scope(backbone["tenant_id"]) as s:
+        repo = EventStoreRepository(s)
+        entries = repo.get_dead_letters(
+            tenant_id=backbone["tenant_id"], consumer="test-consumer", replayed=False
+        )
+        assert len(entries) == 1
+        dlq_id = entries[0].id
+
+    # Mark for replay: should return the original envelope and clear processed_events.
+    with session_scope(backbone["tenant_id"]) as s:
+        repo = EventStoreRepository(s)
+        restored_env = repo.mark_dead_letter_replayed(dlq_id, clear_processed=True)
+
+    assert restored_env is not None
+    assert restored_env.event_id == env.event_id
+    assert restored_env.event_type == env.event_type
+
+    # After replay, replayed_at must be set; processed_events cleared.
+    with session_scope(backbone["tenant_id"]) as s:
+        repo = EventStoreRepository(s)
+        replayed_entries = repo.get_dead_letters(
+            tenant_id=backbone["tenant_id"], replayed=True
+        )
+        assert len(replayed_entries) == 1 and replayed_entries[0].id == dlq_id
+        # processed_events cleared so the consumer can re-process.
+        assert not repo.is_processed("test-consumer", env.event_id)
+
+
+def test_projection_rebuilder_end_to_end(backbone) -> None:
+    """ProjectionRebuilder.rebuild_by_tenant must fold all events into the projection."""
+    from app.projections.engine import Projection, ProjectionRebuilder
+    from app.events.domain_event import DomainEvent
+    from app.events.envelope import EventEnvelope
+
+    # Append three events.
+    w1 = uuid.uuid4()
+    _append(backbone, version=1, widget_id=w1)
+    _append(backbone, version=2, widget_id=uuid.uuid4())
+    _append(backbone, version=3, widget_id=uuid.uuid4())
+
+    captured: list[uuid.UUID] = []
+
+    class _WidgetProjection(Projection):
+        name = "rebuild-test-proj"
+        event_types = frozenset({"WidgetCreated"})
+
+        def handle(self, event, envelope, session) -> None:
+            captured.append(event.widget_id)
+
+        def reset(self, session, tenant_id=None) -> None:
+            captured.clear()
+
+    rebuilder = ProjectionRebuilder(registry=backbone["registry"])
+    applied = rebuilder.rebuild_by_tenant(_WidgetProjection(), backbone["tenant_id"])
+
+    assert applied == 3
+    assert len(captured) == 3

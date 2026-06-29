@@ -19,9 +19,15 @@ class TimestampMixin(BaseModel):
     @field_validator("created_at", "updated_at")
     @classmethod
     def ensure_timezone(cls, value: datetime) -> datetime:
-        """Guarantee timestamps are timezone-aware and normalized to UTC."""
+        """Normalize timestamps to UTC.
+
+        Naive datetimes (e.g. read back from SQLite, which has no timezone-aware
+        storage) are interpreted as UTC rather than rejected; PostgreSQL's
+        ``timestamptz`` already yields aware values. Either way the output is
+        timezone-aware UTC.
+        """
         if value.tzinfo is None:
-            raise ValueError("Timestamp must be timezone-aware.")
+            return value.replace(tzinfo=timezone.utc)
         return value.astimezone(timezone.utc)
 
 
@@ -31,3 +37,18 @@ class IdModel(BaseModel):
     id: str = Field(description="Resource identifier (UUID).")
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator("id", mode="before")
+    @classmethod
+    def stringify_id(cls, value: object) -> object:
+        """Coerce UUID (and other) identifiers to their string form.
+
+        ORM primary keys are ``uuid.UUID`` objects; the API contract exposes the
+        id as a string. Pydantic v2 does not implicitly convert UUID → str, so
+        normalize here once for every schema that inherits :class:`IdModel`.
+        """
+        import uuid as _uuid
+
+        if isinstance(value, _uuid.UUID):
+            return str(value)
+        return value

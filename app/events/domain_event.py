@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import dataclasses
 import datetime as dt
+import decimal
 import enum
 import uuid
 from typing import Any, ClassVar, Mapping, get_type_hints
@@ -35,7 +36,8 @@ def to_jsonable(value: Any) -> Any:
     """Recursively convert a value into a JSON-serializable form.
 
     Handles the types that appear in domain payloads: ``uuid.UUID`` → ``str``,
-    ``datetime``/``date`` → ISO-8601 ``str``, :class:`enum.Enum` → its value, and
+    ``datetime``/``date`` → ISO-8601 ``str``, :class:`enum.Enum` → its value,
+    :class:`decimal.Decimal` → ``str`` (lossless, JSON has no native decimal), and
     mappings/sequences recursively. Other values are returned unchanged (and are
     expected to already be JSON-native).
     """
@@ -44,6 +46,8 @@ def to_jsonable(value: Any) -> Any:
         return str(value)
     if isinstance(value, (dt.datetime, dt.date)):
         return value.isoformat()
+    if isinstance(value, decimal.Decimal):
+        return str(value)
     if isinstance(value, enum.Enum):
         return value.value
     if isinstance(value, Mapping):

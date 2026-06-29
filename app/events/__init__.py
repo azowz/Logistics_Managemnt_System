@@ -21,7 +21,12 @@ from __future__ import annotations
 
 from app.events.domain_event import DomainEvent
 from app.events.envelope import EventEnvelope
-from app.events.registry import EventRegistry, Upcaster, event_registry
+from app.events.registry import EventRegistry, Upcaster, event_registry, register_event
+
+# Concrete domain events — imported here so their @register_event decorators run
+# at package import time, making the process-wide registry complete.
+import app.events.customer_events  # noqa: E402, F401
+import app.events.order_events  # noqa: E402, F401
 
 __all__ = [
     "DomainEvent",
@@ -29,4 +34,5 @@ __all__ = [
     "EventRegistry",
     "Upcaster",
     "event_registry",
+    "register_event",
 ]
