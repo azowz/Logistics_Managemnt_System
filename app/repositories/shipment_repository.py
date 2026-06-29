@@ -24,8 +24,21 @@ from app.models.enums import ShipmentPriority, ShipmentStatus
 from app.models.shipment import Shipment
 from app.repositories.errors import NotFoundError
 
-# Statuses that count as an *active* (in-flight) assignment for exclusivity.
+# Statuses that count as an *active* (in-flight) assignment for driver/vehicle
+# exclusivity (a committed assignment).
 ACTIVE_ASSIGNMENT_STATUSES: Tuple[ShipmentStatus, ...] = (
+    ShipmentStatus.ASSIGNED,
+    ShipmentStatus.PICKED_UP,
+    ShipmentStatus.IN_TRANSIT,
+    ShipmentStatus.DELAYED,
+)
+
+# Non-terminal statuses — an equipment unit referenced by any such shipment is
+# considered "in use" for equipment exclusivity (broader than the committed set,
+# because a unit is reserved to a shipment from the moment it is created).
+NON_TERMINAL_STATUSES: Tuple[ShipmentStatus, ...] = (
+    ShipmentStatus.CREATED,
+    ShipmentStatus.READY,
     ShipmentStatus.ASSIGNED,
     ShipmentStatus.PICKED_UP,
     ShipmentStatus.IN_TRANSIT,
@@ -125,6 +138,19 @@ class ShipmentRepository:
         stmt = select(func.count(Shipment.id)).where(
             Shipment.vehicle_id == vehicle_id,
             Shipment.status.in_(ACTIVE_ASSIGNMENT_STATUSES),
+            Shipment.deleted_at.is_(None),
+        )
+        if exclude_shipment_id is not None:
+            stmt = stmt.where(Shipment.id != exclude_shipment_id)
+        return (self._session.scalar(stmt) or 0) > 0
+
+    def has_active_equipment_assignment(
+        self, equipment_id: uuid.UUID, *, exclude_shipment_id: Optional[uuid.UUID] = None
+    ) -> bool:
+        """Return ``True`` if the equipment is bound to another non-terminal shipment."""
+        stmt = select(func.count(Shipment.id)).where(
+            Shipment.equipment_id == equipment_id,
+            Shipment.status.in_(NON_TERMINAL_STATUSES),
             Shipment.deleted_at.is_(None),
         )
         if exclude_shipment_id is not None:

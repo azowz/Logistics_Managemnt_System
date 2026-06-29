@@ -16,6 +16,11 @@ from app.models.event_store import EventStore, ProcessedEvent, DeadLetterEvent, 
 from app.models.audit_log import AuditLog  # noqa: F401
 from app.models.customer import Customer  # noqa: F401
 from app.models.order import Order  # noqa: F401
+from app.models.equipment import (  # noqa: F401
+    Equipment,
+    EquipmentCategory,
+    EquipmentModel,
+)
 
 __all__ = [
     "Tenant",
@@ -32,4 +37,7 @@ __all__ = [
     "AuditLog",
     "Customer",
     "Order",
+    "Equipment",
+    "EquipmentCategory",
+    "EquipmentModel",
 ]

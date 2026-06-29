@@ -131,10 +131,14 @@ class Shipment(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     failure_reason: Mapped[Optional[str]] = mapped_column(String(255))
     return_reason: Mapped[Optional[str]] = mapped_column(String(255))
 
-    # Optional equipment reference (Sprint 5). No equipment aggregate exists yet,
-    # so this is a plain nullable UUID (no FK) validated only when provided.
+    # Optional equipment reference (Sprint 5). The Equipment aggregate landed in
+    # Sprint 6 (context #15, ADR-009); the FK constraint is added by migration
+    # 0009 (PostgreSQL) and validated in ShipmentService for every dialect.
     equipment_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), nullable=True
+        UUID(as_uuid=True),
+        ForeignKey("equipment.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
 
     # Commercial / offer metadata surfaced to drivers (nullable; populated by

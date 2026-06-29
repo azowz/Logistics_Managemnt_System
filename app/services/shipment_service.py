@@ -62,7 +62,9 @@ from app.models.enums import (
 )
 from app.models.shipment import Shipment
 from app.models.shipment_tracking_event import ShipmentTrackingEvent
+from app.models.enums import EquipmentStatus
 from app.repositories.driver_repository import DriverRepository
+from app.repositories.equipment_repository import EquipmentRepository
 from app.repositories.event_store_repository import EventStoreRepository
 from app.repositories.order_repository import OrderRepository
 from app.repositories.shipment_repository import ShipmentRepository
@@ -80,6 +82,7 @@ from app.services.exceptions import (
     TrackingEventError,
     ValidationError,
 )
+from app.services.equipment_policies import EquipmentStateMachine
 from app.services.shipment_policies import ShipmentStateMachine
 
 _AGGREGATE_TYPE = "Shipment"
@@ -112,6 +115,7 @@ class ShipmentService:
         self._drivers = DriverRepository(session)
         self._vehicles = VehicleRepository(session)
         self._warehouses = WarehouseRepository(session)
+        self._equipment = EquipmentRepository(session)
         self._tracking_events = TrackingEventRepository(session)
         self._event_repo = EventStoreRepository(session)
 
@@ -196,8 +200,57 @@ class ShipmentService:
             self._require_tenant_owned(
                 self._orders.get_by_id(order_id), tenant_id, "Order", order_id
             )
-        # NOTE: equipment_id has no aggregate yet (Sprint 5 known risk); it is
-        # accepted as an opaque, optional reference and cannot be tenant-checked.
+        # equipment_id is validated separately (needs shipment weight/volume and
+        # the exclude-self id) via :meth:`_validate_equipment` (Sprint 6).
+
+    def _validate_equipment(
+        self,
+        *,
+        tenant_id: uuid.UUID,
+        equipment_id: uuid.UUID,
+        weight_kg,
+        volume_m3,
+        exclude_shipment_id: Optional[uuid.UUID] = None,
+    ) -> None:
+        """Validate a referenced equipment unit (Sprint 6 integration, ADR-009).
+
+        The equipment must exist in the tenant, not be decommissioned, be in an
+        assignable state, not already be bound to another active shipment, and be
+        dimensionally compatible with the shipment's declared weight/volume.
+        """
+        equipment = self._require_tenant_owned(
+            self._equipment.get_by_id(equipment_id),
+            tenant_id,
+            "Equipment",
+            equipment_id,
+        )
+        if equipment.status == EquipmentStatus.DECOMMISSIONED:
+            raise ValidationError(
+                f"Equipment {equipment_id} is decommissioned and cannot be shipped."
+            )
+        if not EquipmentStateMachine.is_assignable(equipment.status):
+            raise ConflictError(
+                f"Equipment {equipment_id} is in status '{equipment.status.value}' "
+                "and cannot be assigned to a shipment."
+            )
+        if self._repo.has_active_equipment_assignment(
+            equipment_id, exclude_shipment_id=exclude_shipment_id
+        ):
+            raise ConflictError(
+                f"Equipment {equipment_id} is already assigned to an active shipment."
+            )
+        # Dimensional compatibility: the shipment's declared weight/volume must at
+        # least cover the equipment unit it carries (when both are known).
+        if equipment.weight_kg is not None and weight_kg is not None:
+            if float(weight_kg) < float(equipment.weight_kg):
+                raise ValidationError(
+                    "Shipment weight is below the equipment's weight; incompatible load."
+                )
+        if equipment.volume_m3 is not None and volume_m3 is not None:
+            if float(volume_m3) < float(equipment.volume_m3):
+                raise ValidationError(
+                    "Shipment volume is below the equipment's volume; incompatible load."
+                )
 
     # ------------------------------------------------------------------
     # Create
@@ -234,6 +287,13 @@ class ShipmentService:
             order_id=order_id,
             equipment_id=equipment_id,
         )
+        if equipment_id is not None:
+            self._validate_equipment(
+                tenant_id=tenant_id,
+                equipment_id=equipment_id,
+                weight_kg=data.get("weight_kg"),
+                volume_m3=data.get("volume_m3"),
+            )
 
         reference = reference_code or self._generate_reference_code()
         if self._repo.get_by_reference_code(reference):
@@ -370,6 +430,14 @@ class ShipmentService:
                 tenant_id,
                 "Order",
                 applied["order_id"],
+            )
+        if applied.get("equipment_id") is not None:
+            self._validate_equipment(
+                tenant_id=tenant_id,
+                equipment_id=applied["equipment_id"],
+                weight_kg=applied.get("weight_kg", shipment.weight_kg),
+                volume_m3=applied.get("volume_m3", shipment.volume_m3),
+                exclude_shipment_id=shipment.id,
             )
 
         # Reference-code uniqueness (when changed).

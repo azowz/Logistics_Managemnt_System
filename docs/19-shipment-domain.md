@@ -205,9 +205,18 @@ Full regression: **676 passed, 13 skipped**.
 
 ## 12. Known risks
 
+> **Sprint 6 update — `equipment_id` is now validated.** The Equipment & Asset
+> aggregate (context #15) shipped in Sprint 6 (`docs/20-equipment-domain.md`).
+> `ShipmentService` now validates a referenced `equipment_id` on create/update:
+> it must exist, be tenant-owned, not be `decommissioned`, be in an assignable
+> status, not already be bound to another non-terminal shipment, and be
+> dimensionally compatible with the shipment's declared weight/volume. A DB-level
+> FK `shipments.equipment_id → equipment.id` (SET NULL) is added by migration
+> 0009 on PostgreSQL. The first row of the risk table below is **resolved**.
+
 | Risk | Severity | Mitigation |
 | --- | --- | --- |
-| `equipment_id` has no aggregate yet, so tenant ownership cannot be validated. | LOW | Stored as an opaque optional UUID; validate once an Equipment domain (docs/08) ships. |
+| ~~`equipment_id` has no aggregate yet, so tenant ownership cannot be validated.~~ **RESOLVED in Sprint 6** — validated against the Equipment aggregate (`docs/20`). | ~~LOW~~ | Equipment domain shipped; `_validate_equipment` enforces tenant + status + exclusivity + compatibility. |
 | Pre-existing latent mismatch: legacy migration 0001 had no status CHECK (Enum `create_constraint=False`), so no DB-level guard on `status` values. | LOW | Enforced at the model/service layer; could add a PG CHECK in a later migration. |
 | Warehouse capacity is computed per-request (no reservation ledger). | MEDIUM | Acceptable for current scale; revisit with a projection (ADR-006) if contention appears. |
 | Assignment exclusivity is enforced in the service, not by a DB unique partial index on driver/vehicle. | MEDIUM | Partial indexes added in 0008 support the query; a future hard constraint could close the race window. |
