@@ -25,6 +25,8 @@ from app.events.envelope import EventEnvelope
 from app.events.equipment_events import (
     EquipmentActivated,
     EquipmentAssignedToShipment,
+    EquipmentAvailabilityChanged,
+    EquipmentCategoryCreated,
     EquipmentCreated,
     EquipmentDeactivated,
     EquipmentDecommissioned,
@@ -34,6 +36,7 @@ from app.events.equipment_events import (
     EquipmentLocationChanged,
     EquipmentMaintenanceCompleted,
     EquipmentMaintenanceStarted,
+    EquipmentModelCreated,
     EquipmentReleased,
     EquipmentReserved,
     EquipmentRestored,
@@ -42,7 +45,7 @@ from app.events.equipment_events import (
     EquipmentUpdated,
 )
 from app.models.enums import EquipmentAvailability, EquipmentStatus
-from app.models.equipment import Equipment
+from app.models.equipment import Equipment, EquipmentCategory, EquipmentModel
 from app.repositories.equipment_repository import (
     EquipmentCategoryRepository,
     EquipmentModelRepository,
@@ -377,6 +380,7 @@ class EquipmentService:
 
         EquipmentStateMachine.validate_transition(previous, new_status)
 
+        previous_availability = equipment.availability_status
         equipment.status = new_status
         if availability is not None:
             equipment.availability_status = availability
@@ -400,6 +404,17 @@ class EquipmentService:
             aggregate_id=equipment.id,
             tenant_id=tenant_id,
         )
+        if availability is not None and availability != previous_availability:
+            self._emit(
+                EquipmentAvailabilityChanged(
+                    equipment_id=equipment.id,
+                    tenant_id=tenant_id,
+                    previous_availability=previous_availability.value,
+                    new_availability=availability.value,
+                ),
+                aggregate_id=equipment.id,
+                tenant_id=tenant_id,
+            )
         self._session.commit()
         self._session.refresh(equipment)
         return equipment
@@ -505,9 +520,149 @@ class EquipmentService:
             aggregate_id=equipment.id,
             tenant_id=tenant_id,
         )
+        if previous_availability != EquipmentAvailability.ASSIGNED:
+            self._emit(
+                EquipmentAvailabilityChanged(
+                    equipment_id=equipment.id,
+                    tenant_id=tenant_id,
+                    previous_availability=previous_availability.value,
+                    new_availability=EquipmentAvailability.ASSIGNED.value,
+                ),
+                aggregate_id=equipment.id,
+                tenant_id=tenant_id,
+            )
         self._session.commit()
         self._session.refresh(equipment)
         return equipment
+
+    # ------------------------------------------------------------------
+    # Category & model reference-data operations
+    # ------------------------------------------------------------------
+
+    def create_category(
+        self,
+        *,
+        code: str,
+        name: str,
+        description: Optional[str] = None,
+        parent_id: Optional[uuid.UUID] = None,
+    ) -> EquipmentCategory:
+        """Create a tenant-scoped equipment category."""
+        tenant_id = self._tenant_id()
+        actor_id = self._actor_id()
+
+        if self._categories.get_by_code(code):
+            raise ConflictError(f"Category code '{code}' already exists in this tenant.")
+        if parent_id is not None:
+            self._require_tenant_owned(
+                self._categories.get_by_id(parent_id), tenant_id, "Parent category", parent_id
+            )
+
+        category = self._categories.create(
+            tenant_id=tenant_id,
+            code=code,
+            name=name,
+            description=description,
+            parent_id=parent_id,
+            created_by=actor_id,
+            updated_by=actor_id,
+        )
+        self._session.flush()
+        self._emit(
+            EquipmentCategoryCreated(
+                category_id=category.id, tenant_id=tenant_id, code=code, name=name
+            ),
+            aggregate_id=category.id,
+            tenant_id=tenant_id,
+        )
+        self._session.commit()
+        self._session.refresh(category)
+        return category
+
+    def update_category(self, category_id: uuid.UUID, **data) -> EquipmentCategory:
+        """Update a category's mutable fields."""
+        self._tenant_id()
+        actor_id = self._actor_id()
+        category = self._categories.get_by_id(category_id)
+        if category is None or category.is_deleted:
+            raise NotFoundError(f"Category {category_id} not found.")
+        data["updated_by"] = actor_id
+        self._categories.update(category, **data)
+        self._session.commit()
+        self._session.refresh(category)
+        return category
+
+    def list_categories(self) -> list:
+        """Return the tenant's active categories."""
+        self._tenant_id()
+        return self._categories.list()
+
+    def create_model(
+        self,
+        *,
+        code: str,
+        name: str,
+        category_id: uuid.UUID,
+        manufacturer: Optional[str] = None,
+        model_name: Optional[str] = None,
+        model_year: Optional[int] = None,
+        description: Optional[str] = None,
+    ) -> EquipmentModel:
+        """Create a tenant-scoped equipment model within a category."""
+        tenant_id = self._tenant_id()
+        actor_id = self._actor_id()
+
+        self._require_tenant_owned(
+            self._categories.get_by_id(category_id), tenant_id, "Category", category_id
+        )
+        if self._models.get_by_code(code):
+            raise ConflictError(f"Model code '{code}' already exists in this tenant.")
+
+        model = self._models.create(
+            tenant_id=tenant_id,
+            category_id=category_id,
+            code=code,
+            name=name,
+            manufacturer=manufacturer,
+            model_name=model_name,
+            model_year=model_year,
+            description=description,
+            created_by=actor_id,
+            updated_by=actor_id,
+        )
+        self._session.flush()
+        self._emit(
+            EquipmentModelCreated(
+                model_id=model.id,
+                tenant_id=tenant_id,
+                category_id=category_id,
+                code=code,
+                name=name,
+            ),
+            aggregate_id=model.id,
+            tenant_id=tenant_id,
+        )
+        self._session.commit()
+        self._session.refresh(model)
+        return model
+
+    def update_model(self, model_id: uuid.UUID, **data) -> EquipmentModel:
+        """Update a model's mutable fields."""
+        self._tenant_id()
+        actor_id = self._actor_id()
+        model = self._models.get_by_id(model_id)
+        if model is None or model.is_deleted:
+            raise NotFoundError(f"Model {model_id} not found.")
+        data["updated_by"] = actor_id
+        self._models.update(model, **data)
+        self._session.commit()
+        self._session.refresh(model)
+        return model
+
+    def list_models(self) -> list:
+        """Return the tenant's active models."""
+        self._tenant_id()
+        return self._models.list()
 
     def mark_in_transit(self, equipment_id: uuid.UUID) -> Equipment:
         return self._transition(

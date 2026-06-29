@@ -70,6 +70,9 @@ class EquipmentCategory(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     code: Mapped[str] = mapped_column(String(64), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text)
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="true"
+    )
     parent_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("equipment_categories.id", ondelete="SET NULL"),

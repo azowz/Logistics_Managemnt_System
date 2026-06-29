@@ -232,3 +232,57 @@ def test_rbac_client_can_read(client):
         assert client.get("/equipment").status_code == 200
     finally:
         _ROLE["role"] = UserRole.ADMIN
+
+
+# --- categories & models --------------------------------------------------
+
+
+def test_create_and_list_category(client):
+    code = f"CAT-{uuid.uuid4().hex[:6]}"
+    r = client.post("/equipment/categories", json={"code": code, "name": "Lifting"})
+    assert r.status_code == 201, r.text
+    assert r.json()["code"] == code
+    assert r.json()["is_active"] is True
+    listing = client.get("/equipment/categories")
+    assert listing.status_code == 200
+    assert any(c["code"] == code for c in listing.json())
+
+
+def test_create_category_duplicate_409(client):
+    code = f"CAT-DUP-{uuid.uuid4().hex[:6]}"
+    client.post("/equipment/categories", json={"code": code, "name": "X"})
+    assert client.post("/equipment/categories", json={"code": code, "name": "X"}).status_code == 409
+
+
+def test_create_and_list_model(client):
+    code = f"MOD-{uuid.uuid4().hex[:6]}"
+    r = client.post(
+        "/equipment/models",
+        json={"code": code, "name": "Grove GMK", "category_id": str(_CAT)},
+    )
+    assert r.status_code == 201, r.text
+    assert r.json()["category_id"] == str(_CAT)
+    assert any(m["code"] == code for m in client.get("/equipment/models").json())
+
+
+def test_create_model_unknown_category_422(client):
+    r = client.post(
+        "/equipment/models",
+        json={"code": "MX", "name": "Y", "category_id": str(uuid.uuid4())},
+    )
+    assert r.status_code == 422
+
+
+def test_category_route_precedence_over_id(client):
+    # "/equipment/categories" must resolve to the literal route, not /{uuid}.
+    assert client.get("/equipment/categories").status_code == 200
+    assert client.get("/equipment/models").status_code == 200
+
+
+def test_rbac_client_cannot_create_category(client):
+    _ROLE["role"] = UserRole.CLIENT
+    try:
+        r = client.post("/equipment/categories", json={"code": "Z", "name": "Z"})
+        assert r.status_code == 403
+    finally:
+        _ROLE["role"] = UserRole.ADMIN

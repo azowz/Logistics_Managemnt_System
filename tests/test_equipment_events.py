@@ -36,8 +36,11 @@ ALL_EVENTS = [
     "EquipmentDeleted",
     "EquipmentRestored",
     "EquipmentStatusChanged",
+    "EquipmentAvailabilityChanged",
     "EquipmentLocationChanged",
     "EquipmentSpecificationChanged",
+    "EquipmentCategoryCreated",
+    "EquipmentModelCreated",
 ]
 
 

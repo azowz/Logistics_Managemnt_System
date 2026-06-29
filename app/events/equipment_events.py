@@ -227,6 +227,49 @@ class EquipmentStatusChanged(DomainEvent):
 
 @register_event
 @dataclass(frozen=True, slots=True)
+class EquipmentAvailabilityChanged(DomainEvent):
+    """Equipment availability status changed (independent of lifecycle status)."""
+
+    event_type = "EquipmentAvailabilityChanged"
+    event_version = 1
+
+    equipment_id: uuid.UUID
+    tenant_id: uuid.UUID
+    previous_availability: str
+    new_availability: str
+
+
+@register_event
+@dataclass(frozen=True, slots=True)
+class EquipmentCategoryCreated(DomainEvent):
+    """A new equipment category (taxonomy node) was created."""
+
+    event_type = "EquipmentCategoryCreated"
+    event_version = 1
+
+    category_id: uuid.UUID
+    tenant_id: uuid.UUID
+    code: str
+    name: str
+
+
+@register_event
+@dataclass(frozen=True, slots=True)
+class EquipmentModelCreated(DomainEvent):
+    """A new equipment model (catalog entry) was created."""
+
+    event_type = "EquipmentModelCreated"
+    event_version = 1
+
+    model_id: uuid.UUID
+    tenant_id: uuid.UUID
+    category_id: uuid.UUID
+    code: str
+    name: str
+
+
+@register_event
+@dataclass(frozen=True, slots=True)
 class EquipmentLocationChanged(DomainEvent):
     """Equipment current warehouse / location changed."""
 
@@ -267,6 +310,9 @@ __all__ = [
     "EquipmentDeleted",
     "EquipmentRestored",
     "EquipmentStatusChanged",
+    "EquipmentAvailabilityChanged",
     "EquipmentLocationChanged",
     "EquipmentSpecificationChanged",
+    "EquipmentCategoryCreated",
+    "EquipmentModelCreated",
 ]

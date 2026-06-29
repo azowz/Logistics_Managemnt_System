@@ -298,7 +298,8 @@ def test_assign_to_shipment():
     repo.get_by_id_or_raise.return_value = _equipment(status=EquipmentStatus.ACTIVE)
     res = svc.assign_to_shipment(EQ, shipment_id=SHIP)
     assert res.availability_status == EquipmentAvailability.ASSIGNED
-    svc._event_repo.append.assert_called_once()
+    # EquipmentAssignedToShipment + EquipmentAvailabilityChanged
+    assert svc._event_repo.append.call_count == 2
 
 
 def test_assign_decommissioned_blocked():
@@ -347,3 +348,70 @@ def test_restore_not_deleted():
     repo.get_by_id.return_value = _equipment(is_deleted=False)
     with pytest.raises(ValidationError, match="not deleted"):
         svc.restore_equipment(EQ)
+
+
+# --- category / model reference data --------------------------------------
+
+
+def test_create_category():
+    svc, session, repo = _make()
+    svc._categories.get_by_code.return_value = None
+    svc._categories.create.return_value = MagicMock(id=CAT)
+    svc.create_category(code="EARTH", name="Earthmoving")
+    svc._categories.create.assert_called_once()
+    session.commit.assert_called_once()
+    svc._event_repo.append.assert_called_once()  # EquipmentCategoryCreated
+
+
+def test_create_category_duplicate():
+    svc, session, repo = _make()
+    svc._categories.get_by_code.return_value = MagicMock()
+    with pytest.raises(ConflictError, match="Category code"):
+        svc.create_category(code="EARTH", name="Earthmoving")
+    session.commit.assert_not_called()
+
+
+def test_create_model_validates_category_tenant():
+    svc, session, repo = _make()
+    svc._categories.get_by_id.return_value = _owned(tenant_id=uuid.uuid4())
+    with pytest.raises(ValidationError, match="Category"):
+        svc.create_model(code="M1", name="CAT 320", category_id=CAT)
+
+
+def test_create_model_duplicate():
+    svc, session, repo = _make()
+    svc._categories.get_by_id.return_value = _owned()
+    svc._models.get_by_code.return_value = MagicMock()
+    with pytest.raises(ConflictError, match="Model code"):
+        svc.create_model(code="M1", name="CAT 320", category_id=CAT)
+
+
+def test_create_model_happy():
+    svc, session, repo = _make()
+    svc._categories.get_by_id.return_value = _owned()
+    svc._models.get_by_code.return_value = None
+    svc._models.create.return_value = MagicMock(id=MODEL)
+    svc.create_model(code="M1", name="CAT 320", category_id=CAT)
+    svc._event_repo.append.assert_called_once()  # EquipmentModelCreated
+
+
+def test_update_category_missing():
+    svc, _, repo = _make()
+    svc._categories.get_by_id.return_value = None
+    with pytest.raises(NotFoundError):
+        svc.update_category(CAT, name="x")
+
+
+def test_update_model_missing():
+    svc, _, repo = _make()
+    svc._models.get_by_id.return_value = None
+    with pytest.raises(NotFoundError):
+        svc.update_model(MODEL, name="x")
+
+
+def test_transition_emits_availability_changed():
+    svc, session, repo = _make()
+    repo.get_by_id_or_raise.return_value = _equipment(status=EquipmentStatus.ACTIVE)
+    svc.reserve_equipment(EQ)
+    # EquipmentReserved + EquipmentStatusChanged + EquipmentAvailabilityChanged
+    assert svc._event_repo.append.call_count == 3

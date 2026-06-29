@@ -72,16 +72,29 @@ Statuses: `active`, `inactive`, `under_maintenance`, `reserved`, `in_transit`,
 
 ## 6. Events
 
-17 events (`@dataclass(frozen=True, slots=True)`, `@register_event`, JSONB-safe,
+20 events (`@dataclass(frozen=True, slots=True)`, `@register_event`, JSONB-safe,
 tenant-aware, `event_version = 1`): `EquipmentCreated`, `EquipmentUpdated`,
 `EquipmentActivated`, `EquipmentDeactivated`, `EquipmentReserved`,
 `EquipmentReleased`, `EquipmentAssignedToShipment`, `EquipmentInTransit`,
 `EquipmentDelivered`, `EquipmentMaintenanceStarted`,
 `EquipmentMaintenanceCompleted`, `EquipmentDecommissioned`, `EquipmentDeleted`,
-`EquipmentRestored`, `EquipmentStatusChanged`, `EquipmentLocationChanged`,
-`EquipmentSpecificationChanged`. Every status transition emits its specific
-event(s) plus a general `EquipmentStatusChanged`; updates emit
+`EquipmentRestored`, `EquipmentStatusChanged`, `EquipmentAvailabilityChanged`,
+`EquipmentLocationChanged`, `EquipmentSpecificationChanged`,
+`EquipmentCategoryCreated`, `EquipmentModelCreated`. Every status transition
+emits its specific event(s), a general `EquipmentStatusChanged`, and an
+`EquipmentAvailabilityChanged` when availability changes; updates emit
 location/specification/general events partitioned by changed-field group.
+
+## 6a. Categories & models
+
+`EquipmentCategory` (with an `is_active` flag) and `EquipmentModel` are
+tenant-scoped reference entities. The service exposes `create_category` /
+`update_category` / `list_categories` and `create_model` / `update_model` /
+`list_models` (codes are unique per tenant; a model's category is validated
+tenant-owned), emitting `EquipmentCategoryCreated` / `EquipmentModelCreated`.
+The API surfaces `POST`/`GET /equipment/categories` and
+`POST`/`GET /equipment/models`, declared **before** `/equipment/{id}` so the
+literal paths win over the UUID converter.
 
 ## 7. Repository & service pattern
 
@@ -114,10 +127,30 @@ repositories on models). When provided, the equipment must:
 5. be dimensionally compatible — the shipment's declared weight/volume must cover
    the equipment unit when both are known.
 
-A DB-level FK `shipments.equipment_id → equipment.id` (ON DELETE SET NULL) is
-added on PostgreSQL by migration 0009. The `assign_to_shipment` service operation
-emits `EquipmentAssignedToShipment` and sets availability to `assigned` for the
-future reserve→assign→move→deliver saga (ADR-009 follow-up).
+### 9a. Equipment FK migration strategy
+
+`shipments.equipment_id` already existed as an opaque nullable UUID (added in
+migration 0008, before any equipment rows could exist). Migration 0009 upgrades
+it to a real FK **safely and staged** on PostgreSQL:
+
+```sql
+ALTER TABLE shipments ADD CONSTRAINT fk_shipments_equipment_id_equipment
+  FOREIGN KEY (equipment_id) REFERENCES equipment (id) ON DELETE SET NULL NOT VALID;
+ALTER TABLE shipments VALIDATE CONSTRAINT fk_shipments_equipment_id_equipment;
+```
+
+`NOT VALID` adds the constraint without scanning existing rows under an
+`ACCESS EXCLUSIVE` lock; `VALIDATE CONSTRAINT` then checks existing data with a
+weaker lock. All historical `equipment_id` values are NULL (equipment did not
+exist pre-Sprint-6), so validation is effectively a no-op — but the staged form
+keeps the migration safe even with data present. The column stays nullable
+(shipments without equipment remain valid). On SQLite (tests) the FK is created
+from the ORM model via `create_all`; the `ALTER`-based path is PostgreSQL-only
+(`_is_postgres()` guard), so no unsupported SQLite `ALTER` is issued.
+
+The `assign_to_shipment` service operation emits `EquipmentAssignedToShipment` +
+`EquipmentAvailabilityChanged` and sets availability to `assigned` for the future
+reserve→assign→move→deliver saga (ADR-009 follow-up).
 
 ## 10. Security & tenant isolation
 
@@ -139,17 +172,18 @@ reversible (3/3 tables, 10/10 indexes). All PG-specific ops guarded by
 
 ## 12. Test summary
 
-Seven suites, 123 tests, **~97% coverage** of the equipment modules (events 100%,
-model 100%, policies 100%, repository 97%, schemas 96%, service 94%):
+Seven suites, **~95% coverage** of the equipment modules (events 100%, model
+100%, policies 100%, repository 92%, schemas 96%, service 91%):
 `test_equipment_{model,events,repository,service,routes,state_machine}.py` and
-`test_shipment_equipment_integration.py`. Full regression: **799 passed, 13
-skipped**.
+`test_shipment_equipment_integration.py` — covering category/model CRUD, the
+`EquipmentAvailabilityChanged` emission, and route ordering. Full regression:
+**817 passed, 13 skipped**.
 
 ## 13. Known risks
 
 | Risk | Severity | Mitigation |
 | --- | --- | --- |
-| No `EquipmentCategory`/`EquipmentModel` management API yet (reference data seeded out-of-band). | LOW | Equipment validates them as tenant-owned references; CRUD API is a follow-up. |
+| ~~No `EquipmentCategory`/`EquipmentModel` management API.~~ **RESOLVED** — `POST`/`GET /equipment/categories` and `/equipment/models` ship with this sprint. | — | Codes unique per tenant; tenant-owned validation enforced. |
 | Equipment↔Shipment binding has no shipment-event consumer yet (manual `assign_to_shipment`/`mark_in_transit`). | MEDIUM | The reserve→assign→move→deliver saga reacting to `ShipmentPickedUp`/`ShipmentDelivered` is the ADR-009 follow-up. |
 | Weight/volume compatibility is a simple "shipment ≥ equipment" guard, not a full transport/oversize profile. | MEDIUM | Compliance & Permits (#16) owns oversize/axle/permit rules (docs/08 Part 2) — a future sprint. |
 | Equipment exclusivity enforced in-service (no hard DB constraint linking equipment↔active shipment). | LOW | Query-backed; a future partial unique index could harden it. |

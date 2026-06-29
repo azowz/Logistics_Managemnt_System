@@ -29,9 +29,13 @@ from app.models.enums import (
     UserRole,
 )
 from app.schemas.equipment import (
+    EquipmentCategoryCreate,
+    EquipmentCategoryRead,
     EquipmentCreate,
     EquipmentListParams,
     EquipmentMaintenanceRequest,
+    EquipmentModelCreate,
+    EquipmentModelRead,
     EquipmentRead,
     EquipmentReserveRequest,
     EquipmentUpdate,
@@ -72,6 +76,67 @@ def create_equipment(
     svc = EquipmentService(session)
     equipment = svc.create_equipment(**payload.model_dump())
     return EquipmentRead.model_validate(equipment)
+
+
+# --- categories & models (literal paths declared before /{id}) ------------
+
+
+@router.post(
+    "/categories",
+    response_model=EquipmentCategoryRead,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create an equipment category.",
+)
+def create_category(
+    payload: EquipmentCategoryCreate,
+    session: Session = Depends(get_session),
+    current_user=Depends(require_roles(*_WRITE_ROLES)),
+) -> EquipmentCategoryRead:
+    svc = EquipmentService(session)
+    return EquipmentCategoryRead.model_validate(svc.create_category(**payload.model_dump()))
+
+
+@router.get(
+    "/categories",
+    response_model=list[EquipmentCategoryRead],
+    status_code=status.HTTP_200_OK,
+    summary="List equipment categories.",
+)
+def list_categories(
+    session: Session = Depends(get_session),
+    current_user=Depends(require_roles(*_READ_ROLES)),
+) -> list[EquipmentCategoryRead]:
+    svc = EquipmentService(session)
+    return [EquipmentCategoryRead.model_validate(c) for c in svc.list_categories()]
+
+
+@router.post(
+    "/models",
+    response_model=EquipmentModelRead,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create an equipment model.",
+)
+def create_model(
+    payload: EquipmentModelCreate,
+    session: Session = Depends(get_session),
+    current_user=Depends(require_roles(*_WRITE_ROLES)),
+) -> EquipmentModelRead:
+    svc = EquipmentService(session)
+    return EquipmentModelRead.model_validate(svc.create_model(**payload.model_dump()))
+
+
+@router.get(
+    "/models",
+    response_model=list[EquipmentModelRead],
+    status_code=status.HTTP_200_OK,
+    summary="List equipment models.",
+)
+def list_models(
+    session: Session = Depends(get_session),
+    current_user=Depends(require_roles(*_READ_ROLES)),
+) -> list[EquipmentModelRead]:
+    svc = EquipmentService(session)
+    return [EquipmentModelRead.model_validate(m) for m in svc.list_models()]
 
 
 # --- search (before /{id}) ------------------------------------------------

@@ -77,6 +77,7 @@ def upgrade() -> None:
         sa.Column("code", sa.String(64), nullable=False),
         sa.Column("name", sa.String(255), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
+        sa.Column("is_active", sa.Boolean(), nullable=False, server_default=sa.text("true")),
         sa.Column("parent_id", UUID, nullable=True),
         *_audit_cols(),
         sa.PrimaryKeyConstraint("id", name="pk_equipment_categories"),
@@ -217,13 +218,19 @@ def upgrade() -> None:
 
     # ----- cross-table FK + RLS + partial serial uniqueness (PostgreSQL) -----
     if _is_postgres():
-        op.create_foreign_key(
-            "fk_shipments_equipment_id_equipment",
-            "shipments",
-            "equipment",
-            ["equipment_id"],
-            ["id"],
-            ondelete="SET NULL",
+        # Safe staged FK upgrade: ``shipments.equipment_id`` already exists
+        # (added opaque in 0008). Add the constraint NOT VALID so existing rows
+        # are not scanned under lock, then VALIDATE separately. All historical
+        # values are NULL (equipment did not exist pre-Sprint-6), so VALIDATE is
+        # a fast no-op here, but the staged form keeps the migration safe even if
+        # data were present.
+        op.execute(
+            "ALTER TABLE shipments ADD CONSTRAINT fk_shipments_equipment_id_equipment "
+            "FOREIGN KEY (equipment_id) REFERENCES equipment (id) "
+            "ON DELETE SET NULL NOT VALID"
+        )
+        op.execute(
+            "ALTER TABLE shipments VALIDATE CONSTRAINT fk_shipments_equipment_id_equipment"
         )
         op.create_index(
             "uq_equipment_tenant_id_serial_number",

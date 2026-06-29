@@ -31,7 +31,7 @@ def _coerce_uuid(value: Union[str, uuid.UUID]) -> Optional[uuid.UUID]:
 
 
 class EquipmentCategoryRepository:
-    """Read access to equipment categories (tenant validation support)."""
+    """Persistence boundary for equipment categories (no commit)."""
 
     def __init__(self, session: Session) -> None:
         self._session = session
@@ -42,14 +42,34 @@ class EquipmentCategoryRepository:
             return None
         return self._session.get(EquipmentCategory, cid)
 
+    def get_by_code(self, code: str) -> Optional[EquipmentCategory]:
+        stmt = select(EquipmentCategory).where(
+            EquipmentCategory.code == code,
+            EquipmentCategory.deleted_at.is_(None),
+        )
+        return self._session.scalars(stmt).first()
+
+    def list(self, *, include_deleted: bool = False) -> List[EquipmentCategory]:
+        stmt = select(EquipmentCategory)
+        if not include_deleted:
+            stmt = stmt.where(EquipmentCategory.deleted_at.is_(None))
+        stmt = stmt.order_by(EquipmentCategory.code)
+        return list(self._session.scalars(stmt).all())
+
     def create(self, **data) -> EquipmentCategory:
         obj = EquipmentCategory(**data)
         self._session.add(obj)
         return obj
 
+    def update(self, category: EquipmentCategory, **data) -> EquipmentCategory:
+        for field, value in data.items():
+            if value is not None:
+                setattr(category, field, value)
+        return category
+
 
 class EquipmentModelRepository:
-    """Read access to equipment models (tenant validation support)."""
+    """Persistence boundary for equipment models (no commit)."""
 
     def __init__(self, session: Session) -> None:
         self._session = session
@@ -60,10 +80,30 @@ class EquipmentModelRepository:
             return None
         return self._session.get(EquipmentModel, mid)
 
+    def get_by_code(self, code: str) -> Optional[EquipmentModel]:
+        stmt = select(EquipmentModel).where(
+            EquipmentModel.code == code,
+            EquipmentModel.deleted_at.is_(None),
+        )
+        return self._session.scalars(stmt).first()
+
+    def list(self, *, include_deleted: bool = False) -> List[EquipmentModel]:
+        stmt = select(EquipmentModel)
+        if not include_deleted:
+            stmt = stmt.where(EquipmentModel.deleted_at.is_(None))
+        stmt = stmt.order_by(EquipmentModel.code)
+        return list(self._session.scalars(stmt).all())
+
     def create(self, **data) -> EquipmentModel:
         obj = EquipmentModel(**data)
         self._session.add(obj)
         return obj
+
+    def update(self, model: EquipmentModel, **data) -> EquipmentModel:
+        for field, value in data.items():
+            if value is not None:
+                setattr(model, field, value)
+        return model
 
 
 class EquipmentRepository:

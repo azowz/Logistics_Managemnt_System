@@ -246,6 +246,69 @@ class EquipmentRead(IdModel, TimestampMixin):
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Category / model schemas
+# ---------------------------------------------------------------------------
+
+
+class EquipmentCategoryCreate(BaseModel):
+    """Payload for creating an equipment category."""
+
+    code: str = Field(min_length=1, max_length=64)
+    name: str = Field(min_length=1, max_length=255)
+    description: Optional[str] = Field(default=None, max_length=4000)
+    parent_id: Optional[uuid.UUID] = None
+
+
+class EquipmentCategoryRead(IdModel, TimestampMixin):
+    """Equipment category representation."""
+
+    tenant_id: uuid.UUID
+    code: str
+    name: str
+    description: Optional[str] = None
+    is_active: bool
+    parent_id: Optional[uuid.UUID] = None
+    version: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class EquipmentModelCreate(BaseModel):
+    """Payload for creating an equipment model."""
+
+    model_config = ConfigDict(protected_namespaces=())
+
+    code: str = Field(min_length=1, max_length=64)
+    name: str = Field(min_length=1, max_length=255)
+    category_id: uuid.UUID
+    manufacturer: Optional[str] = Field(default=None, max_length=128)
+    model_name: Optional[str] = Field(default=None, max_length=128)
+    model_year: Optional[int] = None
+    description: Optional[str] = Field(default=None, max_length=4000)
+
+    @field_validator("model_year")
+    @classmethod
+    def year_in_range(cls, v: Optional[int]) -> Optional[int]:
+        return _validate_year(v)
+
+
+class EquipmentModelRead(IdModel, TimestampMixin):
+    """Equipment model representation."""
+
+    model_config = ConfigDict(from_attributes=True, protected_namespaces=())
+
+    tenant_id: uuid.UUID
+    category_id: uuid.UUID
+    code: str
+    name: str
+    manufacturer: Optional[str] = None
+    model_name: Optional[str] = None
+    model_year: Optional[int] = None
+    description: Optional[str] = None
+    version: int
+
+
 class EquipmentListParams(BaseModel):
     """Query parameters for ``GET /equipment`` and ``GET /equipment/search``."""
 
