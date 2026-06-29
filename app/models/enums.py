@@ -23,14 +23,41 @@ class VehicleStatus(str, Enum):
 
 
 class ShipmentStatus(str, Enum):
+    """Shipment lifecycle states (see app.services.shipment_policies.ShipmentStateMachine).
+
+    Lifecycle:
+        created → ready → assigned → picked_up → in_transit → delivered
+    with ``delayed`` as an in-transit overlay, ``failed`` allowing ``returned``,
+    and ``cancelled`` reachable from any pre-delivery state.
+
+    ``PICKED_UP`` and ``DELAYED`` were introduced in Sprint 5 to align the
+    operational lifecycle with the Order domain; older states are preserved for
+    backward compatibility.
+    """
+
     CREATED = "created"
     READY = "ready"
     ASSIGNED = "assigned"
+    PICKED_UP = "picked_up"
     IN_TRANSIT = "in_transit"
+    DELAYED = "delayed"
     DELIVERED = "delivered"
     CANCELLED = "cancelled"
     RETURNED = "returned"
     FAILED = "failed"
+
+
+class ShipmentPriority(str, Enum):
+    """Operational priority used for dispatch ordering (Sprint 5).
+
+    Stored as lowercase values (``values_callable``) so the database
+    representation matches the Order domain's priority column.
+    """
+
+    LOW = "low"
+    NORMAL = "normal"
+    HIGH = "high"
+    URGENT = "urgent"
 
 
 class TrackingEventType(str, Enum):
