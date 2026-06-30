@@ -342,3 +342,133 @@ class OrderStatus(str, Enum):
     DELIVERED = "delivered"
     CANCELLED = "cancelled"
     FAILED = "failed"
+
+
+# --- Billing & Settlements (context #18, Sprint 9) -------------------------
+
+
+class QuoteStatus(str, Enum):
+    """Quote lifecycle states (see app.services.billing_policies.QuoteStateMachine).
+
+    Lifecycle:
+        draft → issued → {approved, rejected, expired, cancelled}
+        approved → cancelled
+    Terminal: rejected, expired, cancelled.
+    """
+
+    DRAFT = "draft"
+    ISSUED = "issued"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    EXPIRED = "expired"
+    CANCELLED = "cancelled"
+
+
+class InvoiceStatus(str, Enum):
+    """Invoice lifecycle states (see app.services.billing_policies.InvoiceStateMachine).
+
+    Lifecycle:
+        draft → {issued, cancelled}
+        issued → {partially_paid, paid, overdue, voided, cancelled}
+        partially_paid → paid
+        overdue → {partially_paid, paid}
+    Terminal: paid, voided, cancelled.
+    """
+
+    DRAFT = "draft"
+    ISSUED = "issued"
+    PARTIALLY_PAID = "partially_paid"
+    PAID = "paid"
+    OVERDUE = "overdue"
+    VOIDED = "voided"
+    CANCELLED = "cancelled"
+
+
+class InvoiceLineType(str, Enum):
+    """Category of an invoice line item."""
+
+    TRANSPORT_FEE = "transport_fee"
+    EQUIPMENT_FEE = "equipment_fee"
+    PERMIT_FEE = "permit_fee"
+    ESCORT_FEE = "escort_fee"
+    STORAGE_FEE = "storage_fee"
+    PENALTY = "penalty"
+    CLAIM_ADJUSTMENT = "claim_adjustment"
+    CANCELLATION_FEE = "cancellation_fee"
+    DISCOUNT = "discount"
+    TAX = "tax"
+
+
+class LineReferenceType(str, Enum):
+    """Optional cross-domain reference attached to an invoice line."""
+
+    ORDER = "order"
+    SHIPMENT = "shipment"
+    EQUIPMENT = "equipment"
+    PERMIT = "permit"
+    ESCORT = "escort"
+    CLAIM = "claim"
+    OTHER = "other"
+
+
+class PaymentStatus(str, Enum):
+    """Payment lifecycle states."""
+
+    PENDING = "pending"
+    CONFIRMED = "confirmed"
+    FAILED = "failed"
+    REVERSED = "reversed"
+
+
+class PaymentMethod(str, Enum):
+    """Supported payment / payout instruments."""
+
+    BANK_TRANSFER = "bank_transfer"
+    CASH = "cash"
+    CARD = "card"
+    SADAD = "sadad"
+    INTERNAL_ADJUSTMENT = "internal_adjustment"
+
+
+class SettlementStatus(str, Enum):
+    """Settlement lifecycle states (see app.services.billing_policies.SettlementStateMachine).
+
+    Lifecycle:
+        draft → pending_approval → approved → settled
+        {draft, pending_approval, approved} → cancelled
+    Terminal: settled, cancelled.
+    """
+
+    DRAFT = "draft"
+    PENDING_APPROVAL = "pending_approval"
+    APPROVED = "approved"
+    SETTLED = "settled"
+    CANCELLED = "cancelled"
+
+
+class SettlementType(str, Enum):
+    """Commercial nature of a settlement."""
+
+    CLAIM_PAYOUT = "claim_payout"
+    CLAIM_OFFSET = "claim_offset"
+    CUSTOMER_REFUND = "customer_refund"
+    CARRIER_PAYOUT = "carrier_payout"
+    PENALTY_DEDUCTION = "penalty_deduction"
+
+
+class PayoutStatus(str, Enum):
+    """Payout lifecycle states."""
+
+    PENDING = "pending"
+    PAID = "paid"
+    FAILED = "failed"
+
+
+class PenaltyType(str, Enum):
+    """Category of a penalty / cancellation fee."""
+
+    LATE_DELIVERY = "late_delivery"
+    CANCELLATION_FEE = "cancellation_fee"
+    COMPLIANCE_VIOLATION = "compliance_violation"
+    DAMAGE = "damage"
+    OTHER = "other"

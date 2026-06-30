@@ -128,11 +128,22 @@ Nine suites (`test_insurance_{model,events,repository,service,routes}.py`,
 97%, repository 95%, insurance_service 95%, claims_service 94%, schemas 92%).
 Full regression: **1051 passed, 13 skipped**.
 
+## 13a. Billing & Settlements consumption (Sprint 9)
+
+The Billing & Settlements domain (context #18, `docs/23-billing-settlements-domain.md`)
+**consumes approved claim outcomes** to create settlement records: a settlement
+may reference a `claim_id`, and a claim-backed settlement requires the claim to
+be **approved or settled** with an amount **bounded by the claim's approved
+amount** (ADMIN override aside). Billing uses a **read-only** `ClaimRepository`
+for validation — it never mutates the claim, and **Claims does not own the
+settlement lifecycle**. The claim continues to emit `ClaimSettled`; Billing emits
+`ClaimSettlementConsumed` when it draws against the claim.
+
 ## 14. Known risks
 
 | Risk | Severity | Mitigation |
 | --- | --- | --- |
 | No automatic claim creation on `ShipmentFailed`/`ShipmentReturned` (manual today). | LOW | Events exist; an FNOL consumer (docs/08 Part 5.2) is a follow-up. |
-| Billing settlement consumption not wired (approved/settled outcomes). | MEDIUM | `ClaimSettled` is emitted; Billing context (#11) integration is a future sprint. |
+| ~~Billing settlement consumption not wired.~~ **RESOLVED in Sprint 9** — `SettlementService` consumes approved claim outcomes (`docs/23`). | ~~MEDIUM~~ | Settlements reference claims by id, bounded by approved amount; automatic invoice-adjustment on `ClaimSettled` remains a follow-up. |
 | Coverage-rule matching (cargo type / category / limits) is modelled but not yet enforced at approval (only policy active + covers-type flag). | MEDIUM | Coverage rules are stored and queryable; richer rule evaluation is a follow-up. |
 | Policy expiry is not auto-swept. | LOW | `expire_policy` exists; a scheduled sweep (ADR-003) is a follow-up. |
