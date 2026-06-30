@@ -228,6 +228,16 @@ transitions, approvals, settlements, damage reports, and liability records all
 live in `ClaimsService`. This preserves the bounded-context boundary: Shipment
 is referenced by id, never the reverse.
 
+## 11b. Billing & Settlements linkage (Sprint 9)
+
+Shipments **may be referenced** by the Billing & Settlements domain (context #18,
+`docs/23-billing-settlements-domain.md`): `quote.shipment_id`,
+`invoice.shipment_id`, `penalty.shipment_id`, and `settlement.shipment_id`
+reference the shipment by id only (validated tenant-owned, SET NULL FKs).
+**Shipment does not own the Billing lifecycle** — invoices, penalties, and
+settlements all live in `BillingService` / `SettlementService`. Shipment is
+referenced by id, never the reverse.
+
 ## 12. Known risks
 
 > **Sprint 6 update — `equipment_id` is now validated.** The Equipment & Asset

@@ -36,6 +36,15 @@ from app.models.insurance import (  # noqa: F401
     InsurancePolicy,
     LiabilityRecord,
 )
+from app.models.billing import (  # noqa: F401
+    Invoice,
+    InvoiceLine,
+    Payment,
+    Payout,
+    Penalty,
+    Quote,
+    Settlement,
+)
 
 __all__ = [
     "Tenant",
@@ -66,4 +75,11 @@ __all__ = [
     "Claim",
     "DamageReport",
     "LiabilityRecord",
+    "Quote",
+    "Invoice",
+    "InvoiceLine",
+    "Payment",
+    "Settlement",
+    "Payout",
+    "Penalty",
 ]

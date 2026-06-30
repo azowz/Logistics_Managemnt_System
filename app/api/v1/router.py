@@ -17,6 +17,7 @@ from fastapi import APIRouter
 
 from app.api.routes import (
     auth,
+    billing,
     claims,
     compliance,
     customers,
@@ -68,9 +69,10 @@ def build_v1_router() -> APIRouter:
     router.include_router(compliance.router)
     router.include_router(insurance.router)
     router.include_router(claims.router)
+    router.include_router(billing.router)
 
     logger.info(
-        "Built v1 API router (prefix={prefix}, routers=13).",
+        "Built v1 API router (prefix={prefix}, routers=14).",
         prefix=settings.api_v1_prefix,
     )
     return router
