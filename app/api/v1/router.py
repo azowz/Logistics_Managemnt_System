@@ -20,6 +20,7 @@ from app.api.routes import (
     customers,
     driver_self,
     drivers,
+    equipment,
     orders,
     shipments,
     users,
@@ -60,9 +61,10 @@ def build_v1_router() -> APIRouter:
     router.include_router(shipments.router)
     router.include_router(customers.router)
     router.include_router(orders.router)
+    router.include_router(equipment.router)
 
     logger.info(
-        "Built v1 API router (prefix={prefix}, routers=9).",
+        "Built v1 API router (prefix={prefix}, routers=10).",
         prefix=settings.api_v1_prefix,
     )
     return router

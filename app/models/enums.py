@@ -92,6 +92,40 @@ class CreditStatus(str, Enum):
     BLOCKED = "blocked"
 
 
+class EquipmentStatus(str, Enum):
+    """Equipment unit lifecycle status (see EquipmentStateMachine, Sprint 6).
+
+    Maps onto the docs/08 Part 6 lifecycle: ``under_maintenance`` ≈ Maintenance,
+    ``decommissioned`` ≈ OutOfService (terminal).
+    """
+
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    UNDER_MAINTENANCE = "under_maintenance"
+    RESERVED = "reserved"
+    IN_TRANSIT = "in_transit"
+    DECOMMISSIONED = "decommissioned"
+
+
+class EquipmentAvailability(str, Enum):
+    """Operational availability of an equipment unit (Sprint 6)."""
+
+    AVAILABLE = "available"
+    RESERVED = "reserved"
+    UNAVAILABLE = "unavailable"
+    ASSIGNED = "assigned"
+    MAINTENANCE = "maintenance"
+
+
+class EquipmentOwnershipType(str, Enum):
+    """How the tenant holds an equipment unit (Sprint 6)."""
+
+    OWNED = "owned"
+    LEASED = "leased"
+    CUSTOMER_OWNED = "customer_owned"
+    THIRD_PARTY = "third_party"
+
+
 class OrderType(str, Enum):
     """Classification of a transport order."""
 

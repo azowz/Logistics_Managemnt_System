@@ -17,6 +17,7 @@ from sqlalchemy.pool import StaticPool
 import app.models  # noqa: F401 — register all models on Base.metadata
 from app.db.base import Base
 from app.models.customer import Customer
+from app.models.equipment import Equipment, EquipmentCategory, EquipmentModel
 from app.models.order import Order
 from app.models.shipment import Shipment
 from app.models.tenant import Tenant
@@ -51,10 +52,62 @@ def make_engine():
             Warehouse.__table__,
             Driver.__table__,
             Vehicle.__table__,
+            EquipmentCategory.__table__,
+            EquipmentModel.__table__,
+            Equipment.__table__,
             Shipment.__table__,
         ],
     )
     return engine
+
+
+def seed_equipment(
+    SessionLocal,
+    *,
+    tenant_id,
+    category_id,
+    equipment_id,
+    status: str = "active",
+    availability_status: str = "available",
+    weight_kg=None,
+    volume_m3=None,
+    code: str = None,
+    asset_tag: str = None,
+) -> None:
+    """Seed a category + a single equipment unit for integration tests."""
+    import uuid as _uuid
+
+    s = SessionLocal()
+    try:
+        if s.get(EquipmentCategory, category_id) is None:
+            s.add(
+                EquipmentCategory(
+                    id=category_id,
+                    tenant_id=tenant_id,
+                    code=f"CAT-{category_id.hex[:6]}",
+                    name="Earthmoving",
+                )
+            )
+            s.commit()
+        if s.get(Equipment, equipment_id) is None:
+            s.add(
+                Equipment(
+                    id=equipment_id,
+                    tenant_id=tenant_id,
+                    equipment_code=code or f"EQP-{equipment_id.hex[:8]}",
+                    asset_tag=asset_tag or f"TAG-{equipment_id.hex[:8]}",
+                    category_id=category_id,
+                    name="Excavator",
+                    ownership_type="owned",
+                    status=status,
+                    availability_status=availability_status,
+                    weight_kg=weight_kg,
+                    volume_m3=volume_m3,
+                )
+            )
+            s.commit()
+    finally:
+        s.close()
 
 
 def seed_prereqs(
