@@ -81,7 +81,9 @@ class FinancialSummaryRead(BaseModel):
     overdue_invoices: int
     gross_revenue: Decimal
     collected_revenue: Decimal
-    outstanding_amount: Decimal
+    net_receivable_change: Decimal = Field(
+        description="Per-period net receivable change (gross issued − collected this period). "
+                    "NOT authoritative outstanding AR — use /analytics/financial/ar-aging for that.")
     claim_adjustments: Decimal
     penalties_amount: Decimal
     settlement_amount: Decimal
@@ -162,7 +164,8 @@ class DashboardSummaryRead(BaseModel):
     unread_urgent_notifications: int
     open_claims: int
     outstanding_invoices: int
-    total_revenue_period: Decimal
+    cumulative_collected_revenue: Decimal = Field(
+        description="Lifetime running total of confirmed payments (cumulative, not a single period).")
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
 

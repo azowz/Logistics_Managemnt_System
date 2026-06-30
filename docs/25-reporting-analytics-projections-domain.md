@@ -59,18 +59,35 @@ tenant. All tenant-scoped + RLS.
 ## 6. Rebuild strategy
 
 `rebuild_all_projections()` / `rebuild_projection(type)`: truncate the tenant's
-projection rows, replay the tenant's `event_store` rows (ordered by
-`occurred_at`) directly through the apply methods — bypassing the dispatcher, so
-no `processed_events` interaction. Strictly tenant-scoped (no cross-tenant
+projection rows, replay the tenant's `event_store` rows (ordered deterministically
+by `occurred_at`, then `aggregate_version`, then `event_id`) directly through the
+apply methods — bypassing the dispatcher, so no `processed_events` interaction. Strictly tenant-scoped (no cross-tenant
 rebuild). `dry_run=True` returns event counts without writing. Idempotent by
 construction (truncate + full replay ⇒ same result).
 
+## 6a. Metric semantics (read me before building dashboards)
+
+- **`proj_financial_summary.net_receivable_change`** is the *per-period* net
+  receivable change (`gross issued − collected`, within that period row). It is
+  **not** the authoritative outstanding AR balance and **can be negative** when a
+  payment lands in a later period than the invoice. For true outstanding AR by
+  customer, use **`proj_ar_aging`** (`GET /analytics/financial/ar-aging`).
+- **`proj_operations_dashboard.cumulative_collected_revenue`** is a **lifetime
+  running total** of confirmed payments, not a single-period figure. For
+  per-period collected revenue use `proj_financial_summary.collected_revenue`.
+
 ## 7. Idempotency strategy
 
-Live path: the `Dispatcher` dedups `(consumer="analytics", event_id)` via
-`processed_events`, so a replayed envelope is applied once. Rebuild path:
-truncate-then-replay makes recomputation deterministic regardless of how many
-times it runs.
+**Live path:** the `Dispatcher` is the *sole* idempotency boundary for live
+projection updates — it dedups `(consumer="analytics", event_id)` via
+`processed_events` and commits the projection write with that record, so a
+replayed envelope is applied exactly once. Projection writes therefore **assume
+dispatcher-controlled delivery**; `handle_domain_event` must not be invoked
+directly for production live updates (doing so would bypass dedup and
+double-count counters). **Rebuild path:** idempotency is achieved by
+tenant-scoped truncate + deterministic replay (ordered by `occurred_at`,
+`aggregate_version`, `event_id`), so recomputation is identical no matter how
+many times it runs.
 
 ## 8. Dashboard APIs
 
@@ -117,5 +134,5 @@ rebuild proven deterministic + tenant-scoped. Full regression: **1330 passed,
 | Metrics not present in the event stream are stored as 0: `on_time/late_deliveries`, `average_delivery_duration_minutes` (no expected-delivery date in events), `total_claimed_amount` & `average_claim_cycle_days` (no claimed amount / per-claim cycle in payloads), `unread_urgent_notifications` (no priority in `NotificationCreated`). | MEDIUM | Computed rates (delay/failure/read) are correct. Enriching the relevant events (add expected-delivery, claimed_amount, priority) is the follow-up; projections recompute on rebuild once added. |
 | `proj_financial_summary` is single-currency (`SAR`): billing events omit `currency_code`. | MEDIUM | Keyed by currency already; add `currency_code` to billing event payloads to unlock multi-currency, then rebuild. |
 | AR aging is a **read-through** projection (reads Billing via read-only `InvoiceRepository`) because billing events omit `customer_id`/`due_date`. | LOW | Read-only, tenant-checked, rebuildable; documented deviation from pure event-sourcing. |
-| Operations-dashboard counters are best-effort live snapshots (clamped ≥0); some (delayed_shipments) can drift vs. exact open state. | LOW | Authoritative analytics are the period projections; the dashboard is a glanceable summary, fully recomputed on rebuild. |
+| Operations-dashboard counters are best-effort live snapshots (clamped ≥0); some (delayed_shipments) can drift vs. exact open state. `cumulative_collected_revenue` is lifetime, not per-period (see §6a). | LOW | Authoritative analytics are the period projections; the dashboard is a glanceable summary, fully recomputed on rebuild (deterministic replay). |
 | Full-tenant rebuild loads the tenant's events into memory. | LOW | Fine at current scale; a batched/streamed replay is a follow-up for very large tenants. |

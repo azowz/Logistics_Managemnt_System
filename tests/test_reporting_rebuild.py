@@ -99,3 +99,27 @@ def test_rebuild_unknown_type_raises():
             ProjectionService(s).rebuild_projection("bogus")
     finally:
         s.close()
+
+
+def test_rebuild_deterministic_under_occurred_at_ties():
+    """L1: same occurred_at -> ordered by aggregate_version so Created precedes
+    Delivered, giving a stable (and correct) operations-dashboard result."""
+    from app.repositories.projection_repository import OperationsDashboardProjectionRepository
+    t = uuid.uuid4()
+    seed_tenant(_Session, tenant_id=t)
+    tie = datetime(2026, 9, 9, 9, 0, tzinfo=timezone.utc)
+    s = _Session()
+    try:
+        # Insert Delivered (v2) BEFORE Created (v1); same timestamp. Stable sort must
+        # still replay Created (v1) first -> active ends at 0, not 1.
+        _insert_event(s, "ShipmentDelivered", tenant=t, occurred=tie, version=2)
+        _insert_event(s, "ShipmentCreated", tenant=t, occurred=tie, version=1)
+        s.commit()
+        with patch("app.services.projection_service.get_current_tenant", return_value=t):
+            ProjectionService(s).rebuild_all_projections()
+            again = ProjectionService(s).rebuild_all_projections()  # repeat -> identical
+        r = OperationsDashboardProjectionRepository(s).get_for_tenant(t)
+        assert r.active_shipments == 0
+        assert again["applied"] == 2
+    finally:
+        s.close()

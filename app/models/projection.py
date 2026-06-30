@@ -97,7 +97,9 @@ class FinancialSummaryProjection(TimestampMixin, Base):
     overdue_invoices: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     gross_revenue: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
     collected_revenue: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
-    outstanding_amount: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
+    # Per-period net receivable change (gross issued − collected this period); NOT
+    # the authoritative outstanding AR balance — see proj_ar_aging for that.
+    net_receivable_change: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
     claim_adjustments: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
     penalties_amount: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
     settlement_amount: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
@@ -215,4 +217,5 @@ class OperationsDashboardProjection(TimestampMixin, Base):
     unread_urgent_notifications: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     open_claims: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     outstanding_invoices: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
-    total_revenue_period: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
+    # Cumulative collected revenue (lifetime running sum of confirmed payments), not a period figure.
+    cumulative_collected_revenue: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")

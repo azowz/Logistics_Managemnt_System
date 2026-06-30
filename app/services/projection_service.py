@@ -194,7 +194,8 @@ class ProjectionService:
             row.penalties_amount += _dec(p.get("amount"))
         elif et == "ClaimSettlementConsumed":
             row.claim_adjustments += _dec(p.get("adjustment_amount"))
-        row.outstanding_amount = row.gross_revenue - row.collected_revenue
+        # Per-period net receivable change (not authoritative outstanding AR — see proj_ar_aging).
+        row.net_receivable_change = row.gross_revenue - row.collected_revenue
         self._bump_health(envelope.tenant_id, "financial_summary", envelope)
         return True
 
@@ -333,7 +334,7 @@ class ProjectionService:
         elif et == "InvoicePaid":
             row.outstanding_invoices = _clamp0(row.outstanding_invoices - 1)
         elif et == "PaymentRecorded":
-            row.total_revenue_period += _dec(p.get("amount"))
+            row.cumulative_collected_revenue += _dec(p.get("amount"))
         elif et == "DispatchBlockedByCompliance":
             row.pending_compliance_blocks += 1
         elif et == "DispatchClearedByCompliance":
@@ -360,8 +361,13 @@ class ProjectionService:
     # ===================== Rebuild (API path) =====================
 
     def _load_events(self, tenant_id) -> List[EventEnvelope]:
+        # Deterministic replay order: occurred_at, then aggregate_version, then event_id.
+        # The secondary keys make order-sensitive updaters (e.g. clamped operations-
+        # dashboard counters) replay identically even when occurred_at ties.
         rows = self._session.scalars(
-            select(EventStore).where(EventStore.tenant_id == tenant_id).order_by(EventStore.occurred_at)
+            select(EventStore).where(EventStore.tenant_id == tenant_id).order_by(
+                EventStore.occurred_at, EventStore.aggregate_version, EventStore.event_id
+            )
         ).all()
         return [EventEnvelope.from_record(r) for r in rows]
 

@@ -75,7 +75,7 @@ def test_financial_summary_amounts():
         assert r.total_quotes == 1 and r.issued_invoices == 1
         assert r.gross_revenue == Decimal("1000.00")
         assert r.collected_revenue == Decimal("500.00")
-        assert r.outstanding_amount == Decimal("500.00")
+        assert r.net_receivable_change == Decimal("500.00")  # per-period gross − collected
         assert r.penalties_amount == Decimal("50.00")
         assert r.settlement_amount == Decimal("200.00")
         assert r.claim_adjustments == Decimal("75.00")
@@ -186,5 +186,47 @@ def test_unrelated_event_is_noop():
     try:
         svc = ProjectionService(s)
         assert svc.handle_domain_event(_env("SomethingUnknown")) is False
+    finally:
+        s.close()
+
+
+def test_net_receivable_change_can_go_negative_across_periods():
+    """M1 semantics: per-period field is gross−collected; a later-period payment
+    makes that period negative — it is NOT a true outstanding balance."""
+    t = uuid.uuid4()
+    seed_tenant(_Session, tenant_id=t)
+    p1 = datetime(2026, 3, 1, tzinfo=timezone.utc)
+    p2 = datetime(2026, 4, 1, tzinfo=timezone.utc)
+    s = _Session()
+    try:
+        svc = ProjectionService(s)
+        svc.handle_domain_event(_env("InvoiceIssued", {"total_amount": "300.00"}, tenant=t, occurred=p1))
+        svc.handle_domain_event(_env("PaymentRecorded", {"amount": "300.00"}, tenant=t, occurred=p2))
+        s.commit()
+        from app.repositories.projection_repository import FinancialSummaryProjectionRepository
+        repo = FinancialSummaryProjectionRepository(s)
+        r1 = repo.get_or_create(t, p1.date(), "SAR")
+        r2 = repo.get_or_create(t, p2.date(), "SAR")
+        assert r1.net_receivable_change == Decimal("300.00")    # issued, not yet collected
+        assert r2.net_receivable_change == Decimal("-300.00")   # collected against a prior period
+    finally:
+        s.close()
+
+
+def test_ops_cumulative_collected_revenue_accumulates():
+    """M2 semantics: ops dashboard revenue is a lifetime cumulative sum."""
+    t = uuid.uuid4()
+    seed_tenant(_Session, tenant_id=t)
+    s = _Session()
+    try:
+        svc = ProjectionService(s)
+        svc.handle_domain_event(_env("PaymentRecorded", {"amount": "40.00"}, tenant=t,
+                                     occurred=datetime(2026, 1, 1, tzinfo=timezone.utc)))
+        svc.handle_domain_event(_env("PaymentRecorded", {"amount": "60.00"}, tenant=t,
+                                     occurred=datetime(2026, 2, 1, tzinfo=timezone.utc)))
+        s.commit()
+        from app.repositories.projection_repository import OperationsDashboardProjectionRepository
+        r = OperationsDashboardProjectionRepository(s).get_for_tenant(t)
+        assert r.cumulative_collected_revenue == Decimal("100.00")  # spans periods, cumulative
     finally:
         s.close()
