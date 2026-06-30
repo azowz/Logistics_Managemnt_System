@@ -49,6 +49,8 @@ _OPENAPI_TAGS: list[dict[str, str]] = [
     {"name": "shipments", "description": "Shipment lifecycle operations."},
     {"name": "equipment", "description": "Equipment & asset lifecycle operations."},
     {"name": "compliance", "description": "Compliance, permits, escorts, and dispatch gating."},
+    {"name": "insurance", "description": "Insurance policies and coverage rules."},
+    {"name": "claims", "description": "Claim workflow, damage reports, and liability."},
 ]
 
 

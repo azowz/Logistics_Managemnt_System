@@ -136,6 +136,18 @@ escort-required / failed-blocking-check / hazardous), shipment dispatch blocking
 & clearing, evaluate + override, cross-tenant validation, RBAC, route ordering,
 UUID/Decimal/datetime serialization.
 
+## 12a. Insurance & Claims linkage (Sprint 8)
+
+A failed compliance check or a permit **may be used as supporting evidence on an
+insurance claim** in the Insurance & Claims domain (context #17,
+`docs/22-insurance-claims-domain.md`). A `Claim` references them by
+`compliance_check_id` and/or `permit_id` only (validated tenant-owned); a
+`compliance_violation` claim typically references a failed compliance check.
+Claim creation does **not** mutate the compliance check or permit, and the
+**Compliance & Permits context does not own the claim lifecycle** — claim
+state, approvals, and liability all live in `ClaimsService`. Compliance is
+referenced by id, never the reverse.
+
 ## 13. Known risks
 
 | Risk | Severity | Mitigation |

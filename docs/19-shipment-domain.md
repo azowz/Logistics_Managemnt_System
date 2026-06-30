@@ -216,6 +216,18 @@ Full regression: **676 passed, 13 skipped**.
   unchanged. `status` is stored as the enum *name* (legacy behaviour, untouched);
   `priority` is stored as the lowercase value, matching the Order column.
 
+## 11a. Insurance & Claims linkage (Sprint 8)
+
+A failed or returned shipment **may be linked to an insurance claim** in the
+Insurance & Claims domain (context #17, `docs/22-insurance-claims-domain.md`).
+A `Claim` references the shipment by `shipment_id` only; claim creation is
+**manual** (no automatic FNOL consumer yet) and does **not** mutate the
+shipment. Shipment continues to emit `ShipmentFailed`/`ShipmentReturned`, but
+the **Shipment context does not own the claim lifecycle** — claim state
+transitions, approvals, settlements, damage reports, and liability records all
+live in `ClaimsService`. This preserves the bounded-context boundary: Shipment
+is referenced by id, never the reverse.
+
 ## 12. Known risks
 
 > **Sprint 6 update — `equipment_id` is now validated.** The Equipment & Asset

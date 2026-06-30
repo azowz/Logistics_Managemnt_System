@@ -188,6 +188,17 @@ Seven suites, **~95% coverage** of the equipment modules (events 100%, model
 `EquipmentAvailabilityChanged` emission, and route ordering. Full regression:
 **817 passed, 13 skipped**.
 
+## 12a. Insurance & Claims linkage (Sprint 8)
+
+Damaged equipment **may be linked to an insurance claim** in the Insurance &
+Claims domain (context #17, `docs/22-insurance-claims-domain.md`). A `Claim`
+references equipment by `equipment_id` only (validated tenant-owned and not
+soft-deleted); an `equipment_damage` claim **requires** an `equipment_id`, and
+damage reports may also reference equipment. Claim creation does **not** mutate
+the equipment record, and the **Equipment context does not own the claim
+lifecycle** — all claim state, approvals, and liability handling live in
+`ClaimsService`. Equipment is referenced by id, never the reverse.
+
 ## 13. Known risks
 
 | Risk | Severity | Mitigation |
