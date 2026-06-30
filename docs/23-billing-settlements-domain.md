@@ -147,6 +147,14 @@ billing modules (events/model/policies 100%, settlement_service 94%,
 billing_service 93%, schemas 92%, routes 91%, repository 90%). Full regression:
 **1198 passed, 13 skipped**.
 
+## 14a. Notifications linkage (Sprint 10)
+
+Billing events are **notification triggers** consumed by the Notifications &
+Communications domain (context #19, `docs/24-notifications-communications-domain.md`):
+`InvoiceIssued`, `InvoicePaid`, `PaymentFailed`, `SettlementApproved`, and
+`SettlementSettled` each produce an in-app notification. The dependency is
+one-way (events out); **Billing does not own the notification lifecycle**.
+
 ## 15. Known risks
 
 | Risk | Severity | Mitigation |

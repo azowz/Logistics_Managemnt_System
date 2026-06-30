@@ -139,6 +139,14 @@ for validation — it never mutates the claim, and **Claims does not own the
 settlement lifecycle**. The claim continues to emit `ClaimSettled`; Billing emits
 `ClaimSettlementConsumed` when it draws against the claim.
 
+## 13b. Notifications linkage (Sprint 10)
+
+Claim events are **notification triggers** consumed by the Notifications &
+Communications domain (context #19, `docs/24-notifications-communications-domain.md`):
+`ClaimCreated`, `ClaimApproved`, `ClaimRejected`, and `ClaimSettled` each produce
+an in-app notification. The dependency is one-way (events out); **Claims does not
+own the notification lifecycle**.
+
 ## 14. Known risks
 
 | Risk | Severity | Mitigation |
