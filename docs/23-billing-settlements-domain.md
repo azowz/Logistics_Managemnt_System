@@ -155,6 +155,12 @@ Communications domain (context #19, `docs/24-notifications-communications-domain
 `SettlementSettled` each produce an in-app notification. The dependency is
 one-way (events out); **Billing does not own the notification lifecycle**.
 
+## 14b. Reporting & Analytics linkage (Sprint 11)
+
+Billing events feed **`proj_financial_summary`** and the read-through
+**`proj_ar_aging`** projections (context #20, `docs/25-...`). One-way (events
+out); Billing owns no projection.
+
 ## 15. Known risks
 
 | Risk | Severity | Mitigation |

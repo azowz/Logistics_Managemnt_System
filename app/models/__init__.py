@@ -50,6 +50,16 @@ from app.models.notification import (  # noqa: F401
     NotificationDeliveryAttempt,
     NotificationTemplate,
 )
+from app.models.projection import (  # noqa: F401
+    ARAgingProjection,
+    ClaimsMetricsProjection,
+    ComplianceMetricsProjection,
+    FinancialSummaryProjection,
+    NotificationDeliverabilityProjection,
+    OperationsDashboardProjection,
+    ProjectionHealth,
+    ShipmentPerformanceProjection,
+)
 
 __all__ = [
     "Tenant",
@@ -90,4 +100,12 @@ __all__ = [
     "NotificationTemplate",
     "Notification",
     "NotificationDeliveryAttempt",
+    "ProjectionHealth",
+    "ShipmentPerformanceProjection",
+    "FinancialSummaryProjection",
+    "ARAgingProjection",
+    "ClaimsMetricsProjection",
+    "ComplianceMetricsProjection",
+    "NotificationDeliverabilityProjection",
+    "OperationsDashboardProjection",
 ]

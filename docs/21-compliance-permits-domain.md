@@ -157,6 +157,13 @@ Communications domain (context #19, `docs/24-notifications-communications-domain
 dependency is one-way (events out); **Compliance does not own the notification
 lifecycle**.
 
+## 12c. Reporting & Analytics linkage (Sprint 11)
+
+Compliance/permit events (`Permit*`, `Dispatch*ByCompliance`,
+`ComplianceCheckFailed`, `ComplianceOverrideApplied`) feed
+**`proj_compliance_metrics`** (context #20, `docs/25-...`). One-way (events out);
+Compliance owns no projection.
+
 ## 13. Known risks
 
 | Risk | Severity | Mitigation |

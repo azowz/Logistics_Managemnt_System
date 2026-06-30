@@ -249,6 +249,13 @@ in-app notification. The Notifications consumer reads these events from the
 outbox; **Shipment does not own the notification lifecycle** and is unaware of
 notifications — the dependency is one-way (events out).
 
+## 11d. Reporting & Analytics linkage (Sprint 11)
+
+Shipment lifecycle events feed the read-side **`proj_shipment_performance`** and
+**`proj_operations_dashboard`** projections (context #20,
+`docs/25-reporting-analytics-projections-domain.md`). The dependency is one-way
+(events out); Shipment is unaware of analytics and owns no projection.
+
 ## 12. Known risks
 
 > **Sprint 6 update — `equipment_id` is now validated.** The Equipment & Asset
