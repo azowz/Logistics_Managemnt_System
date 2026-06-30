@@ -53,6 +53,7 @@ _OPENAPI_TAGS: list[dict[str, str]] = [
     {"name": "claims", "description": "Claim workflow, damage reports, and liability."},
     {"name": "billing", "description": "Quotes, invoices, payments, settlements, payouts, and penalties."},
     {"name": "notifications", "description": "Notification templates, notifications, and delivery tracking."},
+    {"name": "analytics", "description": "Reporting & analytics dashboards and CQRS projection rebuild."},
 ]
 
 

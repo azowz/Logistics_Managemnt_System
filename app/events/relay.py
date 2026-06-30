@@ -97,8 +97,10 @@ def run_outbox_relay(
     # the relay free of a hard dependency on the notifications package at module
     # load and avoids any import cycle.
     from app.notifications.handlers import register_notification_handlers
+    from app.analytics.handlers import register_analytics_handlers
 
     register_notification_handlers(bus)
+    register_analytics_handlers(bus)
     result = RelayResult()
 
     # --- 1) read the due batch under platform scope (spans all tenants) ---

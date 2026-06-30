@@ -178,6 +178,12 @@ Nine suites (`test_notifications_{model,events,repository,service,routes}.py`,
 Idempotency is proven at both the domain level and via the real `Dispatcher`.
 Full regression: **1278 passed, 13 skipped**.
 
+## 15a. Reporting & Analytics linkage (Sprint 11)
+
+Notification events feed **`proj_notification_deliverability`** (context #20,
+`docs/25-reporting-analytics-projections-domain.md`). One-way (events out);
+Notifications owns no projection.
+
 ## 16. Known risks
 
 | Risk | Severity | Mitigation |

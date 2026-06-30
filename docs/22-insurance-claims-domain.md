@@ -147,6 +147,11 @@ Communications domain (context #19, `docs/24-notifications-communications-domain
 an in-app notification. The dependency is one-way (events out); **Claims does not
 own the notification lifecycle**.
 
+## 13c. Reporting & Analytics linkage (Sprint 11)
+
+Claim events feed **`proj_claims_metrics`** (context #20, `docs/25-...`).
+One-way (events out); Claims owns no projection.
+
 ## 14. Known risks
 
 | Risk | Severity | Mitigation |
