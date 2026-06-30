@@ -26,11 +26,22 @@ class ShipmentStatus(str, Enum):
     CREATED = "created"
     READY = "ready"
     ASSIGNED = "assigned"
+    PICKED_UP = "picked_up"
     IN_TRANSIT = "in_transit"
+    DELAYED = "delayed"
     DELIVERED = "delivered"
     CANCELLED = "cancelled"
     RETURNED = "returned"
     FAILED = "failed"
+
+
+class ShipmentPriority(str, Enum):
+    """Operational priority for dispatch scheduling."""
+
+    LOW = "low"
+    NORMAL = "normal"
+    HIGH = "high"
+    URGENT = "urgent"
 
 
 class TrackingEventType(str, Enum):
