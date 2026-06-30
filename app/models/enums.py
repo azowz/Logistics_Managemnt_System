@@ -126,6 +126,96 @@ class EquipmentOwnershipType(str, Enum):
     THIRD_PARTY = "third_party"
 
 
+class PermitStatus(str, Enum):
+    """Permit lifecycle status (see PermitStateMachine, Sprint 7).
+
+    Terminal: ``rejected``, ``expired``, ``cancelled``.
+    """
+
+    DRAFT = "draft"
+    SUBMITTED = "submitted"
+    UNDER_REVIEW = "under_review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    ACTIVE = "active"
+    EXPIRED = "expired"
+    CANCELLED = "cancelled"
+
+
+class PermitType(str, Enum):
+    """Classification of a movement permit (docs/08 Part 2.1)."""
+
+    OVERSIZE = "oversize"
+    OVERWEIGHT = "overweight"
+    GOVERNMENT = "government"
+    MUNICIPAL = "municipal"
+    SPECIAL_MOVEMENT = "special_movement"
+    SITE_ENTRY = "site_entry"
+
+
+class EscortType(str, Enum):
+    """Type of escort accompanying an oversize/overweight movement."""
+
+    PRIVATE_ESCORT = "private_escort"
+    POLICE_ESCORT = "police_escort"
+    PILOT_VEHICLE = "pilot_vehicle"
+    TECHNICAL_SUPPORT = "technical_support"
+
+
+class EscortStatus(str, Enum):
+    """Lifecycle of an escort plan."""
+
+    PLANNED = "planned"
+    SCHEDULED = "scheduled"
+    CANCELLED = "cancelled"
+    COMPLETED = "completed"
+
+
+class RouteRestrictionType(str, Enum):
+    """Type of road/route restriction (docs/08 Part 4)."""
+
+    WEIGHT_LIMIT = "weight_limit"
+    HEIGHT_LIMIT = "height_limit"
+    WIDTH_LIMIT = "width_limit"
+    LENGTH_LIMIT = "length_limit"
+    TIME_WINDOW = "time_window"
+    HAZARDOUS_MATERIAL = "hazardous_material"
+    ROAD_CLOSURE = "road_closure"
+
+
+class ComplianceCheckType(str, Enum):
+    """Category of compliance evaluation (docs/08 Part 2.3)."""
+
+    PERMIT_REQUIRED = "permit_required"
+    PERMIT_VALIDITY = "permit_validity"
+    ESCORT_REQUIRED = "escort_required"
+    AXLE_WEIGHT = "axle_weight"
+    OVERSIZE = "oversize"
+    ROUTE_RESTRICTION = "route_restriction"
+    OPERATOR_CERTIFICATION = "operator_certification"
+    INSURANCE_REQUIRED = "insurance_required"
+    HAZARDOUS_MATERIAL = "hazardous_material"
+
+
+class ComplianceCheckStatus(str, Enum):
+    """Outcome of a compliance check."""
+
+    PENDING = "pending"
+    PASSED = "passed"
+    FAILED = "failed"
+    WARNING = "warning"
+    OVERRIDDEN = "overridden"
+
+
+class OperatorCertificationStatus(str, Enum):
+    """Validity status of an operator certification."""
+
+    ACTIVE = "active"
+    EXPIRED = "expired"
+    SUSPENDED = "suspended"
+    REVOKED = "revoked"
+
+
 class OrderType(str, Enum):
     """Classification of a transport order."""
 

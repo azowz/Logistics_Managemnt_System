@@ -43,6 +43,7 @@ def _shipment(*, status=ShipmentStatus.CREATED, is_deleted=False):
     s.origin_warehouse_id = ORIGIN
     s.destination_warehouse_id = DEST
     s.order_id = None
+    s.equipment_id = None
     s.driver_id = None
     s.vehicle_id = None
     s.status = status

@@ -152,6 +152,15 @@ The `assign_to_shipment` service operation emits `EquipmentAssignedToShipment` +
 `EquipmentAvailabilityChanged` and sets availability to `assigned` for the future
 reserve→assign→move→deliver saga (ADR-009 follow-up).
 
+## 9b. Compliance integration (Sprint 7)
+
+The equipment **transport profile** — `requires_permit`, `requires_escort`,
+`hazardous`, `insurance_required`, and dimensions/weight (oversize triggers) — is
+consumed by the **Compliance & Permits domain** (#16, `docs/21`) to evaluate
+compliance and gate shipment dispatch. Equipment **does not own** the permit,
+escort, or compliance-check lifecycle; it is a referenced input. The permit
+lifecycle lives entirely in context #16.
+
 ## 10. Security & tenant isolation
 
 `tenant_id` is sourced from request context, never the client. All three tables

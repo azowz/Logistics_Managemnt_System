@@ -34,6 +34,10 @@ from app.common.datetime import utcnow
 from app.common.pagination import Page, PageParams
 from app.db.tenant import get_current_tenant, get_current_user_id
 from app.events.envelope import EventEnvelope
+from app.events.compliance_events import (
+    DispatchBlockedByCompliance,
+    DispatchClearedByCompliance,
+)
 from app.events.shipment_events import (
     ShipmentAddressChanged,
     ShipmentAssigned,
@@ -82,6 +86,7 @@ from app.services.exceptions import (
     TrackingEventError,
     ValidationError,
 )
+from app.services.compliance_service import ComplianceValidationService
 from app.services.equipment_policies import EquipmentStateMachine
 from app.services.shipment_policies import ShipmentStateMachine
 
@@ -118,6 +123,7 @@ class ShipmentService:
         self._equipment = EquipmentRepository(session)
         self._tracking_events = TrackingEventRepository(session)
         self._event_repo = EventStoreRepository(session)
+        self._compliance_gate = ComplianceValidationService(session)
 
     # ------------------------------------------------------------------
     # Context helpers
@@ -496,6 +502,47 @@ class ShipmentService:
         return shipment
 
     # ------------------------------------------------------------------
+    # Compliance dispatch gate (Sprint 7)
+    # ------------------------------------------------------------------
+
+    def _enforce_dispatch_gate(self, shipment: Shipment, stage: str) -> None:
+        """Ask the Compliance dispatch gate whether ``shipment`` may proceed.
+
+        Only shipments referencing equipment carry compliance conditions; normal
+        shipments pass straight through (no event noise). On a block, persists a
+        :class:`DispatchBlockedByCompliance` audit event and raises
+        :exc:`ConflictError`; on clearance, persists
+        :class:`DispatchClearedByCompliance`.
+        """
+        if shipment.equipment_id is None:
+            return
+        tenant_id = shipment.tenant_id
+        result = self._compliance_gate.validate_dispatch(shipment=shipment, stage=stage)
+        if not result.allowed:
+            self._emit(
+                DispatchBlockedByCompliance(
+                    shipment_id=shipment.id,
+                    tenant_id=tenant_id,
+                    stage=stage,
+                    blocking_reasons=list(result.blocking_reasons),
+                ),
+                aggregate_id=shipment.id,
+                tenant_id=tenant_id,
+            )
+            self._session.commit()
+            raise ConflictError(
+                "Dispatch blocked by compliance: " + "; ".join(result.blocking_reasons)
+            )
+        self._emit(
+            DispatchClearedByCompliance(
+                shipment_id=shipment.id, tenant_id=tenant_id, stage=stage
+            ),
+            aggregate_id=shipment.id,
+            tenant_id=tenant_id,
+        )
+        self._session.commit()
+
+    # ------------------------------------------------------------------
     # Generic validated transition
     # ------------------------------------------------------------------
 
@@ -606,6 +653,10 @@ class ShipmentService:
             raise AssignmentError("Vehicle already assigned to an active shipment.")
         self._assert_vehicle_capacity(vehicle, shipment)
 
+        # Compliance dispatch gate (Sprint 7) — blocks heavy/permit/hazard cargo
+        # lacking an active permit / required escort.
+        self._enforce_dispatch_gate(shipment, "assign")
+
         def _mutate(s: Shipment) -> None:
             s.driver_id = driver.id
             s.vehicle_id = vehicle.id
@@ -629,6 +680,8 @@ class ShipmentService:
 
     def pickup_shipment(self, shipment_id: uuid.UUID) -> Shipment:
         """assigned → picked_up."""
+        self._enforce_dispatch_gate(self._repo.get_by_id_or_raise(shipment_id), "pickup")
+
         def _mutate(s: Shipment) -> None:
             s.picked_up_at = utcnow()
 
@@ -648,6 +701,7 @@ class ShipmentService:
 
     def start_transit(self, shipment_id: uuid.UUID) -> Shipment:
         """picked_up → in_transit (also resumes delayed → in_transit)."""
+        self._enforce_dispatch_gate(self._repo.get_by_id_or_raise(shipment_id), "transit")
         return self._transition(
             shipment_id,
             ShipmentStatus.IN_TRANSIT,
