@@ -356,7 +356,7 @@ class Penalty(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         UUID(as_uuid=True), ForeignKey("shipments.id", ondelete="SET NULL"), nullable=True, index=True
     )
     invoice_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("invoices.id", ondelete="SET NULL"), nullable=True
+        UUID(as_uuid=True), ForeignKey("invoices.id", ondelete="SET NULL"), nullable=True, index=True
     )
     penalty_type: Mapped[PenaltyType] = mapped_column(
         SAEnum(PenaltyType, native_enum=False, length=32, values_callable=_enum_values), nullable=False

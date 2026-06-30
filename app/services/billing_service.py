@@ -138,7 +138,7 @@ class BillingService:
         actor_id = self._actor_id()
         self._validate_commercial_refs(tenant_id, data)
         number = quote_number or self._gen("QUO")
-        if self._quotes.get_by_number(number):
+        if self._quotes.get_by_number(number, include_deleted=True):
             raise ConflictError(f"Quote number '{number}' already exists in this tenant.")
         subtotal = _money(data.pop("subtotal_amount", 0))
         tax = _money(data.pop("tax_amount", 0))
@@ -309,7 +309,7 @@ class BillingService:
             if quote.status == QuoteStatus.EXPIRED:
                 raise ValidationError("An expired quote cannot be converted to an invoice.")
         number = invoice_number or self._gen("INV")
-        if self._invoices.get_by_number(number):
+        if self._invoices.get_by_number(number, include_deleted=True):
             raise ConflictError(f"Invoice number '{number}' already exists in this tenant.")
         data.pop("status", None)
         invoice = self._invoices.create(
@@ -386,18 +386,28 @@ class BillingService:
         self._session.refresh(invoice)
         return invoice
 
-    def validate_payment(self, invoice: Invoice, amount: Decimal, currency_code: str, *, allow_override=False) -> None:
+    def validate_payment(self, invoice: Invoice, amount: Decimal, currency_code: str, *,
+                         allow_override=False, check_balance=True) -> None:
+        """Validate a payment against an invoice.
+
+        Currency-match and invoice-status guards apply to **every** payment,
+        confirmed or pending. Only the confirmed-balance (over-payment) check is
+        gated behind ``check_balance`` so a pending payment can be staged without
+        being capped by the live balance — but never in the wrong currency nor
+        against a draft/voided/cancelled/paid invoice.
+        """
         if invoice.status in (InvoiceStatus.DRAFT, InvoiceStatus.VOIDED, InvoiceStatus.CANCELLED, InvoiceStatus.PAID):
             raise ValidationError(f"Cannot record a payment against a '{invoice.status.value}' invoice.")
         if _money(amount) <= 0:
             raise ValidationError("Payment amount must be positive.")
         if currency_code is not None and currency_code.upper() != (invoice.currency_code or "").upper():
             raise ValidationError("Payment currency must match the invoice currency.")
-        balance = self.calculate_invoice_balance(invoice)
-        if not allow_override and _money(amount) > balance:
-            raise ValidationError(
-                f"Payment amount {amount} exceeds the remaining balance {balance} (override required)."
-            )
+        if check_balance:
+            balance = self.calculate_invoice_balance(invoice)
+            if not allow_override and _money(amount) > balance:
+                raise ValidationError(
+                    f"Payment amount {amount} exceeds the remaining balance {balance} (override required)."
+                )
 
     def record_payment(self, invoice_id, *, amount, method, currency_code=None, payment_reference=None,
                        notes=None, confirm=True, allow_override=False) -> Payment:
@@ -407,8 +417,9 @@ class BillingService:
         if invoice.is_deleted:
             raise NotFoundError(f"Invoice {invoice_id} not found (deleted).")
         currency = (currency_code or invoice.currency_code)
-        if confirm:
-            self.validate_payment(invoice, amount, currency, allow_override=allow_override)
+        # Currency + invoice-status guards apply to every payment; the balance
+        # (over-payment) check is only meaningful for a confirmed payment.
+        self.validate_payment(invoice, amount, currency, allow_override=allow_override, check_balance=confirm)
         status = PaymentStatus.CONFIRMED if confirm else PaymentStatus.PENDING
         payment = self._payments.create(
             tenant_id=tenant_id, invoice_id=invoice.id, amount=_money(amount), currency_code=currency.upper(),

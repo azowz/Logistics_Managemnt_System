@@ -81,10 +81,15 @@ or settled settlement.
 
 `SettlementService.consume_claim_settlement` (and `create_settlement` with a
 `claim_id`) validates the claim is approved/settled and bounded, creates the
-settlement, and emits `ClaimSettlementConsumed`. A **read-only**
-`ClaimRepository` is used for validation — there is **no** dependency on
-`ClaimsService`, so no circular dependency is introduced, and the claim
-aggregate is never mutated by Billing.
+settlement, and emits `ClaimSettlementConsumed` (payload carries
+`settlement_id`, `claim_id`, `invoice_id`, settlement `amount`, and
+`adjustment_amount`). When an `invoice_id` is supplied, the consumed amount is
+added to the invoice's **`claim_adjustment_amount`** and the invoice total is
+recomputed (`total = subtotal + tax + penalty − claim_adjustment`); a paid,
+voided, or cancelled invoice is finalized and rejects further adjustment. A
+**read-only** `ClaimRepository` is used for validation — there is **no**
+dependency on `ClaimsService`, so no circular dependency is introduced, and the
+claim aggregate is never mutated by Billing.
 
 ## 8. Order integration
 
@@ -137,10 +142,10 @@ policies. PG-specific operations guarded by `_is_postgres()`; reversible
 
 Ten suites (`test_billing_{model,events,repository,service,routes}.py`,
 `test_{quote,invoice,settlement}_state_machine.py`,
-`test_billing_{claims,order_shipment}_integration.py`), **92% coverage** of the
-billing modules (events/model/policies 100%, repository 90%, schemas 92%,
-billing_service 92%, settlement_service 93%, routes 91%). Full regression:
-**1186 passed, 13 skipped**.
+`test_billing_{claims,order_shipment}_integration.py`), **94% coverage** of the
+billing modules (events/model/policies 100%, settlement_service 94%,
+billing_service 93%, schemas 92%, routes 91%, repository 90%). Full regression:
+**1198 passed, 13 skipped**.
 
 ## 15. Known risks
 
@@ -148,6 +153,6 @@ billing_service 92%, settlement_service 93%, routes 91%). Full regression:
 | --- | --- | --- |
 | `quote_lines` omitted — quote totals are direct fields (no per-line quote breakdown). | LOW | "If needed" per the spec; invoice lines are fully modelled. Add later if itemized quotes are required. |
 | Invoice `overdue` is set via an internal `mark_overdue` method, not a public route. | LOW | A scheduled sweep (ADR-003) reading `due_date` is the follow-up; the event + transition exist. |
-| Claim adjustment is recorded as an invoice-level amount; no automatic invoice creation on `ClaimSettled`. | MEDIUM | `ClaimSettlementConsumed` is emitted; an automatic invoice-adjustment consumer is a follow-up. |
+| No automatic invoice creation on `ClaimSettled` (claim consumption against an invoice is explicit via `consume_claim_settlement(invoice_id=...)`). | LOW | Claim adjustment is now wired into invoice totals; an automatic `ClaimSettled`→invoice consumer remains a follow-up. |
 | Payout has no settle/fail lifecycle endpoint (created `pending`). | LOW | `PayoutStatus` supports paid/failed; a payout-confirmation flow is a follow-up. |
 | No external accounting/ERP export yet. | MEDIUM | Events are the integration seam; an accounting projection is a future sprint. |

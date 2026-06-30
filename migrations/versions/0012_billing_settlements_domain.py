@@ -296,6 +296,7 @@ def upgrade() -> None:
     op.create_index("ix_penalties_tenant_id", "penalties", ["tenant_id"])
     op.create_index("ix_penalties_order_id", "penalties", ["order_id"])
     op.create_index("ix_penalties_shipment_id", "penalties", ["shipment_id"])
+    op.create_index("ix_penalties_invoice_id", "penalties", ["invoice_id"])
 
     if _is_postgres():
         for table in _RLS_TABLES:

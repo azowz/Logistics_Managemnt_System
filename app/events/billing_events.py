@@ -296,6 +296,8 @@ class ClaimSettlementConsumed(DomainEvent):
     tenant_id: uuid.UUID
     claim_id: uuid.UUID
     amount: Optional[str]
+    invoice_id: Optional[uuid.UUID]
+    adjustment_amount: Optional[str]
 
 
 __all__ = [

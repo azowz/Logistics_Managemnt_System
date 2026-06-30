@@ -428,3 +428,129 @@ def test_invoice_line_negative_net_clamped():
     ])
     # net clamped to 0 -> subtotal 0
     assert inv.subtotal_amount == Decimal("0.00")
+
+
+# ===================== M1 — claim adjustment wiring =====================
+
+
+def test_consume_claim_settlement_adjusts_invoice_total():
+    cid = uuid.uuid4()
+    seed_claim(_Session, tenant_id=_TENANT, claim_id=cid, status="approved", approved_amount=1000)
+    bsvc = _svc()
+    inv = bsvc.issue_invoice(bsvc.create_invoice(customer_id=_CUSTOMER, lines=[
+        {"line_type": "transport_fee", "quantity": Decimal("1"), "unit_price": Decimal("500"),
+         "tax_rate": Decimal("0"), "discount_amount": Decimal("0")}]).id)
+    assert inv.total_amount == Decimal("500.00")
+    ssvc = _ssvc()
+    ssvc.consume_claim_settlement(claim_id=cid, amount=Decimal("200"), invoice_id=inv.id)
+    refreshed = _svc().get_invoice(inv.id)
+    assert refreshed.claim_adjustment_amount == Decimal("200.00")
+    assert refreshed.total_amount == Decimal("300.00")  # 500 − 200
+
+
+def test_claim_adjustment_increments_on_repeat():
+    cid = uuid.uuid4()
+    seed_claim(_Session, tenant_id=_TENANT, claim_id=cid, status="approved", approved_amount=1000)
+    bsvc = _svc()
+    inv = bsvc.issue_invoice(bsvc.create_invoice(customer_id=_CUSTOMER, lines=[
+        {"line_type": "transport_fee", "quantity": Decimal("1"), "unit_price": Decimal("400"),
+         "tax_rate": Decimal("0"), "discount_amount": Decimal("0")}]).id)
+    ssvc = _ssvc()
+    ssvc.consume_claim_settlement(claim_id=cid, amount=Decimal("100"), invoice_id=inv.id)
+    ssvc.consume_claim_settlement(claim_id=cid, amount=Decimal("50"), invoice_id=inv.id)
+    refreshed = _svc().get_invoice(inv.id)
+    assert refreshed.claim_adjustment_amount == Decimal("150.00")
+    assert refreshed.total_amount == Decimal("250.00")  # 400 − 150
+
+
+def test_claim_adjustment_rejected_on_paid_invoice():
+    cid = uuid.uuid4()
+    seed_claim(_Session, tenant_id=_TENANT, claim_id=cid, status="approved", approved_amount=1000)
+    bsvc = _svc()
+    inv = _make_issued_invoice(bsvc)  # total 100
+    bsvc.record_payment(inv.id, amount=Decimal("100"), method=PaymentMethod.CASH)  # -> paid
+    ssvc = _ssvc()
+    with pytest.raises(ValidationError):
+        ssvc.consume_claim_settlement(claim_id=cid, amount=Decimal("10"), invoice_id=inv.id)
+
+
+def test_consume_without_invoice_leaves_adjustment_none():
+    cid = uuid.uuid4()
+    seed_claim(_Session, tenant_id=_TENANT, claim_id=cid, status="approved", approved_amount=1000)
+    stl = _ssvc().consume_claim_settlement(claim_id=cid, amount=Decimal("300"))
+    assert stl.claim_id == cid and stl.amount == Decimal("300.00")
+
+
+# ===================== M2 — pending payment validation =====================
+
+
+def test_pending_payment_rejects_currency_mismatch():
+    svc = _svc()
+    inv = _make_issued_invoice(svc)
+    with pytest.raises(ValidationError):
+        svc.record_payment(inv.id, amount=Decimal("10"), method=PaymentMethod.CARD,
+                           currency_code="USD", confirm=False)
+
+
+def test_pending_payment_rejects_draft_invoice():
+    svc = _svc()
+    inv = svc.create_invoice(customer_id=_CUSTOMER, lines=[])
+    with pytest.raises(ValidationError):
+        svc.record_payment(inv.id, amount=Decimal("10"), method=PaymentMethod.CARD, confirm=False)
+
+
+def test_pending_payment_rejects_cancelled_invoice():
+    svc = _svc()
+    inv = svc.cancel_invoice(svc.create_invoice(customer_id=_CUSTOMER, lines=[]).id)
+    with pytest.raises(ValidationError):
+        svc.record_payment(inv.id, amount=Decimal("10"), method=PaymentMethod.CARD, confirm=False)
+
+
+def test_pending_payment_rejects_voided_invoice():
+    svc = _svc()
+    inv = _make_issued_invoice(svc)
+    svc.void_invoice(inv.id, reason="x")
+    with pytest.raises(ValidationError):
+        svc.record_payment(inv.id, amount=Decimal("10"), method=PaymentMethod.CARD, confirm=False)
+
+
+def test_valid_pending_payment_allowed_without_balance_cap():
+    svc = _svc()
+    inv = _make_issued_invoice(svc)  # total 100
+    # over-balance amount is allowed for a *pending* payment (balance check skipped)
+    pay = svc.record_payment(inv.id, amount=Decimal("999"), method=PaymentMethod.CARD, confirm=False)
+    assert (pay.status.value if hasattr(pay.status, "value") else pay.status) == "pending"
+    # invoice is not advanced by a pending payment
+    assert svc.get_invoice(inv.id).status == InvoiceStatus.ISSUED
+
+
+def test_confirmed_payment_behaviour_unchanged():
+    svc = _svc()
+    inv = _make_issued_invoice(svc)
+    # currency mismatch still rejected for confirmed
+    with pytest.raises(ValidationError):
+        svc.record_payment(inv.id, amount=Decimal("10"), method=PaymentMethod.CASH, currency_code="USD")
+    # over-balance still rejected for confirmed
+    with pytest.raises(ValidationError):
+        svc.record_payment(inv.id, amount=Decimal("500"), method=PaymentMethod.CASH)
+    # valid confirmed payment advances the invoice
+    svc.record_payment(inv.id, amount=Decimal("100"), method=PaymentMethod.CASH)
+    assert svc.get_invoice(inv.id).status == InvoiceStatus.PAID
+
+
+# ===================== L3 — soft-deleted number reuse =====================
+
+
+def test_soft_deleted_invoice_number_reuse_returns_conflict():
+    from app.repositories.billing_repository import InvoiceRepository
+    svc = _svc()
+    inv = svc.create_invoice(customer_id=_CUSTOMER, invoice_number="INV-DUPDEL", lines=[])
+    s = _Session()
+    try:
+        repo = InvoiceRepository(s)
+        repo.soft_delete(repo.get_by_id(inv.id))
+        s.commit()
+    finally:
+        s.close()
+    with pytest.raises(ConflictError):
+        svc.create_invoice(customer_id=_CUSTOMER, invoice_number="INV-DUPDEL", lines=[])

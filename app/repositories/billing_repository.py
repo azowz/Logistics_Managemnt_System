@@ -78,8 +78,10 @@ class _BaseRepo:
 class QuoteRepository(_BaseRepo):
     model = Quote
 
-    def get_by_number(self, quote_number: str) -> Optional[Quote]:
-        stmt = select(Quote).where(Quote.quote_number == quote_number, Quote.deleted_at.is_(None))
+    def get_by_number(self, quote_number: str, *, include_deleted: bool = False) -> Optional[Quote]:
+        stmt = select(Quote).where(Quote.quote_number == quote_number)
+        if not include_deleted:
+            stmt = stmt.where(Quote.deleted_at.is_(None))
         return self._session.scalars(stmt).first()
 
     def list_quotes(
@@ -108,10 +110,10 @@ class QuoteRepository(_BaseRepo):
 class InvoiceRepository(_BaseRepo):
     model = Invoice
 
-    def get_by_number(self, invoice_number: str) -> Optional[Invoice]:
-        stmt = select(Invoice).where(
-            Invoice.invoice_number == invoice_number, Invoice.deleted_at.is_(None)
-        )
+    def get_by_number(self, invoice_number: str, *, include_deleted: bool = False) -> Optional[Invoice]:
+        stmt = select(Invoice).where(Invoice.invoice_number == invoice_number)
+        if not include_deleted:
+            stmt = stmt.where(Invoice.deleted_at.is_(None))
         return self._session.scalars(stmt).first()
 
     def list_invoices_for_customer(self, customer_id: uuid.UUID) -> List[Invoice]:
@@ -193,10 +195,10 @@ class PaymentRepository(_BaseRepo):
 class SettlementRepository(_BaseRepo):
     model = Settlement
 
-    def get_by_number(self, settlement_number: str) -> Optional[Settlement]:
-        stmt = select(Settlement).where(
-            Settlement.settlement_number == settlement_number, Settlement.deleted_at.is_(None)
-        )
+    def get_by_number(self, settlement_number: str, *, include_deleted: bool = False) -> Optional[Settlement]:
+        stmt = select(Settlement).where(Settlement.settlement_number == settlement_number)
+        if not include_deleted:
+            stmt = stmt.where(Settlement.deleted_at.is_(None))
         return self._session.scalars(stmt).first()
 
     def list_settlements_for_claim(self, claim_id: uuid.UUID) -> List[Settlement]:

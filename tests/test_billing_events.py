@@ -56,3 +56,15 @@ def test_invoice_event_payload():
     iid, tid = uuid.uuid4(), uuid.uuid4()
     e = be.InvoiceCreated(invoice_id=iid, tenant_id=tid, invoice_number="INV-1", status="draft", total_amount="0.00")
     assert e.to_payload()["invoice_number"] == "INV-1"
+
+
+def test_claim_settlement_consumed_payload():
+    sid, tid, cid, iid = uuid.uuid4(), uuid.uuid4(), uuid.uuid4(), uuid.uuid4()
+    e = be.ClaimSettlementConsumed(settlement_id=sid, tenant_id=tid, claim_id=cid, amount="200.00",
+                                   invoice_id=iid, adjustment_amount="200.00")
+    p = e.to_payload()
+    assert p["settlement_id"] == str(sid)
+    assert p["claim_id"] == str(cid)
+    assert p["invoice_id"] == str(iid)
+    assert p["adjustment_amount"] == "200.00"
+    assert all(not isinstance(v, uuid.UUID) for v in p.values())

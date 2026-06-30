@@ -30,7 +30,7 @@ from app.events.billing_events import (
 )
 from app.events.envelope import EventEnvelope
 from app.models.billing import Payout, Settlement
-from app.models.enums import ClaimStatus, PayoutStatus, SettlementStatus, SettlementType
+from app.models.enums import ClaimStatus, InvoiceStatus, PayoutStatus, SettlementStatus, SettlementType
 from app.repositories.billing_repository import (
     InvoiceRepository,
     PayoutRepository,
@@ -138,7 +138,7 @@ class SettlementService:
             amount=data.get("amount", 0), tenant_id=tenant_id, allow_override=allow_override,
         )
         number = settlement_number or self._gen()
-        if self._settlements.get_by_number(number):
+        if self._settlements.get_by_number(number, include_deleted=True):
             raise ConflictError(f"Settlement number '{number}' already exists in this tenant.")
         data.pop("status", None)
         if "amount" in data:
@@ -172,14 +172,43 @@ class SettlementService:
             claim_id=claim_id, amount=amount, settlement_type=settlement_type,
             invoice_id=invoice_id, notes=notes, allow_override=allow_override,
         )
+        adjustment = None
+        if invoice_id is not None:
+            adjustment = self._apply_invoice_claim_adjustment(invoice_id, settlement.amount)
         self._emit(
-            ClaimSettlementConsumed(settlement_id=settlement.id, tenant_id=settlement.tenant_id,
-                                    claim_id=claim_id, amount=_str(settlement.amount)),
+            ClaimSettlementConsumed(
+                settlement_id=settlement.id, tenant_id=settlement.tenant_id, claim_id=claim_id,
+                invoice_id=invoice_id, amount=_str(settlement.amount),
+                adjustment_amount=_str(adjustment) if adjustment is not None else None,
+            ),
             aggregate_id=settlement.id, aggregate_type="Settlement", tenant_id=settlement.tenant_id,
         )
         self._session.commit()
         self._session.refresh(settlement)
         return settlement
+
+    def _apply_invoice_claim_adjustment(self, invoice_id, amount):
+        """Increment an invoice's claim_adjustment_amount and recompute its total.
+
+        A claim settlement consumed against an invoice reduces the amount owed by
+        the customer. Only an open invoice may be adjusted — a paid, voided, or
+        cancelled invoice is finalized.
+        """
+        tenant_id = self._tenant_id()
+        invoice = self._owned(self._invoices.get_by_id(invoice_id), tenant_id, "Invoice", invoice_id)
+        if invoice.status in (InvoiceStatus.PAID, InvoiceStatus.VOIDED, InvoiceStatus.CANCELLED):
+            raise ValidationError(
+                f"Cannot apply a claim adjustment to a '{invoice.status.value}' invoice."
+            )
+        invoice.claim_adjustment_amount = _money(invoice.claim_adjustment_amount) + _money(amount)
+        total = (
+            _money(invoice.subtotal_amount) + _money(invoice.tax_amount)
+            + _money(invoice.penalty_amount) - _money(invoice.claim_adjustment_amount)
+        )
+        invoice.total_amount = _money(total) if total > 0 else Decimal("0.00")
+        invoice.updated_by = self._actor_id()
+        self._session.flush()
+        return _money(amount)
 
     def _transition(self, settlement_id, new_status, *, mutate=None, extra_events=None) -> Settlement:
         self._tenant_id()
