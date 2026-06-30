@@ -107,6 +107,17 @@ class ClaimsService:
         """Return an enum's value, tolerating a raw string (defensive)."""
         return value.value if hasattr(value, "value") else value
 
+    @staticmethod
+    def _cycle_days(created, settled):
+        """Whole days from claim creation to settlement (None if unknown/non-datetime)."""
+        from datetime import datetime, timezone
+
+        if not isinstance(created, datetime) or not isinstance(settled, datetime):
+            return None
+        created = created if created.tzinfo else created.replace(tzinfo=timezone.utc)
+        settled = settled if settled.tzinfo else settled.replace(tzinfo=timezone.utc)
+        return max(0, (settled - created).days)
+
     # --- validation ops ---
 
     def validate_claim_references(self, tenant_id, data) -> None:
@@ -168,7 +179,9 @@ class ClaimsService:
         self._emit(
             ClaimCreated(claim_id=claim.id, tenant_id=tenant_id, claim_number=number,
                          claim_type=self._ev(claim.claim_type), status=self._ev(claim.status),
-                         shipment_id=claim.shipment_id, equipment_id=claim.equipment_id),
+                         shipment_id=claim.shipment_id, equipment_id=claim.equipment_id,
+                         claimed_amount=str(claim.claimed_amount) if claim.claimed_amount is not None else None,
+                         currency_code=claim.currency_code, customer_id=claim.customer_id),
             aggregate_id=claim.id, aggregate_type="Claim", tenant_id=tenant_id,
         )
         if claim.shipment_id is not None:
@@ -227,7 +240,8 @@ class ClaimsService:
         return self._transition(
             claim_id, ClaimStatus.APPROVED, mutate=_m,
             extra_events=[lambda c, prev: ClaimApproved(claim_id=c.id, tenant_id=c.tenant_id, previous_status=prev.value,
-                                                        approved_amount=str(c.approved_amount) if c.approved_amount is not None else None)],
+                                                        approved_amount=str(c.approved_amount) if c.approved_amount is not None else None,
+                                                        currency_code=c.currency_code)],
         )
 
     def reject_claim(self, claim_id, *, reason):
@@ -253,7 +267,9 @@ class ClaimsService:
         return self._transition(
             claim_id, ClaimStatus.SETTLED, mutate=_m,
             extra_events=[lambda c, prev: ClaimSettled(claim_id=c.id, tenant_id=c.tenant_id, previous_status=prev.value,
-                                                      approved_amount=str(c.approved_amount) if c.approved_amount is not None else None)],
+                                                      approved_amount=str(c.approved_amount) if c.approved_amount is not None else None,
+                                                      currency_code=c.currency_code,
+                                                      cycle_days=self._cycle_days(c.created_at, c.settled_at))],
         )
 
     def close_claim(self, claim_id):

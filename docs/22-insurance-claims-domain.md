@@ -160,3 +160,9 @@ One-way (events out); Claims owns no projection.
 | ~~Billing settlement consumption not wired.~~ **RESOLVED in Sprint 9** — `SettlementService` consumes approved claim outcomes (`docs/23`). | ~~MEDIUM~~ | Settlements reference claims by id, bounded by approved amount; automatic invoice-adjustment on `ClaimSettled` remains a follow-up. |
 | Coverage-rule matching (cargo type / category / limits) is modelled but not yet enforced at approval (only policy active + covers-type flag). | MEDIUM | Coverage rules are stored and queryable; richer rule evaluation is a follow-up. |
 | Policy expiry is not auto-swept. | LOW | `expire_policy` exists; a scheduled sweep (ADR-003) is a follow-up. |
+
+---
+
+## Sprint 12 — event enrichment (additive, v1-compatible)
+
+`ClaimCreated` gained `claimed_amount`, `currency_code`, and `customer_id`; `ClaimApproved` and `ClaimSettled` gained `currency_code` (and `ClaimSettled` a `cycle_days`). All are `Optional[...] = None` at `event_version` 1 and are populated by `ClaimsService` from data it already holds. They make the claims analytics currency-aware and feed `total_claimed_amount` / `average_claim_cycle_days` — see docs/26. Older payloads remain fully compatible.

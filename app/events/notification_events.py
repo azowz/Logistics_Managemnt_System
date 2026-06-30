@@ -70,6 +70,9 @@ class NotificationCreated(DomainEvent):
     status: str
     source_event_type: Optional[str]
     recipient_user_id: Optional[uuid.UUID]
+    # Sprint 12 enrichment (additive, v1-compatible): older payloads omit this and
+    # deserialize with priority=None.
+    priority: Optional[str] = None
 
 
 @register_event
@@ -133,6 +136,7 @@ class NotificationRead(DomainEvent):
     notification_id: uuid.UUID
     tenant_id: uuid.UUID
     recipient_user_id: Optional[uuid.UUID]
+    priority: Optional[str] = None  # Sprint 12 enrichment (additive, v1-compatible)
 
 
 @register_event

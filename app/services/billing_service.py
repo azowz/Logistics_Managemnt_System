@@ -156,7 +156,8 @@ class BillingService:
         self._session.flush()
         self._emit(
             QuoteCreated(quote_id=quote.id, tenant_id=tenant_id, quote_number=number,
-                         status=quote.status.value, total_amount=_str(total)),
+                         status=quote.status.value, total_amount=_str(total),
+                         currency_code=quote.currency_code),
             aggregate_id=quote.id, aggregate_type="Quote", tenant_id=tenant_id,
         )
         self._session.commit()
@@ -202,7 +203,8 @@ class BillingService:
             q.approved_at = utcnow()
         return self._quote_transition(
             quote_id, QuoteStatus.APPROVED, mutate=_m,
-            extra_events=[lambda q, prev: QuoteApproved(quote_id=q.id, tenant_id=q.tenant_id, previous_status=prev.value)],
+            extra_events=[lambda q, prev: QuoteApproved(quote_id=q.id, tenant_id=q.tenant_id, previous_status=prev.value,
+                                                         currency_code=q.currency_code)],
         )
 
     def reject_quote(self, quote_id, *, reason=None):
@@ -325,7 +327,8 @@ class BillingService:
         self._session.flush()
         self._emit(
             InvoiceCreated(invoice_id=invoice.id, tenant_id=tenant_id, invoice_number=number,
-                           status=invoice.status.value, total_amount=_str(invoice.total_amount)),
+                           status=invoice.status.value, total_amount=_str(invoice.total_amount),
+                           currency_code=invoice.currency_code),
             aggregate_id=invoice.id, aggregate_type="Invoice", tenant_id=tenant_id,
         )
         self._session.commit()
@@ -379,7 +382,7 @@ class BillingService:
         self._session.flush()
         self._emit(
             InvoiceIssued(invoice_id=invoice.id, tenant_id=invoice.tenant_id, previous_status=previous.value,
-                          total_amount=_str(invoice.total_amount)),
+                          total_amount=_str(invoice.total_amount), currency_code=invoice.currency_code),
             aggregate_id=invoice.id, aggregate_type="Invoice", tenant_id=invoice.tenant_id,
         )
         self._session.commit()
@@ -429,7 +432,8 @@ class BillingService:
         self._session.flush()
         self._emit(
             PaymentRecorded(payment_id=payment.id, tenant_id=tenant_id, invoice_id=invoice.id,
-                            amount=_str(_money(amount)), method=payment.method.value if hasattr(payment.method, "value") else str(payment.method)),
+                            amount=_str(_money(amount)), method=payment.method.value if hasattr(payment.method, "value") else str(payment.method),
+                            currency_code=invoice.currency_code),
             aggregate_id=invoice.id, aggregate_type="Invoice", tenant_id=tenant_id,
         )
         if confirm:
@@ -450,7 +454,8 @@ class BillingService:
         invoice.status = target
         if target == InvoiceStatus.PAID:
             invoice.paid_at = utcnow()
-            event = InvoicePaid(invoice_id=invoice.id, tenant_id=invoice.tenant_id, previous_status=previous.value)
+            event = InvoicePaid(invoice_id=invoice.id, tenant_id=invoice.tenant_id, previous_status=previous.value,
+                                currency_code=invoice.currency_code)
         else:
             event = InvoicePartiallyPaid(invoice_id=invoice.id, tenant_id=invoice.tenant_id,
                                          previous_status=previous.value, balance=_str(balance))
@@ -535,7 +540,8 @@ class BillingService:
         invoice.updated_by = actor_id
         self._session.flush()
         self._emit(
-            InvoiceOverdue(invoice_id=invoice.id, tenant_id=tenant_id, previous_status=previous.value),
+            InvoiceOverdue(invoice_id=invoice.id, tenant_id=tenant_id, previous_status=previous.value,
+                           currency_code=invoice.currency_code),
             aggregate_id=invoice.id, aggregate_type="Invoice", tenant_id=tenant_id,
         )
         self._session.commit()
@@ -578,7 +584,8 @@ class BillingService:
         self._emit(
             PenaltyApplied(penalty_id=penalty.id, tenant_id=tenant_id,
                            penalty_type=penalty.penalty_type.value if hasattr(penalty.penalty_type, "value") else str(penalty.penalty_type),
-                           amount=_str(_money(amount)), order_id=order_id, shipment_id=shipment_id, invoice_id=invoice_id),
+                           amount=_str(_money(amount)), order_id=order_id, shipment_id=shipment_id, invoice_id=invoice_id,
+                           currency_code=penalty.currency_code),
             aggregate_id=penalty.id, aggregate_type="Penalty", tenant_id=tenant_id,
         )
         self._session.commit()

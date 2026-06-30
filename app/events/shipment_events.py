@@ -126,6 +126,13 @@ class ShipmentDelivered(DomainEvent):
     tenant_id: uuid.UUID
     delivered_at: Optional[str]
     previous_status: str
+    # Sprint 12 enrichment (additive, v1-compatible): timing for on-time/late +
+    # delivery-duration analytics. Older payloads omit these (deserialize as None).
+    planned_delivery_at: Optional[str] = None
+    picked_up_at: Optional[str] = None
+    delay_minutes: Optional[int] = None
+    order_id: Optional[uuid.UUID] = None
+    customer_id: Optional[uuid.UUID] = None
 
 
 @register_event

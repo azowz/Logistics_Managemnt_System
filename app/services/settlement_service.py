@@ -180,6 +180,7 @@ class SettlementService:
                 settlement_id=settlement.id, tenant_id=settlement.tenant_id, claim_id=claim_id,
                 invoice_id=invoice_id, amount=_str(settlement.amount),
                 adjustment_amount=_str(adjustment) if adjustment is not None else None,
+                currency_code=settlement.currency_code,
             ),
             aggregate_id=settlement.id, aggregate_type="Settlement", tenant_id=settlement.tenant_id,
         )
@@ -254,7 +255,8 @@ class SettlementService:
         settlement = self._transition(
             settlement_id, SettlementStatus.SETTLED, mutate=_m,
             extra_events=[lambda s, prev: SettlementSettled(
-                settlement_id=s.id, tenant_id=s.tenant_id, previous_status=prev.value, amount=_str(s.amount))],
+                settlement_id=s.id, tenant_id=s.tenant_id, previous_status=prev.value, amount=_str(s.amount),
+                currency_code=s.currency_code)],
         )
         return settlement
 

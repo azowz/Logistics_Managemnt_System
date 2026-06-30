@@ -105,4 +105,29 @@ def relay_outbox(batch_size: int = 100) -> dict[str, int]:
     }
 
 
-__all__ = ["ping", "relay_outbox"]
+@celery_app.task(name="mesaar.projection_health_check")
+def projection_health_check() -> dict[str, int]:
+    """Run one non-destructive projection-health sweep across all tenants.
+
+    Thin wrapper over :func:`app.analytics.health.run_projection_health_check` (the
+    worker layer holds no business logic). Re-classifies projection staleness only; it
+    never replays events or rebuilds projections, so it is safe to overlap-guard at the
+    scheduler and idempotent across runs.
+
+    Returns:
+        A summary dict ``{tenants, checked, healthy, stale, error}``.
+    """
+    # Lazy import keeps the analytics/SQLAlchemy stack out of worker module load.
+    from app.analytics.health import run_projection_health_check
+
+    result = run_projection_health_check()
+    return {
+        "tenants": result.tenants,
+        "checked": result.checked,
+        "healthy": result.healthy,
+        "stale": result.stale,
+        "error": result.error,
+    }
+
+
+__all__ = ["ping", "relay_outbox", "projection_health_check"]
