@@ -29,6 +29,13 @@ from app.models.compliance import (  # noqa: F401
     Permit,
     RouteRestriction,
 )
+from app.models.insurance import (  # noqa: F401
+    Claim,
+    CoverageRule,
+    DamageReport,
+    InsurancePolicy,
+    LiabilityRecord,
+)
 
 __all__ = [
     "Tenant",
@@ -54,4 +61,9 @@ __all__ = [
     "AxleWeightProfile",
     "ComplianceCheck",
     "OperatorCertification",
+    "InsurancePolicy",
+    "CoverageRule",
+    "Claim",
+    "DamageReport",
+    "LiabilityRecord",
 ]

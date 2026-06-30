@@ -216,6 +216,84 @@ class OperatorCertificationStatus(str, Enum):
     REVOKED = "revoked"
 
 
+class InsurancePolicyStatus(str, Enum):
+    """Insurance policy lifecycle (see PolicyStateMachine, Sprint 8)."""
+
+    DRAFT = "draft"
+    ACTIVE = "active"
+    SUSPENDED = "suspended"
+    EXPIRED = "expired"
+    CANCELLED = "cancelled"
+
+
+class InsurancePolicyType(str, Enum):
+    """Classification of an insurance policy (docs/08 Part 5)."""
+
+    CARGO = "cargo"
+    EQUIPMENT_IN_TRANSIT = "equipment_in_transit"
+    THIRD_PARTY_LIABILITY = "third_party_liability"
+    PROJECT_CAR_EAR = "project_car_ear"
+    MARINE_INLAND = "marine_inland"
+
+
+class CoverageType(str, Enum):
+    """What a coverage rule (or claim) pertains to."""
+
+    SHIPMENT_LOSS = "shipment_loss"
+    SHIPMENT_DAMAGE = "shipment_damage"
+    EQUIPMENT_DAMAGE = "equipment_damage"
+    THIRD_PARTY_LIABILITY = "third_party_liability"
+    DELAY_PENALTY = "delay_penalty"
+    HAZARDOUS_CARGO = "hazardous_cargo"
+
+
+class ClaimStatus(str, Enum):
+    """Claim workflow status (see ClaimStateMachine, Sprint 8)."""
+
+    CREATED = "created"
+    UNDER_REVIEW = "under_review"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+    SETTLED = "settled"
+    CLOSED = "closed"
+
+
+class ClaimType(str, Enum):
+    """Classification of a claim."""
+
+    SHIPMENT_LOSS = "shipment_loss"
+    SHIPMENT_DAMAGE = "shipment_damage"
+    EQUIPMENT_DAMAGE = "equipment_damage"
+    DELAY_CLAIM = "delay_claim"
+    THIRD_PARTY_LIABILITY = "third_party_liability"
+    COMPLIANCE_VIOLATION = "compliance_violation"
+
+
+class ClaimSeverity(str, Enum):
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    CRITICAL = "critical"
+
+
+class DamageType(str, Enum):
+    CARGO_DAMAGE = "cargo_damage"
+    EQUIPMENT_DAMAGE = "equipment_damage"
+    VEHICLE_DAMAGE = "vehicle_damage"
+    PROPERTY_DAMAGE = "property_damage"
+    MISSING_ITEMS = "missing_items"
+    DELAY_DAMAGE = "delay_damage"
+
+
+class ResponsiblePartyType(str, Enum):
+    CUSTOMER = "customer"
+    CARRIER = "carrier"
+    DRIVER = "driver"
+    COMPANY = "company"
+    THIRD_PARTY = "third_party"
+    UNKNOWN = "unknown"
+
+
 class OrderType(str, Enum):
     """Classification of a transport order."""
 
