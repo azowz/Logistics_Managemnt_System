@@ -230,3 +230,13 @@ escape hatch), guarded by `_is_postgres()` so SQLite/test runs skip RLS.
 
 Order-domain line coverage **≈99%** (target 90%). Full suite: **507 passed, 13
 skipped** (skips are PostgreSQL-only RLS tests gated on `TEST_DATABASE_URL`).
+
+## 9. Billing & Settlements linkage (Sprint 9)
+
+Orders **may be referenced** by the Billing & Settlements domain (context #18,
+`docs/23-billing-settlements-domain.md`): `quote.order_id`, `invoice.order_id`,
+and `penalty.order_id` reference the order by id only (validated tenant-owned,
+SET NULL FKs). Cancellation fees are linked to an order or shipment. **Order does
+not own the Billing lifecycle** — quotes, invoices, payments, penalties, and
+their financial state all live in `BillingService` / `SettlementService`. Order
+is referenced by id, never the reverse.

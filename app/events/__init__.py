@@ -28,6 +28,14 @@ from app.events.registry import EventRegistry, Upcaster, event_registry, registe
 import app.events.customer_events  # noqa: E402, F401
 import app.events.order_events  # noqa: E402, F401
 import app.events.shipment_events  # noqa: E402, F401
+<<<<<<< HEAD
+=======
+import app.events.equipment_events  # noqa: E402, F401
+import app.events.compliance_events  # noqa: E402, F401
+import app.events.insurance_events  # noqa: E402, F401
+import app.events.billing_events  # noqa: E402, F401
+import app.events.notification_events  # noqa: E402, F401
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
 
 __all__ = [
     "DomainEvent",

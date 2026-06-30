@@ -376,7 +376,7 @@ Full M2 implementation: `domain_event.py`, `envelope.py` (UUIDv7, frozen datacla
 **`shipment_service.py`**: Shipment lifecycle management with state-machine enforcement. `transition()` validates allowed transitions against 8-state machine. ✅  
 **`exceptions.py`**: `ServiceException`, `ValidationError`, `NotFoundError`, `ConflictError` used across all services. ✅
 
-**Gap:** `shipment_service.py` transitions currently do not emit `EventEnvelope` to the outbox. This must be wired before M3 (ADR-004 requires events on all aggregate state changes).
+**Gap:** `shipment_service.py` transitions currently do not emit `EventEnvelope` to the outbox. This must be wired before M3 (ADR-004 requires events on all aggregate state changes). ✅ **RESOLVED in Sprint 5** — see `docs/19-shipment-domain.md` §5.
 
 #### `app/workers/` — Background Jobs
 
@@ -552,7 +552,7 @@ Full M2 implementation: `domain_event.py`, `envelope.py` (UUIDv7, frozen datacla
 | No event sourcing (aggregates reconstructed from DB, not events) | ✅ | Aggregates loaded via ORM; events are integration/audit artifacts |
 | Idempotent command handling | ✅ | Dispatcher checks ProcessedEvent before handling |
 
-**Gap:** `ShipmentService.transition()` must emit domain events to outbox on every state change. This is the primary M2→M3 wire-up action.
+**Gap:** `ShipmentService.transition()` must emit domain events to outbox on every state change. This is the primary M2→M3 wire-up action. ✅ **RESOLVED in Sprint 5** — see `docs/19-shipment-domain.md` §5–6.
 
 **Score: 80/100** (deducted for event wire-up gap in ShipmentService)
 
@@ -1045,7 +1045,7 @@ All policies: `ENABLE ROW LEVEL SECURITY; FORCE ROW LEVEL SECURITY`. FORCE ensur
 
 ### Top 5 Findings
 
-1. **[CRITICAL] ShipmentService does not emit domain events.** Every state transition in `shipment_service.py` must call `EventStoreRepository.append()` with the appropriate domain event. This is the primary M2→M3 wire-up action and is required before any new event consumer can be added.
+1. **[CRITICAL] ShipmentService does not emit domain events.** ✅ **RESOLVED (Sprint 5 — see `docs/19-shipment-domain.md`).** `ShipmentService` was refactored to the Customer/Order unit-of-work pattern: the repository no longer commits, the service owns the UoW, and every state transition now emits the appropriate domain event via `EventEnvelope.create()` → `EventStoreRepository.append()` in the same transaction. Eighteen `Shipment*` events are registered in `app/events/shipment_events.py`.
 
 2. **[CRITICAL] Non-superuser CI gate not wired.** RLS is correctly defined but PostgreSQL superuser roles bypass it silently. CI must run integration tests with a non-superuser application role. A single misconfigured CI environment can produce false-positive tenant isolation tests.
 

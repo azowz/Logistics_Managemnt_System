@@ -16,6 +16,50 @@ from app.models.event_store import EventStore, ProcessedEvent, DeadLetterEvent, 
 from app.models.audit_log import AuditLog  # noqa: F401
 from app.models.customer import Customer  # noqa: F401
 from app.models.order import Order  # noqa: F401
+from app.models.equipment import (  # noqa: F401
+    Equipment,
+    EquipmentCategory,
+    EquipmentModel,
+)
+from app.models.compliance import (  # noqa: F401
+    AxleWeightProfile,
+    ComplianceCheck,
+    Escort,
+    OperatorCertification,
+    Permit,
+    RouteRestriction,
+)
+from app.models.insurance import (  # noqa: F401
+    Claim,
+    CoverageRule,
+    DamageReport,
+    InsurancePolicy,
+    LiabilityRecord,
+)
+from app.models.billing import (  # noqa: F401
+    Invoice,
+    InvoiceLine,
+    Payment,
+    Payout,
+    Penalty,
+    Quote,
+    Settlement,
+)
+from app.models.notification import (  # noqa: F401
+    Notification,
+    NotificationDeliveryAttempt,
+    NotificationTemplate,
+)
+from app.models.projection import (  # noqa: F401
+    ARAgingProjection,
+    ClaimsMetricsProjection,
+    ComplianceMetricsProjection,
+    FinancialSummaryProjection,
+    NotificationDeliverabilityProjection,
+    OperationsDashboardProjection,
+    ProjectionHealth,
+    ShipmentPerformanceProjection,
+)
 
 __all__ = [
     "Tenant",
@@ -32,4 +76,36 @@ __all__ = [
     "AuditLog",
     "Customer",
     "Order",
+    "Equipment",
+    "EquipmentCategory",
+    "EquipmentModel",
+    "Permit",
+    "Escort",
+    "RouteRestriction",
+    "AxleWeightProfile",
+    "ComplianceCheck",
+    "OperatorCertification",
+    "InsurancePolicy",
+    "CoverageRule",
+    "Claim",
+    "DamageReport",
+    "LiabilityRecord",
+    "Quote",
+    "Invoice",
+    "InvoiceLine",
+    "Payment",
+    "Settlement",
+    "Payout",
+    "Penalty",
+    "NotificationTemplate",
+    "Notification",
+    "NotificationDeliveryAttempt",
+    "ProjectionHealth",
+    "ShipmentPerformanceProjection",
+    "FinancialSummaryProjection",
+    "ARAgingProjection",
+    "ClaimsMetricsProjection",
+    "ComplianceMetricsProjection",
+    "NotificationDeliverabilityProjection",
+    "OperationsDashboardProjection",
 ]
