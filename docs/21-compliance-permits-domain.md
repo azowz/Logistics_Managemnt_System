@@ -148,6 +148,15 @@ Claim creation does **not** mutate the compliance check or permit, and the
 state, approvals, and liability all live in `ClaimsService`. Compliance is
 referenced by id, never the reverse.
 
+## 12b. Notifications linkage (Sprint 10)
+
+Compliance events are **notification triggers** consumed by the Notifications &
+Communications domain (context #19, `docs/24-notifications-communications-domain.md`):
+`DispatchBlockedByCompliance`, `DispatchClearedByCompliance`, `PermitApproved`,
+`PermitRejected`, and `PermitExpired` each produce an in-app notification. The
+dependency is one-way (events out); **Compliance does not own the notification
+lifecycle**.
+
 ## 13. Known risks
 
 | Risk | Severity | Mitigation |

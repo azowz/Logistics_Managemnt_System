@@ -45,6 +45,11 @@ from app.models.billing import (  # noqa: F401
     Quote,
     Settlement,
 )
+from app.models.notification import (  # noqa: F401
+    Notification,
+    NotificationDeliveryAttempt,
+    NotificationTemplate,
+)
 
 __all__ = [
     "Tenant",
@@ -82,4 +87,7 @@ __all__ = [
     "Settlement",
     "Payout",
     "Penalty",
+    "NotificationTemplate",
+    "Notification",
+    "NotificationDeliveryAttempt",
 ]

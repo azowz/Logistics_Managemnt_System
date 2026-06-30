@@ -472,3 +472,54 @@ class PenaltyType(str, Enum):
     COMPLIANCE_VIOLATION = "compliance_violation"
     DAMAGE = "damage"
     OTHER = "other"
+
+
+# --- Notifications & Communications (context #19, Sprint 10) ----------------
+
+
+class NotificationChannel(str, Enum):
+    """Delivery channel for a notification / template."""
+
+    IN_APP = "in_app"
+    EMAIL = "email"
+    SMS = "sms"
+    PUSH = "push"
+    WEBHOOK = "webhook"
+
+
+class NotificationStatus(str, Enum):
+    """Notification lifecycle states (see NotificationStateMachine).
+
+    Lifecycle:
+        pending → queued → sent
+        {pending, queued} → cancelled
+        {queued, sent} → failed
+        sent → read
+        failed → queued (retry)
+    """
+
+    PENDING = "pending"
+    QUEUED = "queued"
+    SENT = "sent"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+    READ = "read"
+
+
+class NotificationPriority(str, Enum):
+    """Operational priority of a notification."""
+
+    LOW = "low"
+    NORMAL = "normal"
+    HIGH = "high"
+    URGENT = "urgent"
+
+
+class DeliveryAttemptStatus(str, Enum):
+    """Outcome of a single channel delivery attempt."""
+
+    PENDING = "pending"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    SKIPPED = "skipped"
+    RETRYING = "retrying"

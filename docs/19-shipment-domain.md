@@ -238,6 +238,17 @@ reference the shipment by id only (validated tenant-owned, SET NULL FKs).
 settlements all live in `BillingService` / `SettlementService`. Shipment is
 referenced by id, never the reverse.
 
+## 11c. Notifications linkage (Sprint 10)
+
+Shipment lifecycle events are **notification triggers** consumed by the
+Notifications & Communications domain (context #19,
+`docs/24-notifications-communications-domain.md`): `ShipmentAssigned`,
+`ShipmentPickedUp`, `ShipmentInTransit`, `ShipmentDelayed`, `ShipmentDelivered`,
+`ShipmentFailed`, `ShipmentReturned`, and `ShipmentCancelled` each produce an
+in-app notification. The Notifications consumer reads these events from the
+outbox; **Shipment does not own the notification lifecycle** and is unaware of
+notifications — the dependency is one-way (events out).
+
 ## 12. Known risks
 
 > **Sprint 6 update — `equipment_id` is now validated.** The Equipment & Asset
