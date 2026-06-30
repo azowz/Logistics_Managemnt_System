@@ -146,6 +146,19 @@ Every transition emits the specific event(s) plus a general
 wins over the UUID converter. Routes are thin: they extract input, enforce RBAC,
 and delegate; domain exceptions are translated by the global handlers.
 
+## 7a. Compliance dispatch gate (Sprint 7)
+
+`assign`, `pickup`, and `start_transit` now call the **Compliance dispatch gate**
+(`ComplianceValidationService`, context #16 — see `docs/21`) before proceeding.
+For a shipment referencing equipment, the gate can **block dispatch** (raising
+`ConflictError` / HTTP 409 and persisting `DispatchBlockedByCompliance`) when an
+active movement permit or a required escort is missing, or when a prior blocking
+compliance check failed. Normal shipments (no equipment) are unaffected.
+
+Compliance rules remain **outside** the Shipment lifecycle: Shipment depends only
+on the thin read-only gate port and only validates whether dispatch is permitted —
+it does not own permits, escorts, or compliance evaluation.
+
 ## 8. Security & tenant isolation
 
 - `tenant_id` is **never** accepted from the client — it is read from the

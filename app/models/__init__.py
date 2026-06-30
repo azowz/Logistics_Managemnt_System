@@ -21,6 +21,14 @@ from app.models.equipment import (  # noqa: F401
     EquipmentCategory,
     EquipmentModel,
 )
+from app.models.compliance import (  # noqa: F401
+    AxleWeightProfile,
+    ComplianceCheck,
+    Escort,
+    OperatorCertification,
+    Permit,
+    RouteRestriction,
+)
 
 __all__ = [
     "Tenant",
@@ -40,4 +48,10 @@ __all__ = [
     "Equipment",
     "EquipmentCategory",
     "EquipmentModel",
+    "Permit",
+    "Escort",
+    "RouteRestriction",
+    "AxleWeightProfile",
+    "ComplianceCheck",
+    "OperatorCertification",
 ]
