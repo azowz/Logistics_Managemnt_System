@@ -32,6 +32,16 @@ router = APIRouter(prefix="/notifications", tags=["notifications"])
 
 _WRITE = (UserRole.ADMIN, UserRole.MANAGER)
 _READ = (UserRole.ADMIN, UserRole.MANAGER, UserRole.CLIENT, UserRole.DRIVER)
+_TENANT_WIDE = (UserRole.ADMIN, UserRole.MANAGER)  # see their tenant's notifications
+
+
+def _viewer_scope(current_user):
+    """Return the user id a non-privileged viewer is restricted to, else ``None``.
+
+    ADMIN/MANAGER get tenant-wide visibility; CLIENT/DRIVER are scoped to the
+    notifications addressed to them (per-user ownership, beyond RLS tenant isolation).
+    """
+    return None if current_user.role in _TENANT_WIDE else current_user.id
 
 
 def _tpl_page(p) -> Page[NotificationTemplateRead]:
@@ -149,7 +159,9 @@ def search_notifications(
     page: int = Query(default=1, ge=1), size: int = Query(default=50, ge=1, le=200),
     session: Session = Depends(get_session), current_user=Depends(require_roles(*_READ)),
 ) -> Page[NotificationRead]:
-    params = NotificationListParams(q=q, status=status_filter, channel=channel, recipient_user_id=recipient_user_id,
+    scope = _viewer_scope(current_user)
+    params = NotificationListParams(q=q, status=status_filter, channel=channel,
+                                    recipient_user_id=scope or recipient_user_id,
                                     event_type=event_type, unread_only=unread_only, include_deleted=include_deleted,
                                     sort_by=sort_by, sort_dir=sort_dir, page=page, size=size)
     return _ntf_page(NotificationService(session).list_notifications(params))
@@ -174,7 +186,9 @@ def list_notifications(
     page: int = Query(default=1, ge=1), size: int = Query(default=50, ge=1, le=200),
     session: Session = Depends(get_session), current_user=Depends(require_roles(*_READ)),
 ) -> Page[NotificationRead]:
-    params = NotificationListParams(status=status_filter, channel=channel, recipient_user_id=recipient_user_id,
+    scope = _viewer_scope(current_user)
+    params = NotificationListParams(status=status_filter, channel=channel,
+                                    recipient_user_id=scope or recipient_user_id,
                                     event_type=event_type, unread_only=unread_only, include_deleted=include_deleted,
                                     sort_by=sort_by, sort_dir=sort_dir, page=page, size=size)
     return _ntf_page(NotificationService(session).list_notifications(params))
@@ -183,7 +197,8 @@ def list_notifications(
 @router.get("/{notification_id}", response_model=NotificationRead, summary="Get a notification.")
 def get_notification(notification_id: uuid.UUID, include_deleted: bool = Query(default=False),
                      session: Session = Depends(get_session), current_user=Depends(require_roles(*_READ))) -> NotificationRead:
-    return NotificationRead.model_validate(NotificationService(session).get_notification(notification_id, include_deleted=include_deleted))
+    return NotificationRead.model_validate(NotificationService(session).get_notification(
+        notification_id, include_deleted=include_deleted, viewer_user_id=_viewer_scope(current_user)))
 
 
 @router.post("/{notification_id}/queue", response_model=NotificationRead, summary="Queue a notification.")
@@ -213,7 +228,8 @@ def cancel_notification(notification_id: uuid.UUID, payload: NotificationCancelR
 @router.post("/{notification_id}/read", response_model=NotificationRead, summary="Mark a notification read.")
 def read_notification(notification_id: uuid.UUID, session: Session = Depends(get_session),
                       current_user=Depends(require_roles(*_READ))) -> NotificationRead:
-    return NotificationRead.model_validate(NotificationService(session).mark_read(notification_id))
+    return NotificationRead.model_validate(NotificationService(session).mark_read(
+        notification_id, viewer_user_id=_viewer_scope(current_user)))
 
 
 @router.get("/{notification_id}/attempts", response_model=list[NotificationDeliveryAttemptRead],

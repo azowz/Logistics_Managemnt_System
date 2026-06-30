@@ -172,6 +172,70 @@ def test_rbac_client_can_read_and_mark_read(client):
     _ROLE["role"] = UserRole.CLIENT
     try:
         assert client.get("/notifications").status_code == 200
+        # _USER is the current user and the recipient -> allowed
         assert client.post(f"/notifications/{nid}/read").status_code == 200
+    finally:
+        _ROLE["role"] = UserRole.ADMIN
+
+
+# --- M1: per-user read scoping for CLIENT/DRIVER ---
+
+
+def _create_for_other(client):
+    """Create a notification addressed to a *different* user (as ADMIN)."""
+    other = uuid.uuid4()
+    r = client.post("/notifications", json={"channel": "in_app", "recipient_email": f"{other.hex[:6]}@x.test",
+                                            "body": "for someone else"})
+    assert r.status_code == 201, r.text
+    return r.json()["id"]
+
+
+@pytest.mark.parametrize("role", [UserRole.CLIENT, UserRole.DRIVER])
+def test_non_privileged_cannot_read_others_notification(client, role):
+    _ROLE["role"] = UserRole.ADMIN
+    nid = _create_for_other(client)  # not addressed to _USER
+    _ROLE["role"] = role
+    try:
+        assert client.get(f"/notifications/{nid}").status_code == 404
+        assert client.post(f"/notifications/{nid}/read").status_code == 404
+    finally:
+        _ROLE["role"] = UserRole.ADMIN
+
+
+@pytest.mark.parametrize("role", [UserRole.CLIENT, UserRole.DRIVER])
+def test_non_privileged_list_is_scoped_to_self(client, role):
+    _ROLE["role"] = UserRole.ADMIN
+    _create_for_other(client)
+    _create_notification(client)  # addressed to _USER
+    _ROLE["role"] = role
+    try:
+        items = client.get("/notifications").json()["items"]
+        assert items, "expected at least the viewer's own notification"
+        assert all(i["recipient_user_id"] == str(_USER) for i in items)
+        # cannot widen scope by passing another recipient_user_id
+        other_items = client.get(f"/notifications?recipient_user_id={uuid.uuid4()}").json()["items"]
+        assert all(i["recipient_user_id"] == str(_USER) for i in other_items)
+    finally:
+        _ROLE["role"] = UserRole.ADMIN
+
+
+def test_admin_and_manager_have_tenant_wide_visibility(client):
+    _ROLE["role"] = UserRole.ADMIN
+    nid = _create_for_other(client)
+    for role in (UserRole.ADMIN, UserRole.MANAGER):
+        _ROLE["role"] = role
+        assert client.get(f"/notifications/{nid}").status_code == 200
+    _ROLE["role"] = UserRole.ADMIN
+
+
+def test_unread_still_works_for_client(client):
+    _ROLE["role"] = UserRole.ADMIN
+    nid = _create_notification(client)["id"]
+    client.post(f"/notifications/{nid}/send")
+    _ROLE["role"] = UserRole.CLIENT
+    try:
+        r = client.get("/notifications/unread")
+        assert r.status_code == 200
+        assert all(i["recipient_user_id"] == str(_USER) for i in r.json()["items"])
     finally:
         _ROLE["role"] = UserRole.ADMIN

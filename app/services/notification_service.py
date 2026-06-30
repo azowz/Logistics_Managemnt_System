@@ -19,6 +19,7 @@ from __future__ import annotations
 import uuid
 from typing import List, Optional
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.common.datetime import utcnow
@@ -286,9 +287,14 @@ class NotificationService:
             aggregate_id=notification.id, aggregate_type="Notification", tenant_id=tenant_id,
         )
 
-    def get_notification(self, notification_id, *, include_deleted=False) -> Notification:
+    def get_notification(self, notification_id, *, include_deleted=False, viewer_user_id=None) -> Notification:
         n = self._notifications.get_by_id(notification_id)
         if n is None or (n.is_deleted and not include_deleted):
+            raise NotFoundError(f"Notification {notification_id} not found.")
+        # Per-user ownership scoping for non-privileged viewers (defence-in-depth
+        # beyond RLS, which only isolates tenants). A clean 404 avoids leaking the
+        # existence of another user's notification.
+        if viewer_user_id is not None and n.recipient_user_id != viewer_user_id:
             raise NotFoundError(f"Notification {notification_id} not found.")
         return n
 
@@ -349,8 +355,10 @@ class NotificationService:
         self._session.refresh(n)
         return n
 
-    def mark_read(self, notification_id) -> Notification:
+    def mark_read(self, notification_id, *, viewer_user_id=None) -> Notification:
         n = self._load_active(notification_id)
+        if viewer_user_id is not None and n.recipient_user_id != viewer_user_id:
+            raise NotFoundError(f"Notification {notification_id} not found.")
         if n.read_at is not None or n.status == NotificationStatus.READ:
             return n  # idempotent: do not re-mark
         NotificationStateMachine.validate_transition(n.status, NotificationStatus.READ)
@@ -475,14 +483,23 @@ class NotificationService:
             subject, body, template_id = self.render_template(
                 event_type=envelope.event_type, channel=channel, variables=variables,
             )
-            notification = self._notifications.create(
-                tenant_id=tenant_id, idempotency_key=key, event_id=envelope.event_id,
-                event_type=envelope.event_type, aggregate_type=envelope.aggregate_type,
-                aggregate_id=envelope.aggregate_id, channel=channel, subject=subject, body=body,
-                template_id=template_id, status=NotificationStatus.PENDING, priority=priority,
-                created_by=envelope.user_id, updated_by=envelope.user_id, **recipient,
-            )
-            self._session.flush()
+            try:
+                # SAVEPOINT so a lost idempotency-key race rolls back only this
+                # insert (the unique constraint is the source of truth) without
+                # poisoning the surrounding dispatcher transaction.
+                with self._session.begin_nested():
+                    notification = self._notifications.create(
+                        tenant_id=tenant_id, idempotency_key=key, event_id=envelope.event_id,
+                        event_type=envelope.event_type, aggregate_type=envelope.aggregate_type,
+                        aggregate_id=envelope.aggregate_id, channel=channel, subject=subject, body=body,
+                        template_id=template_id, status=NotificationStatus.PENDING, priority=priority,
+                        created_by=envelope.user_id, updated_by=envelope.user_id, **recipient,
+                    )
+                    self._session.flush()
+            except IntegrityError:
+                # A concurrent consumer won the race for this idempotency key —
+                # treat as an idempotent skip, not a failed event.
+                continue
             self._emit_created(notification, tenant_id)
             if deliver:
                 self._deliver(notification)

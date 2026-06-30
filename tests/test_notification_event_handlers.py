@@ -118,3 +118,30 @@ def test_register_is_idempotent():
     h2 = register_notification_handlers(bus)
     assert h1 is h2
     assert len([x for x in bus.handlers if x.name == "notifications"]) == 1
+
+
+def test_relay_registers_notification_handler_on_its_bus():
+    """H1: run_outbox_relay attaches the notification consumer to the bus it publishes through."""
+    from contextlib import contextmanager
+    from unittest.mock import MagicMock
+
+    from app.events.bus import InProcessEventBus
+    from app.events import relay as relay_module
+
+    fake_session = MagicMock()
+    fake_session.scalar.return_value = 0
+
+    @contextmanager
+    def _scope(*_a, **_k):
+        yield fake_session
+
+    bus = InProcessEventBus()
+    assert not any(h.name == "notifications" for h in bus.handlers)
+    with (
+        patch.object(relay_module, "session_scope", _scope),
+        patch.object(relay_module, "EventStoreRepository") as MR,
+    ):
+        MR.return_value.fetch_unpublished.return_value = []
+        relay_module.run_outbox_relay(bus=bus)
+    # The relay wired the consumer onto the very bus it uses to publish.
+    assert any(h.name == "notifications" for h in bus.handlers)

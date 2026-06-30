@@ -91,6 +91,14 @@ def run_outbox_relay(
 ) -> RelayResult:
     """Publish one batch of unpublished events; returns a :class:`RelayResult`."""
     bus = bus or get_event_bus()
+    # Attach domain consumers to the bus we publish through. Registration is
+    # idempotent (a handler named 'notifications' is registered at most once), so
+    # this is safe to call on every relay run / worker reload. Lazy import keeps
+    # the relay free of a hard dependency on the notifications package at module
+    # load and avoids any import cycle.
+    from app.notifications.handlers import register_notification_handlers
+
+    register_notification_handlers(bus)
     result = RelayResult()
 
     # --- 1) read the due batch under platform scope (spans all tenants) ---

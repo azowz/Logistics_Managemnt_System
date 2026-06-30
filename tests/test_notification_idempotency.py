@@ -92,6 +92,43 @@ def test_consumer_level_idempotency_via_dispatcher():
             s.close()
 
 
+def test_concurrent_race_integrity_error_is_idempotent_skip():
+    """L3: if the idempotency-key SELECT misses but the row already exists, the
+    INSERT's IntegrityError is swallowed as an idempotent skip (not a failed event)."""
+    from app.models.enums import NotificationChannel
+    from app.repositories.notification_repository import NotificationRepository
+    from app.services.notification_service import NotificationService
+
+    evt, env = _envelope()
+    key = f"{env.event_id}:in_app:{_USER}"
+    with (
+        patch("app.services.notification_service.get_current_tenant", return_value=_TENANT),
+        patch("app.services.notification_service.get_current_user_id", return_value=_USER),
+        patch("app.services.notification_service.EventStoreRepository", autospec=True) as M,
+    ):
+        M.return_value.next_aggregate_version.return_value = 1
+        M.return_value.append.return_value = None
+        s = _Session()
+        try:
+            # Pre-insert the row a "concurrent" consumer would have written.
+            NotificationRepository(s).create(
+                tenant_id=_TENANT, idempotency_key=key, event_id=env.event_id,
+                event_type="ShipmentDelivered", channel=NotificationChannel.IN_APP,
+                body="race winner", recipient_user_id=_USER, status="pending",
+            )
+            s.commit()
+            svc = NotificationService(s)
+            # Force the SELECT-miss so the code path reaches the INSERT + IntegrityError.
+            with patch.object(svc, "enforce_idempotency", return_value=None):
+                created = svc.create_notifications_from_event(
+                    evt, env, channel=NotificationChannel.IN_APP)
+            s.commit()
+            assert created == []  # idempotent skip, no exception
+            assert _count_for_event(s, env.event_id) == 1
+        finally:
+            s.close()
+
+
 def test_distinct_events_create_distinct_notifications():
     with (
         patch("app.services.notification_service.get_current_tenant", return_value=_TENANT),

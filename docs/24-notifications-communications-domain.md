@@ -120,13 +120,21 @@ Templates: `POST/GET /notifications/templates`, `GET .../search`,
 
 ## 11. Worker integration
 
-The platform already runs the outbox relay (`run_outbox_relay`) which publishes
-each stored event through `default_bus` to registered handlers; the `Dispatcher`
-provides idempotency + SAVEPOINT isolation + retry + dead-lettering and commits
-the handler's writes with the `processed_events` record. The notification
-consumer is wired by calling `register_notification_handlers(default_bus)` at the
-worker/relay bootstrap. The handler runs **inside the dispatcher's transaction
-and never commits** — async processing is real, not faked.
+The platform runs the outbox relay (`run_outbox_relay`, scheduled by celery-beat
+every 30s via the `mesaar.relay_outbox` task) which publishes each stored event
+through `default_bus` to registered handlers; the `Dispatcher` provides
+idempotency + SAVEPOINT isolation + retry + dead-lettering and commits the
+handler's writes with the `processed_events` record.
+
+**The notification consumer is wired into the live path:** `run_outbox_relay`
+calls `register_notification_handlers(bus)` against the bus it publishes through
+on every run (registration is idempotent — the `notifications` handler is
+attached at most once, safe across worker reloads). So the consumer is active
+wherever the relay runs, with no separate bootstrap step required. The handler
+runs **inside the dispatcher's transaction and never commits** — async
+processing is real, not faked. The domain-level insert is wrapped in a SAVEPOINT
+so a lost idempotency-key race is swallowed as a skip (the unique constraint is
+the source of truth), never a failed event.
 
 ## 12. Provider configuration
 
@@ -142,6 +150,14 @@ recipient `user_id` validated tenant-owned; per-tenant unique template codes and
 idempotency keys; write = ADMIN/MANAGER, read + mark-read add CLIENT/DRIVER,
 delete/restore = ADMIN; recipient email/phone format validated; optimistic
 locking via `version`.
+
+**Per-user read scoping (beyond RLS):** RLS isolates tenants but not individual
+users. So `GET /notifications`, `GET /notifications/{id}`, and
+`POST /notifications/{id}/read` apply an additional ownership filter for
+non-privileged roles — **CLIENT and DRIVER see and may mark-read only the
+notifications addressed to them** (`recipient_user_id == current_user.id`), and a
+mismatch returns a clean `404` (no existence leak). ADMIN and MANAGER retain
+tenant-wide visibility. `GET /notifications/unread` is always self-scoped.
 
 ## 14. Migration summary
 
@@ -168,6 +184,6 @@ Full regression: **1278 passed, 13 skipped**.
 | --- | --- | --- |
 | Recipient routing targets the event actor only (not the shipment client / invoice customer / assignee). | MEDIUM | `resolve_recipients` is the single seam; richer per-event routing is a follow-up. |
 | Email/SMS/Push/Webhook are null adapters (no real delivery). | MEDIUM | Provider ports + registry are in place; register a real adapter per channel to enable. |
-| `register_notification_handlers` must be called at worker/relay bootstrap to activate event-driven notifications. | LOW | Documented; the API path and handler are fully tested independently. |
+| ~~`register_notification_handlers` must be called at bootstrap.~~ **RESOLVED** — `run_outbox_relay` registers the consumer (idempotently) on the bus it publishes through every run. | ~~LOW~~ | Wired into the live relay path; covered by `test_relay_registers_notification_handler_on_its_bus`. |
 | Scheduled retry/overdue sweep not wired (manual retry only). | LOW | `list_failed_retryable` exists; a celery-beat sweep (ADR-003) is a follow-up. |
 | Template rendering is `str.format`-based (no logic/loops/i18n catalogs). | LOW | Sufficient for transactional messages; a richer engine can replace `TemplateRenderer`. |
