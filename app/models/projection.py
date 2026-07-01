@@ -50,11 +50,15 @@ class ProjectionHealth(TimestampMixin, Base):
     events_applied: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     last_rebuilt_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     # Sprint 12 health automation (additive): operational status + diagnostics for the
-    # scheduled projection-health check. ``status`` ∈ {healthy, stale, error}.
+    # scheduled projection-health check. Today only ``healthy``/``stale`` are written by
+    # ProjectionService; ``error``, ``last_failure_at`` and ``last_error`` are RESERVED
+    # scaffolding for a future out-of-band failure-capture path (projection-write failures
+    # currently roll back inside the dispatcher transaction — see docs/26 §4a) and stay
+    # unset for now.
     status: Mapped[str] = mapped_column(String(16), nullable=False, server_default="healthy")
     last_success_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
-    last_failure_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
-    last_error: Mapped[Optional[str]] = mapped_column(String(512))
+    last_failure_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))  # reserved
+    last_error: Mapped[Optional[str]] = mapped_column(String(512))  # reserved
     last_event_occurred_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     rebuild_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
 

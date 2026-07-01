@@ -100,12 +100,34 @@ bookkeeping, not dashboard figures).
   `stale` once its newest source event lags beyond `_HEALTH_STALE_AFTER` (6 h). It
   **never replays or rebuilds** — staleness is advisory, surfaced through
   `GET /analytics/projections/health` so operators decide when a rebuild is
-  warranted. Rows already in `error` are left untouched (a stronger signal).
+  warranted.
 
 The sweep runs on celery-beat every 5 minutes (`mesaar.projection_health_check`,
 overlap-guarded), mirroring the outbox relay's tenant model: the tenant list is read
 under platform scope, each tenant's rows updated inside that tenant's own RLS-scoped
 transaction, and one tenant's failure is logged and skipped so it cannot stall the rest.
+
+### 4a. Reserved `error` surface (not yet active)
+
+**Today the only statuses written are `healthy` and `stale`.** The `error` status
+value and the `last_error` / `last_failure_at` columns are **reserved scaffolding for
+a future out-of-band failure-capture path** and are currently always `NULL` / unset.
+The reason they are not wired yet is deliberate and structural:
+
+- Projection writes execute **inside the dispatcher's SAVEPOINT transaction**. If an
+  updater raises, that transaction — including any health-row mutation — **rolls back
+  with it**, so there is no in-band way to *persist* an `error` status from the failing
+  path. The failure is instead handled by the event backbone's existing retry / DLQ
+  machinery (see docs on the dispatcher), not by `projection_health`.
+- Populating `error` correctly therefore requires a **separate, tested out-of-band
+  transaction** (e.g. a post-DLQ hook that writes health in its own session). That
+  design is intentionally deferred; no fake error writes are emitted in the meantime.
+
+`run_health_check` includes a guard that leaves any row already in `error` untouched,
+so the future path composes cleanly — but until that path exists, the guard is inert.
+Consumers of `GET /analytics/projections/health` should treat `last_error`,
+`last_failure_at`, and a `status` of `error` as **reserved and always empty for now**;
+they must not be read as evidence that projection-failure capture is active.
 
 ---
 
@@ -131,14 +153,23 @@ retyped; no data is migrated. Single linear head:
 
 ## 7. Test summary
 
-`tests/test_event_enrichment_sprint12.py` (24 cases) covers: old-vs-new payload
+`tests/test_event_enrichment_sprint12.py` (23 cases) covers: old-vs-new payload
 compatibility for every enriched event + the `event_version == 1` invariant;
 multi-currency no-mixing and the currency filter; SAR fallback; claims money + cycle
 running average (incl. the missing-`cycle_days` skip); shipment on-time/late +
 delivery duration (incl. legacy no-timing rows); the unread-urgent badge and its ≥0
 clamp; health `healthy → stale → healthy` transitions; rebuild bookkeeping; the
-cross-tenant sweep aggregation + per-tenant failure isolation; and the celery task
-wrapper. Full suite: **1353 passed, 13 skipped**; OpenAPI builds; alembic single head.
+cross-tenant sweep aggregation + per-tenant failure isolation; the celery task
+wrapper; and a `NotificationCreated` emit-site assertion.
+
+Direct **emit-site** assertions (proving the new fields are populated from
+service-owned data) were also added to the existing service-test harnesses:
+`test_shipment_service.py` (ShipmentDelivered timing/ids, incl. the no-due-date →
+`delay_minutes = None` case), `test_billing_service.py` (InvoiceIssued /
+PaymentRecorded `currency_code`), and `test_insurance_service.py` (ClaimCreated
+`claimed_amount` / `currency_code` / `customer_id`).
+
+Full suite: **1361 passed, 13 skipped**; OpenAPI builds; alembic single head `0015`.
 
 ---
 

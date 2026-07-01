@@ -568,8 +568,13 @@ class ProjectionService:
         Compares each projection's newest source-event time against ``now`` and marks a
         row ``stale`` once it lags beyond :data:`_HEALTH_STALE_AFTER`. It never replays or
         rebuilds — staleness is advisory, surfaced via the health endpoint so operators can
-        decide whether a rebuild is warranted. Rows already in ``error`` are left untouched
-        (an error is a stronger signal than staleness). Caller owns the commit.
+        decide whether a rebuild is warranted. Caller owns the commit.
+
+        Note: the ``status == "error"`` guard below is *reserved* — no code path writes an
+        ``error`` status today (projection-write failures roll back inside the dispatcher
+        transaction), so the guard is currently inert. It is kept so a future out-of-band
+        failure-capture path composes cleanly without re-classifying a real error as stale
+        or healthy. See docs/26 §4a.
         """
         now = now or utcnow()
         checked = stale = healthy = errored = 0

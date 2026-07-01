@@ -364,3 +364,25 @@ def test_restore_not_deleted_claim():
     svc._claims.get_by_id.return_value = _claim(is_deleted=False)
     with pytest.raises(ValidationError, match="not deleted"):
         svc.restore_claim(CLAIM)
+
+
+# --- Sprint 12: emit-site enrichment assertions ---------------------------
+
+
+def test_create_claim_emits_enriched_money_fields():
+    """ClaimCreated carries claimed_amount / currency_code / customer_id from the claim."""
+    svc, session = _make_claims()
+    cust = uuid.uuid4()
+    c = _claim()
+    c.currency_code = "USD"
+    c.customer_id = cust
+    svc._claims.create.return_value = c
+    svc.create_claim(claim_type=ClaimType.SHIPMENT_LOSS, policy_id=POLICY)
+
+    envs = [call.args[0] for call in svc._event_repo.append.call_args_list]
+    created = [e for e in envs if e.event_type == "ClaimCreated"]
+    assert created, "ClaimCreated was not emitted"
+    p = created[0].payload
+    assert p["claimed_amount"] == "1000"
+    assert p["currency_code"] == "USD"
+    assert p["customer_id"] == str(cust)
