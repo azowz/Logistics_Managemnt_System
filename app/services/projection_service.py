@@ -18,7 +18,7 @@ total_claimed_amount, urgent-unread) are left at 0 — see docs/25 known risks.
 from __future__ import annotations
 
 import uuid
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from typing import Iterable, List, Optional
 
@@ -73,7 +73,8 @@ _NOTIFICATION = {
 _AR_AGING_EVENTS = {"InvoiceCreated", "InvoiceIssued", "InvoicePartiallyPaid", "InvoicePaid",
                     "InvoiceOverdue", "PaymentRecorded"}
 _OPS_EVENTS = _SHIPMENT | _CLAIMS | {"InvoiceIssued", "InvoicePaid", "PaymentRecorded",
-                                     "DispatchBlockedByCompliance", "DispatchClearedByCompliance"}
+                                     "DispatchBlockedByCompliance", "DispatchClearedByCompliance",
+                                     "NotificationCreated", "NotificationRead"}
 
 ALL_EVENT_TYPES = frozenset(_SHIPMENT | _COMPLIANCE | _CLAIMS | _BILLING | _NOTIFICATION)
 
@@ -107,6 +108,42 @@ def _clamp0(value: int) -> int:
     return value if value > 0 else 0
 
 
+def _currency(payload) -> str:
+    """Normalize an event payload's currency to a 3-letter code, defaulting to SAR.
+
+    Older (pre-Sprint-12) payloads omit ``currency_code`` entirely; they collapse to
+    SAR, exactly the single-currency behaviour they were written under. Newer enriched
+    payloads carry their real currency, so multi-currency rows never get mixed.
+    """
+    code = (payload or {}).get("currency_code")
+    code = str(code).strip().upper() if code else ""
+    return code or "SAR"
+
+
+def _aware(dt: datetime) -> datetime:
+    """Treat naive timestamps (e.g. SQLite round-trips) as UTC for safe subtraction."""
+    return dt if dt.tzinfo is not None else dt.replace(tzinfo=timezone.utc)
+
+
+def _parse_dt(value) -> Optional[datetime]:
+    """Best-effort ISO-8601 parse of a payload timestamp; None if absent/unparseable."""
+    if not value:
+        return None
+    if isinstance(value, datetime):
+        return value
+    try:
+        return datetime.fromisoformat(str(value))
+    except (ValueError, TypeError):
+        return None
+
+
+# Notification priorities that count toward the "unread urgent" operations badge.
+_URGENT_PRIORITIES = {"high", "urgent"}
+
+# Status thresholds for the scheduled projection-health check (see docs/26).
+_HEALTH_STALE_AFTER = timedelta(hours=6)
+
+
 class ProjectionService:
     def __init__(self, session: Session) -> None:
         self._session = session
@@ -135,10 +172,18 @@ class ProjectionService:
 
     def _bump_health(self, tenant_id, projection_name: str, envelope: EventEnvelope) -> None:
         h = self._health.get_or_create(tenant_id, projection_name)
+        now = utcnow()
         h.last_event_id = envelope.event_id
         h.last_event_type = envelope.event_type
-        h.last_applied_at = utcnow()
+        h.last_applied_at = now
         h.events_applied = (h.events_applied or 0) + 1
+        # Sprint 12: applying an event is a successful projection write — clear any prior
+        # error state and record the source event's occurrence time for staleness checks.
+        if envelope.occurred_at is not None:
+            h.last_event_occurred_at = envelope.occurred_at
+        h.last_success_at = now
+        h.status = "healthy"
+        h.last_error = None
 
     # ===================== Updaters (consumer path; no commit) =====================
 
@@ -157,6 +202,7 @@ class ProjectionService:
             row.delayed_shipments += 1
         elif et == "ShipmentDelivered":
             row.delivered_shipments += 1
+            self._apply_delivery_timing(row, envelope.payload or {})
         elif et == "ShipmentFailed":
             row.failed_shipments += 1
         elif et == "ShipmentReturned":
@@ -169,12 +215,39 @@ class ProjectionService:
         self._bump_health(envelope.tenant_id, "shipment_performance", envelope)
         return True
 
+    @staticmethod
+    def _apply_delivery_timing(row, payload: dict) -> None:
+        """On-time/late split + incremental delivery-duration mean from enriched timing.
+
+        Older ``ShipmentDelivered`` payloads omit ``delay_minutes`` / ``picked_up_at`` —
+        those deliveries simply don't contribute to either metric (no false on-time/late
+        classification, no zero-duration sample skewing the mean).
+        """
+        delay = payload.get("delay_minutes")
+        if delay is not None:
+            try:
+                row.late_deliveries += 1 if int(delay) > 0 else 0
+                row.on_time_deliveries += 0 if int(delay) > 0 else 1
+            except (ValueError, TypeError):
+                pass
+        picked = _parse_dt(payload.get("picked_up_at"))
+        delivered = _parse_dt(payload.get("delivered_at"))
+        if picked is not None and delivered is not None:
+            minutes = Decimal((delivered - picked).total_seconds()) / Decimal(60)
+            if minutes >= 0:
+                n = (row.delivery_duration_sample_count or 0) + 1
+                prev = row.average_delivery_duration_minutes or _ZERO
+                row.average_delivery_duration_minutes = (
+                    (prev * (n - 1) + minutes) / Decimal(n)
+                ).quantize(Decimal("0.01"))
+                row.delivery_duration_sample_count = n
+
     def update_financial_summary(self, envelope: EventEnvelope) -> bool:
         et = envelope.event_type
         if et not in _BILLING:
             return False
         p = envelope.payload or {}
-        row = self._fin.get_or_create(envelope.tenant_id, self._period(envelope), "SAR")
+        row = self._fin.get_or_create(envelope.tenant_id, self._period(envelope), _currency(p))
         if et == "QuoteCreated":
             row.total_quotes += 1
         elif et == "QuoteApproved":
@@ -204,9 +277,10 @@ class ProjectionService:
         if et not in _CLAIMS:
             return False
         p = envelope.payload or {}
-        row = self._claims.get_or_create(envelope.tenant_id, self._period(envelope), "SAR")
+        row = self._claims.get_or_create(envelope.tenant_id, self._period(envelope), _currency(p))
         if et == "ClaimCreated":
             row.total_claims += 1
+            row.total_claimed_amount += _dec(p.get("claimed_amount"))
         elif et == "ClaimApproved":
             row.approved_claims += 1
             row.total_approved_amount += _dec(p.get("approved_amount"))
@@ -215,10 +289,33 @@ class ProjectionService:
         elif et == "ClaimSettled":
             row.settled_claims += 1
             row.total_settled_amount += _dec(p.get("approved_amount"))
+            self._accumulate_cycle_days(row, p.get("cycle_days"))
         # DamageReportCreated / LiabilityRecordCreated / ClaimClosed have no metric column.
         row.open_claims = _clamp0(row.total_claims - row.settled_claims - row.rejected_claims)
         self._bump_health(envelope.tenant_id, "claims_metrics", envelope)
         return True
+
+    @staticmethod
+    def _accumulate_cycle_days(row, cycle_days) -> None:
+        """Fold one settled-claim cycle length into the incremental mean.
+
+        Only settled claims that report a ``cycle_days`` (Sprint 12 enrichment) update the
+        average; older settlements without it leave ``average_claim_cycle_days`` untouched
+        rather than dragging it toward zero. The dedicated sample counter keeps the running
+        mean exact and rebuild-deterministic even when old/new settlements interleave.
+        """
+        if cycle_days is None:
+            return
+        try:
+            sample = Decimal(int(cycle_days))
+        except (ValueError, TypeError):
+            return
+        if sample < 0:
+            return
+        n = (row.claim_cycle_sample_count or 0) + 1
+        prev = row.average_claim_cycle_days or _ZERO
+        row.average_claim_cycle_days = ((prev * (n - 1) + sample) / Decimal(n)).quantize(Decimal("0.01"))
+        row.claim_cycle_sample_count = n
 
     def update_compliance_metrics(self, envelope: EventEnvelope) -> bool:
         et = envelope.event_type
@@ -339,6 +436,12 @@ class ProjectionService:
             row.pending_compliance_blocks += 1
         elif et == "DispatchClearedByCompliance":
             row.pending_compliance_blocks = _clamp0(row.pending_compliance_blocks - 1)
+        elif et == "NotificationCreated":
+            if (p.get("priority") or "").lower() in _URGENT_PRIORITIES:
+                row.unread_urgent_notifications += 1
+        elif et == "NotificationRead":
+            if (p.get("priority") or "").lower() in _URGENT_PRIORITIES:
+                row.unread_urgent_notifications = _clamp0(row.unread_urgent_notifications - 1)
         self._bump_health(envelope.tenant_id, "operations_dashboard", envelope)
         return True
 
@@ -421,9 +524,15 @@ class ProjectionService:
                 "events_relevant": len(events), "applied": applied, "dry_run": False}
 
     def _stamp_rebuilt(self, tenant_id, names: Iterable[str]) -> None:
+        now = utcnow()
         for name in names:
             h = self._health.get_or_create(tenant_id, name)
-            h.last_rebuilt_at = utcnow()
+            h.last_rebuilt_at = now
+            h.rebuild_count = (h.rebuild_count or 0) + 1
+            # A successful rebuild is the strongest possible "healthy" signal.
+            h.status = "healthy"
+            h.last_success_at = now
+            h.last_error = None
 
     # ===================== Getters (read-only API path) =====================
 
@@ -433,14 +542,14 @@ class ProjectionService:
     def get_shipment_performance(self, *, start=None, end=None):
         return self._ship.list_for_period(self._tenant_id(), start=start, end=end)
 
-    def get_financial_summary(self, *, start=None, end=None):
-        return self._fin.list_for_period(self._tenant_id(), start=start, end=end)
+    def get_financial_summary(self, *, start=None, end=None, currency_code=None):
+        return self._fin.list_for_period(self._tenant_id(), start=start, end=end, currency_code=currency_code)
 
     def get_ar_aging(self, *, customer_id=None, currency_code=None):
         return self._ar.list_for_tenant(self._tenant_id(), customer_id=customer_id, currency_code=currency_code)
 
-    def get_claims_metrics(self, *, start=None, end=None):
-        return self._claims.list_for_period(self._tenant_id(), start=start, end=end)
+    def get_claims_metrics(self, *, start=None, end=None, currency_code=None):
+        return self._claims.list_for_period(self._tenant_id(), start=start, end=end, currency_code=currency_code)
 
     def get_compliance_metrics(self, *, start=None, end=None):
         return self._comp.list_for_period(self._tenant_id(), start=start, end=end)
@@ -450,3 +559,31 @@ class ProjectionService:
 
     def get_projection_health(self):
         return self._health.list_for_tenant(self._tenant_id())
+
+    # ===================== Health automation (scheduled task) =====================
+
+    def run_health_check(self, tenant_id, *, now: Optional[datetime] = None) -> dict:
+        """Non-destructive sweep: flag projections whose last applied event is stale.
+
+        Compares each projection's newest source-event time against ``now`` and marks a
+        row ``stale`` once it lags beyond :data:`_HEALTH_STALE_AFTER`. It never replays or
+        rebuilds — staleness is advisory, surfaced via the health endpoint so operators can
+        decide whether a rebuild is warranted. Rows already in ``error`` are left untouched
+        (an error is a stronger signal than staleness). Caller owns the commit.
+        """
+        now = now or utcnow()
+        checked = stale = healthy = errored = 0
+        for h in self._health.list_for_tenant(tenant_id):
+            checked += 1
+            if h.status == "error":
+                errored += 1
+                continue
+            reference = h.last_event_occurred_at or h.last_applied_at
+            if reference is not None and (now - _aware(reference)) > _HEALTH_STALE_AFTER:
+                h.status = "stale"
+                stale += 1
+            else:
+                h.status = "healthy"
+                healthy += 1
+        return {"tenant_id": str(tenant_id), "checked": checked,
+                "healthy": healthy, "stale": stale, "error": errored}

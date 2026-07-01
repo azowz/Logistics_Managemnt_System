@@ -65,10 +65,12 @@ def shipment_performance(start_date: Optional[date] = Query(default=None),
 @router.get("/financial/summary", response_model=list[FinancialSummaryRead], summary="Financial summary by period.")
 def financial_summary(start_date: Optional[date] = Query(default=None),
                       end_date: Optional[date] = Query(default=None),
+                      currency_code: Optional[str] = Query(default=None, min_length=3, max_length=3),
                       session: Session = Depends(get_session),
                       current_user=Depends(require_roles(*_READ))) -> list[FinancialSummaryRead]:
     _validate_range(start_date, end_date)
-    rows = ProjectionService(session).get_financial_summary(start=start_date, end=end_date)
+    rows = ProjectionService(session).get_financial_summary(
+        start=start_date, end=end_date, currency_code=currency_code.upper() if currency_code else None)
     return [FinancialSummaryRead.model_validate(r) for r in rows]
 
 
@@ -85,10 +87,12 @@ def ar_aging(customer_id: Optional[str] = Query(default=None),
 @router.get("/claims/metrics", response_model=list[ClaimsMetricsRead], summary="Claims metrics by period.")
 def claims_metrics(start_date: Optional[date] = Query(default=None),
                    end_date: Optional[date] = Query(default=None),
+                   currency_code: Optional[str] = Query(default=None, min_length=3, max_length=3),
                    session: Session = Depends(get_session),
                    current_user=Depends(require_roles(*_READ))) -> list[ClaimsMetricsRead]:
     _validate_range(start_date, end_date)
-    rows = ProjectionService(session).get_claims_metrics(start=start_date, end=end_date)
+    rows = ProjectionService(session).get_claims_metrics(
+        start=start_date, end=end_date, currency_code=currency_code.upper() if currency_code else None)
     return [ClaimsMetricsRead.model_validate(r) for r in rows]
 
 

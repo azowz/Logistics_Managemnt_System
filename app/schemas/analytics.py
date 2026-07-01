@@ -178,6 +178,13 @@ class ProjectionHealthRead(BaseModel):
     last_applied_at: Optional[datetime] = None
     events_applied: int
     last_rebuilt_at: Optional[datetime] = None
+    # Sprint 12 health automation.
+    status: str = Field(default="healthy", description="Operational status: healthy | stale | error.")
+    last_success_at: Optional[datetime] = None
+    last_failure_at: Optional[datetime] = None
+    last_error: Optional[str] = None
+    last_event_occurred_at: Optional[datetime] = None
+    rebuild_count: int = 0
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
 

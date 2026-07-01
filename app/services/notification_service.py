@@ -283,6 +283,7 @@ class NotificationService:
                 notification_id=notification.id, tenant_id=tenant_id, channel=self._ev(notification.channel),
                 status=self._ev(notification.status), source_event_type=notification.event_type,
                 recipient_user_id=notification.recipient_user_id,
+                priority=self._ev(notification.priority),
             ),
             aggregate_id=notification.id, aggregate_type="Notification", tenant_id=tenant_id,
         )
@@ -367,7 +368,8 @@ class NotificationService:
         n.updated_by = self._actor_id()
         self._session.flush()
         self._emit(NotificationRead(notification_id=n.id, tenant_id=n.tenant_id,
-                                    recipient_user_id=n.recipient_user_id),
+                                    recipient_user_id=n.recipient_user_id,
+                                    priority=self._ev(n.priority)),
                    aggregate_id=n.id, aggregate_type="Notification", tenant_id=n.tenant_id)
         self._session.commit()
         self._session.refresh(n)

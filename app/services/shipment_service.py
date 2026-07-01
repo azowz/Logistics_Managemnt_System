@@ -109,6 +109,19 @@ _CARGO_FIELDS = frozenset(
 )
 
 
+def _delivery_delay_minutes(due, delivered):
+    """Whole minutes a delivery ran past its due time (0 if on-time/early, None if
+    no due time). Both args are tz-aware UTC; naive values are treated as UTC."""
+    if due is None or delivered is None:
+        return None
+    from datetime import timezone
+
+    due = due if due.tzinfo else due.replace(tzinfo=timezone.utc)
+    delivered = delivered if delivered.tzinfo else delivered.replace(tzinfo=timezone.utc)
+    minutes = int((delivered - due).total_seconds() // 60)
+    return minutes if minutes > 0 else 0
+
+
 class ShipmentService:
     """Orchestrates Shipment persistence, validation, and event emission."""
 
@@ -738,14 +751,18 @@ class ShipmentService:
         return self._transition(
             shipment_id,
             ShipmentStatus.DELIVERED,
-            extra_events=[
-                lambda s, prev: ShipmentDelivered(
-                    shipment_id=s.id,
-                    tenant_id=s.tenant_id,
-                    delivered_at=s.delivered_at.isoformat() if s.delivered_at else None,
-                    previous_status=prev.value,
-                )
-            ],
+            extra_events=[lambda s, prev: ShipmentDelivered(
+                shipment_id=s.id,
+                tenant_id=s.tenant_id,
+                delivered_at=s.delivered_at.isoformat() if s.delivered_at else None,
+                previous_status=prev.value,
+                # Sprint 12 enrichment: timing for on-time/late + duration analytics.
+                planned_delivery_at=s.delivery_due_at.isoformat() if s.delivery_due_at else None,
+                picked_up_at=s.picked_up_at.isoformat() if s.picked_up_at else None,
+                delay_minutes=_delivery_delay_minutes(s.delivery_due_at, s.delivered_at),
+                order_id=s.order_id,
+                customer_id=s.client_id,
+            )],
         )
 
     def fail_shipment(

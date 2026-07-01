@@ -273,3 +273,9 @@ Shipment lifecycle events feed the read-side **`proj_shipment_performance`** and
 | Pre-existing latent mismatch: legacy migration 0001 had no status CHECK (Enum `create_constraint=False`), so no DB-level guard on `status` values. | LOW | Enforced at the model/service layer; could add a PG CHECK in a later migration. |
 | Warehouse capacity is computed per-request (no reservation ledger). | MEDIUM | Acceptable for current scale; revisit with a projection (ADR-006) if contention appears. |
 | Assignment exclusivity is enforced in the service, not by a DB unique partial index on driver/vehicle. | MEDIUM | Partial indexes added in 0008 support the query; a future hard constraint could close the race window. |
+
+---
+
+## Sprint 12 — event enrichment (additive, v1-compatible)
+
+`ShipmentDelivered` was enriched with `planned_delivery_at`, `picked_up_at`, `delay_minutes`, `order_id`, and `customer_id` (all `Optional[...] = None`, `event_version` unchanged at 1). `deliver_shipment` populates them from the shipment's own timing columns. These power the analytics on-time/late split and delivery-duration mean — see docs/26. Historical `ShipmentDelivered` rows omit the keys and deserialize them as `None`, so nothing about replay or existing handlers changes.

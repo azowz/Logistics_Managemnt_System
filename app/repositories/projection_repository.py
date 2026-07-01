@@ -66,12 +66,16 @@ class _BaseProjectionRepo:
 class _PeriodRepoMixin:
     """List helper for period-keyed projections (filter by [start, end])."""
 
-    def list_for_period(self, tenant_id, *, start=None, end=None, sort_dir="asc", limit=400):
+    def list_for_period(self, tenant_id, *, start=None, end=None, currency_code=None, sort_dir="asc", limit=400):
         stmt = select(self.model).where(self.model.tenant_id == tenant_id)
         if start is not None:
             stmt = stmt.where(self.model.period_date >= start)
         if end is not None:
             stmt = stmt.where(self.model.period_date <= end)
+        # Multi-currency projections (financial_summary, claims_metrics) can be narrowed
+        # to a single currency; projections without the column ignore the filter.
+        if currency_code is not None and hasattr(self.model, "currency_code"):
+            stmt = stmt.where(self.model.currency_code == currency_code)
         order = asc if sort_dir == "asc" else desc
         stmt = stmt.order_by(order(self.model.period_date)).limit(limit)
         return list(self._session.scalars(stmt).all())

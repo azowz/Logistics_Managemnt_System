@@ -49,6 +49,14 @@ class ProjectionHealth(TimestampMixin, Base):
     last_applied_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     events_applied: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     last_rebuilt_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    # Sprint 12 health automation (additive): operational status + diagnostics for the
+    # scheduled projection-health check. ``status`` ∈ {healthy, stale, error}.
+    status: Mapped[str] = mapped_column(String(16), nullable=False, server_default="healthy")
+    last_success_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    last_failure_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    last_error: Mapped[Optional[str]] = mapped_column(String(512))
+    last_event_occurred_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    rebuild_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
 
 
 class ShipmentPerformanceProjection(TimestampMixin, Base):
@@ -73,6 +81,10 @@ class ShipmentPerformanceProjection(TimestampMixin, Base):
     on_time_deliveries: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     late_deliveries: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     average_delivery_duration_minutes: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, server_default="0")
+    # Sprint 12 (additive): sample count backing the incremental delivery-duration mean.
+    # Only deliveries carrying both pickup + delivery timestamps contribute, so this can
+    # be < delivered_shipments. Kept internal (not exposed in the read schema).
+    delivery_duration_sample_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     delay_rate: Mapped[Decimal] = mapped_column(Numeric(6, 4), nullable=False, server_default="0")
     failure_rate: Mapped[Decimal] = mapped_column(Numeric(6, 4), nullable=False, server_default="0")
 
@@ -150,6 +162,10 @@ class ClaimsMetricsProjection(TimestampMixin, Base):
     total_approved_amount: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
     total_settled_amount: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
     average_claim_cycle_days: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False, server_default="0")
+    # Sprint 12 (additive): sample count backing the incremental claim-cycle mean. Only
+    # settled claims carrying a cycle_days value contribute, so this can be < settled_claims.
+    # Kept internal (not exposed in the read schema).
+    claim_cycle_sample_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
 
 
 class ComplianceMetricsProjection(TimestampMixin, Base):
