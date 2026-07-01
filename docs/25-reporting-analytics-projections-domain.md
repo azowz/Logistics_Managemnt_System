@@ -136,3 +136,9 @@ rebuild proven deterministic + tenant-scoped. Full regression: **1330 passed,
 | AR aging is a **read-through** projection (reads Billing via read-only `InvoiceRepository`) because billing events omit `customer_id`/`due_date`. | LOW | Read-only, tenant-checked, rebuildable; documented deviation from pure event-sourcing. |
 | Operations-dashboard counters are best-effort live snapshots (clamped ≥0); some (delayed_shipments) can drift vs. exact open state. `cumulative_collected_revenue` is lifetime, not per-period (see §6a). | LOW | Authoritative analytics are the period projections; the dashboard is a glanceable summary, fully recomputed on rebuild (deterministic replay). |
 | Full-tenant rebuild loads the tenant's events into memory. | LOW | Fine at current scale; a batched/streamed replay is a follow-up for very large tenants. |
+
+---
+
+## Sprint 13 — analytics events are not externally published
+
+The Integrations & Webhooks context (docs/27) consumes operational domain events into outbound webhooks. Analytics/projection events are intentionally **not** in the externally-publishable map; `projection.health_stale` was considered and deliberately omitted (no safe internal domain event backs it). The analytics projection consumer and the new webhook consumer run independently on the same outbox relay.

@@ -199,3 +199,9 @@ Notifications owns no projection.
 ## Sprint 12 — event enrichment (additive, v1-compatible)
 
 `NotificationCreated` and `NotificationRead` gained `priority` (`Optional[str] = None`, `event_version` unchanged at 1), populated from the notification's own priority. It drives the operations-dashboard `unread_urgent_notifications` badge (high/urgent created − read, clamped ≥ 0) — see docs/26. Older payloads deserialize `priority` as `None` and are unaffected.
+
+---
+
+## Sprint 13 — externally publishable events
+
+`NotificationFailed` is exposed to external partners as the webhook event `notification.failed` (sanitized, whitelist-only payload) via the Integrations & Webhooks context — see docs/27. Notification bodies are never included in outbound webhooks. The notifications consumer is unaffected; the webhook consumer is a separate consumer with its own idempotency key.
