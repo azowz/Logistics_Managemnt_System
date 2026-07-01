@@ -131,3 +131,53 @@ def test_inbound_find_by_idempotency():
     finally:
         s.rollback()
         s.close()
+
+
+def test_delivery_and_inbound_list_filters():
+    from app.models.integration import InboundIntegrationEvent, PartnerApiKey
+    s = _Session()
+    try:
+        p = _partner(s)
+        sub = WebhookSubscription(id=uuid.uuid4(), tenant_id=_TENANT, partner_id=p.id, name="s",
+                                  target_url="https://x/s", event_types=["shipment.delivered"],
+                                  status="active", encrypted_secret="e")
+        s.add(sub); s.flush()
+        d = WebhookDelivery(id=uuid.uuid4(), tenant_id=_TENANT, subscription_id=sub.id, partner_id=p.id,
+                            source_event_id=uuid.uuid4(), source_event_type="ShipmentDelivered",
+                            external_event_type="shipment.delivered", status="pending",
+                            payload={}, payload_hash="h", signature="sha256=x")
+        s.add(d); s.flush()
+        drepo = WebhookDeliveryRepository(s)
+        items, total = drepo.list_deliveries(subscription_id=sub.id, status="pending",
+                                             external_event_type="shipment.delivered", partner_id=p.id)
+        assert total >= 1 and all(x.subscription_id == sub.id for x in items)
+
+        key = PartnerApiKey(id=uuid.uuid4(), tenant_id=_TENANT, partner_id=p.id, name="k",
+                            key_prefix="ip123", key_hash="h", status="active")
+        s.add(key); s.flush()
+        ie = InboundIntegrationEvent(id=uuid.uuid4(), tenant_id=_TENANT, partner_id=p.id, api_key_id=key.id,
+                                     idempotency_key="ik", event_type="order.updated", status="accepted")
+        s.add(ie); s.flush()
+        irepo = InboundIntegrationEventRepository(s)
+        items2, total2 = irepo.list_inbound(partner_id=p.id, status="accepted", event_type="order.updated")
+        assert total2 >= 1
+        assert irepo.find_by_idempotency(key.id, "ik") is not None
+    finally:
+        s.rollback()
+        s.close()
+
+
+def test_subscription_list_filters():
+    s = _Session()
+    try:
+        p = _partner(s)
+        s.add(WebhookSubscription(id=uuid.uuid4(), tenant_id=_TENANT, partner_id=p.id, name="LF",
+                                  target_url="https://x/lf", event_types=["invoice.paid"],
+                                  status="active", encrypted_secret="e"))
+        s.flush()
+        repo = WebhookSubscriptionRepository(s)
+        items, total = repo.list_subscriptions(q="LF", partner_id=p.id, status="active")
+        assert total >= 1 and all(x.partner_id == p.id for x in items)
+    finally:
+        s.rollback()
+        s.close()

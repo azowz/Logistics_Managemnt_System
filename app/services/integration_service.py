@@ -17,7 +17,7 @@ import hashlib
 import json
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Tuple
 
 from sqlalchemy.orm import Session
@@ -47,8 +47,14 @@ from app.events.integration_events import (
 )
 from app.integrations import crypto
 from app.integrations.delivery import get_webhook_provider
+from app.integrations.encryption import get_secret_provider
 from app.integrations.event_mapping import external_name, sanitize_payload
-from app.integrations.policies import validate_event_types, validate_target_url
+from app.integrations.policies import (
+    validate_allowed_ips,
+    validate_event_types,
+    validate_scopes,
+    validate_target_url,
+)
 from app.models.enums import (
     ApiKeyStatus,
     InboundEventStatus,
@@ -73,9 +79,11 @@ from app.services.exceptions import ConflictError, NotFoundError, ValidationErro
 class ApiKeyAuthContext:
     """Result of authenticating a partner API key (returned to the auth dependency)."""
 
-    api_key_id: "uuid.UUID"  # noqa: F821 - forward ref, real uuid.UUID at runtime
-    partner_id: "uuid.UUID"  # noqa: F821
-    tenant_id: "uuid.UUID"   # noqa: F821
+    api_key_id: uuid.UUID
+    partner_id: uuid.UUID
+    tenant_id: uuid.UUID
+    scopes: tuple = ()
+    allowed_ips: tuple = ()
 
 
 def _aware(dt: Optional[datetime]) -> Optional[datetime]:
@@ -87,6 +95,17 @@ def _aware(dt: Optional[datetime]) -> Optional[datetime]:
 def _canonical_body(payload: dict) -> str:
     """Deterministic JSON body used for hashing/signing (stable key order)."""
     return json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str)
+
+
+# Bounded exponential backoff between webhook delivery attempts.
+_RETRY_BASE_SECONDS = 30
+_RETRY_MAX_SECONDS = 3600
+
+
+def _retry_backoff_seconds(attempt_count: int) -> int:
+    """Backoff before the next attempt: base·2^(n-1), capped. attempt_count is 1-based."""
+    n = max(1, int(attempt_count or 1))
+    return min(_RETRY_MAX_SECONDS, _RETRY_BASE_SECONDS * (2 ** (n - 1)))
 
 
 class IntegrationService:
@@ -219,6 +238,8 @@ class IntegrationService:
                        ) -> Tuple["PartnerApiKey", str]:  # noqa: F821
         tenant_id = self._tenant_id()
         partner = self._owned(self._partners.get_by_id(partner_id), tenant_id, "IntegrationPartner", partner_id)
+        scopes = validate_scopes(scopes)
+        allowed_ips = validate_allowed_ips(allowed_ips)
         plaintext, key_prefix, key_hash = crypto.generate_api_key()
         key = self._keys.create(
             tenant_id=tenant_id, partner_id=partner.id, name=name, key_prefix=key_prefix,
@@ -302,7 +323,10 @@ class IntegrationService:
             return None
         key.last_used_at = now
         self._session.flush()
-        return ApiKeyAuthContext(api_key_id=key.id, partner_id=key.partner_id, tenant_id=key.tenant_id)
+        return ApiKeyAuthContext(
+            api_key_id=key.id, partner_id=key.partner_id, tenant_id=key.tenant_id,
+            scopes=tuple(key.scopes or ()), allowed_ips=tuple(key.allowed_ips or ()),
+        )
 
     @staticmethod
     def _ev(value):
@@ -320,10 +344,12 @@ class IntegrationService:
         target_url = validate_target_url(target_url, allow_insecure=allow_insecure_url)
         event_types = validate_event_types(event_types)
         secret = crypto.generate_webhook_secret()
+        enc = get_secret_provider()
         sub = self._subs.create(
             tenant_id=tenant_id, partner_id=partner.id, name=name, target_url=target_url,
             event_types=event_types, status=WebhookSubscriptionStatus.ACTIVE,
-            encrypted_secret=crypto.encrypt_secret(secret), max_retries=max_retries,
+            encrypted_secret=enc.encrypt(secret), encryption_provider=enc.provider_name,
+            encryption_key_id=enc.key_id, max_retries=max_retries,
             timeout_seconds=timeout_seconds, subscription_metadata=subscription_metadata,
             created_by=self._actor_id(), updated_by=self._actor_id(),
         )
@@ -399,7 +425,10 @@ class IntegrationService:
         tenant_id = self._tenant_id()
         sub = self._owned(self._subs.get_by_id(subscription_id), tenant_id, "WebhookSubscription", subscription_id)
         secret = crypto.generate_webhook_secret()
-        sub.encrypted_secret = crypto.encrypt_secret(secret)
+        enc = get_secret_provider()
+        sub.encrypted_secret = enc.encrypt(secret)
+        sub.encryption_provider = enc.provider_name
+        sub.encryption_key_id = enc.key_id
         sub.updated_by = self._actor_id()
         self._session.flush()
         self._emit(WebhookSubscriptionUpdated(subscription_id=sub.id, tenant_id=tenant_id),
@@ -446,7 +475,7 @@ class IntegrationService:
             }
             body = _canonical_body(payload)
             payload_hash = hashlib.sha256(body.encode("utf-8")).hexdigest()
-            secret = crypto.decrypt_secret(sub.encrypted_secret)
+            secret = get_secret_provider().decrypt(sub.encrypted_secret)
             if secret is None:
                 # M1: never sign with an empty secret. Record an unsigned, failed delivery
                 # + a skipped attempt so the integrity failure is observable and the payload
@@ -511,7 +540,7 @@ class IntegrationService:
             # M1: an unsigned delivery (secret was undecryptable at creation) must never be
             # sent. Try to (re)sign if the secret is now recoverable; otherwise record a
             # skipped attempt and leave it failed — no unsigned payload leaves the platform.
-            secret = crypto.decrypt_secret(sub.encrypted_secret) if sub is not None else None
+            secret = get_secret_provider().decrypt(sub.encrypted_secret) if sub is not None else None
             if secret is None:
                 self._attempts.create(
                     tenant_id=tenant_id, delivery_id=delivery.id,
@@ -537,7 +566,8 @@ class IntegrationService:
             "Content-Type": "application/json",
             "X-Mesaar-Event": delivery.external_event_type,
             "X-Mesaar-Signature": delivery.signature,
-            "X-Mesaar-Delivery": str(delivery.id),
+            "X-Mesaar-Delivery-Id": str(delivery.id),
+            "X-Mesaar-Idempotency-Key": str(delivery.source_event_id),
         }
         timeout = sub.timeout_seconds if sub is not None else 10
         attempt_number = self._attempts.next_attempt_number(delivery.id)
@@ -578,7 +608,11 @@ class IntegrationService:
             delivery.failed_at = utcnow()
             delivery.last_error = (result.error_message or result.error_code or "delivery failed")[:1024]
             max_retries = sub.max_retries if sub is not None else 0
-            delivery.next_attempt_at = utcnow() if delivery.attempt_count <= max_retries else None
+            # Exponential backoff (bounded) while retries remain; terminal once exhausted.
+            delivery.next_attempt_at = (
+                utcnow() + timedelta(seconds=_retry_backoff_seconds(delivery.attempt_count))
+                if delivery.attempt_count <= max_retries else None
+            )
             self._session.flush()
             self._emit(WebhookDeliveryFailed(delivery_id=delivery.id, tenant_id=tenant_id,
                                              subscription_id=delivery.subscription_id, reason=delivery.last_error),
@@ -622,6 +656,11 @@ class IntegrationService:
     def list_deliveries(self, **kw):
         self._tenant_id()
         return self._deliveries.list_deliveries(**kw)
+
+    def list_due_deliveries(self, *, limit: int = 100):
+        """Deliveries currently due for a (re)attempt (operator observability)."""
+        self._tenant_id()
+        return self._deliveries.list_due(limit=limit)
 
     def list_delivery_attempts(self, delivery_id):
         tenant_id = self._tenant_id()

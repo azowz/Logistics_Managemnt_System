@@ -144,6 +144,9 @@ class WebhookSubscriptionRead(IdModel, TimestampMixin):
     max_retries: int
     timeout_seconds: int
     subscription_metadata: Optional[dict] = None
+    # Non-secret secret-encryption metadata (Sprint 14) — the ciphertext/secret is NEVER exposed.
+    encryption_provider: Optional[str] = None
+    encryption_key_id: Optional[str] = None
     deleted_at: Optional[datetime] = None
     version: int
     model_config = ConfigDict(from_attributes=True)

@@ -140,8 +140,11 @@ class WebhookSubscription(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         SAEnum(WebhookSubscriptionStatus, native_enum=False, length=16, values_callable=_enum_values),
         nullable=False, server_default=WebhookSubscriptionStatus.ACTIVE.value, index=True,
     )
-    # Fernet-encrypted signing secret (never returned by read APIs).
+    # Encrypted signing secret (never returned by read APIs). Sprint 14: the encryption
+    # provider + key id are recorded so a KMS migration / key rotation is auditable.
     encrypted_secret: Mapped[str] = mapped_column(Text, nullable=False)
+    encryption_provider: Mapped[Optional[str]] = mapped_column(String(32))
+    encryption_key_id: Mapped[Optional[str]] = mapped_column(String(64))
     signing_algorithm: Mapped[SigningAlgorithm] = mapped_column(
         SAEnum(SigningAlgorithm, native_enum=False, length=16, values_callable=_enum_values),
         nullable=False, server_default=SigningAlgorithm.HMAC_SHA256.value,

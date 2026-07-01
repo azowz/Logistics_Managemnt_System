@@ -145,11 +145,18 @@ def test_admin_can_revoke_key(client):
     assert r.status_code == 200 and r.json()["status"] == "revoked"
 
 
-# --- inbound endpoint (partner API-key auth overridden) + auth dependency ---
+# --- inbound endpoint: scope + replay-window + signature (Sprint 14) ---------
+
+import time as _time
+import types as _types
+
+from app.integrations.auth import AuthenticatedPartner, SCOPE_INBOUND_WRITE, get_current_api_key_partner
+from app.integrations import crypto as _crypto
+from app.services.integration_service import ApiKeyAuthContext
 
 
-def _seed_partner_key():
-    """Create a partner + api key directly for inbound auth tests; returns (partner_id, key_id, plaintext)."""
+def _seed_partner_key(scopes=None, allowed_ips=None):
+    """Create a partner + api key directly; returns (partner_id, key_id, plaintext)."""
     from unittest.mock import patch as _p
     with _p("app.services.integration_service.get_current_tenant", return_value=_TENANT), \
          _p("app.services.integration_service.get_current_user_id", return_value=_USER):
@@ -157,47 +164,142 @@ def _seed_partner_key():
         from app.models.enums import IntegrationPartnerType
         svc = IntegrationService(_TestSession())
         p = svc.create_partner(name=f"P-{uuid.uuid4().hex[:8]}", partner_type=IntegrationPartnerType.VENDOR)
-        key, plaintext = svc.create_api_key(p.id, name="k")
+        key, plaintext = svc.create_api_key(p.id, name="k", scopes=scopes, allowed_ips=allowed_ips)
         return p.id, key.id, plaintext
 
 
-def test_inbound_event_valid_and_invalid_signature(client):
-    from app.integrations import crypto
-    from app.integrations.auth import AuthenticatedPartner, get_current_api_key_partner
-    from app.services.integration_service import ApiKeyAuthContext
-
-    partner_id, key_id, plaintext = _seed_partner_key()
-    principal = AuthenticatedPartner(
-        context=ApiKeyAuthContext(api_key_id=key_id, partner_id=partner_id, tenant_id=_TENANT),
+def _principal(partner_id, key_id, plaintext, *, scopes=(SCOPE_INBOUND_WRITE,)):
+    return AuthenticatedPartner(
+        context=ApiKeyAuthContext(api_key_id=key_id, partner_id=partner_id, tenant_id=_TENANT, scopes=tuple(scopes)),
         api_key=plaintext)
-    client.app.dependency_overrides[get_current_api_key_partner] = lambda: principal
+
+
+def _override(principal):
+    client_fixture = None  # set by caller
+    return principal
+
+
+def test_inbound_event_valid_and_invalid_signature(client):
+    partner_id, key_id, plaintext = _seed_partner_key(scopes=[SCOPE_INBOUND_WRITE])
+    client.app.dependency_overrides[get_current_api_key_partner] = lambda: _principal(partner_id, key_id, plaintext)
     try:
+        ts = str(int(_time.time()))
         body = '{"idempotency_key":"evt-1","event_type":"order.updated","payload":{"x":1}}'
-        sig = crypto.compute_signature(plaintext, body)
+        sig = _crypto.compute_signature(plaintext, body, timestamp=ts)
         r = client.post("/integrations/inbound/events", content=body,
-                        headers={"X-Mesaar-Signature": sig, "Content-Type": "application/json"})
+                        headers={"X-Mesaar-Signature": sig, "X-Mesaar-Timestamp": ts, "Content-Type": "application/json"})
         assert r.status_code == 201, r.text
         assert r.json()["status"] == "accepted" and r.json()["signature_valid"] is True
 
-        # bad signature → rejected (still 201, audited)
         body2 = '{"idempotency_key":"evt-2","event_type":"order.updated","payload":{}}'
         r2 = client.post("/integrations/inbound/events", content=body2,
-                         headers={"X-Mesaar-Signature": "sha256=bad", "Content-Type": "application/json"})
+                         headers={"X-Mesaar-Signature": "sha256=bad", "X-Mesaar-Timestamp": ts,
+                                  "Content-Type": "application/json"})
         assert r2.status_code == 201 and r2.json()["status"] == "rejected"
     finally:
         client.app.dependency_overrides.pop(get_current_api_key_partner, None)
 
 
-def test_auth_dependency_extract_and_reject():
+def test_inbound_missing_scope_forbidden(client):
+    partner_id, key_id, plaintext = _seed_partner_key(scopes=[])
+    # principal without the inbound scope
+    client.app.dependency_overrides[get_current_api_key_partner] = lambda: _principal(
+        partner_id, key_id, plaintext, scopes=())
+    try:
+        ts = str(int(_time.time()))
+        body = '{"idempotency_key":"ns-1","event_type":"e","payload":{}}'
+        sig = _crypto.compute_signature(plaintext, body, timestamp=ts)
+        r = client.post("/integrations/inbound/events", content=body,
+                        headers={"X-Mesaar-Signature": sig, "X-Mesaar-Timestamp": ts})
+        assert r.status_code == 403
+    finally:
+        client.app.dependency_overrides.pop(get_current_api_key_partner, None)
+
+
+def test_inbound_replay_window(client):
+    partner_id, key_id, plaintext = _seed_partner_key(scopes=[SCOPE_INBOUND_WRITE])
+    client.app.dependency_overrides[get_current_api_key_partner] = lambda: _principal(partner_id, key_id, plaintext)
+    try:
+        body = '{"idempotency_key":"rw-1","event_type":"e","payload":{}}'
+        # missing timestamp → 4xx
+        assert client.post("/integrations/inbound/events", content=body,
+                           headers={"X-Mesaar-Signature": "sha256=x"}).status_code in (400, 422)
+        # malformed timestamp → 4xx
+        assert client.post("/integrations/inbound/events", content=body,
+                           headers={"X-Mesaar-Signature": "sha256=x", "X-Mesaar-Timestamp": "abc"}
+                           ).status_code in (400, 422)
+        # stale timestamp → 401
+        old = str(int(_time.time()) - 4000)
+        assert client.post("/integrations/inbound/events", content=body,
+                           headers={"X-Mesaar-Signature": "sha256=x", "X-Mesaar-Timestamp": old}
+                           ).status_code == 401
+        # far-future timestamp → 401
+        future = str(int(_time.time()) + 4000)
+        assert client.post("/integrations/inbound/events", content=body,
+                           headers={"X-Mesaar-Signature": "sha256=x", "X-Mesaar-Timestamp": future}
+                           ).status_code == 401
+    finally:
+        client.app.dependency_overrides.pop(get_current_api_key_partner, None)
+
+
+def test_inbound_malformed_body_is_client_error(client):
+    partner_id, key_id, plaintext = _seed_partner_key(scopes=[SCOPE_INBOUND_WRITE])
+    client.app.dependency_overrides[get_current_api_key_partner] = lambda: _principal(partner_id, key_id, plaintext)
+    try:
+        ts = str(int(_time.time()))
+        h = {"X-Mesaar-Signature": "sha256=x", "X-Mesaar-Timestamp": ts, "Content-Type": "application/json"}
+        assert client.post("/integrations/inbound/events", content="{not json", headers=h).status_code in (400, 422)
+        assert client.post("/integrations/inbound/events", content='{"event_type":"e"}', headers=h
+                           ).status_code in (400, 422)
+    finally:
+        client.app.dependency_overrides.pop(get_current_api_key_partner, None)
+
+
+def test_inbound_rate_limit_returns_429_and_is_api_key_scoped(client):
+    from app.integrations.policies import (
+        InMemoryRateLimitBackend, RateLimitPolicy, get_inbound_rate_limiter, set_inbound_rate_limiter,
+    )
+    original = get_inbound_rate_limiter()
+    set_inbound_rate_limiter(RateLimitPolicy(limit=2, window_seconds=60, backend=InMemoryRateLimitBackend()))
+    partner_id, key_a, plain_a = _seed_partner_key(scopes=[SCOPE_INBOUND_WRITE])
+    _pb, key_b, _plain_b = _seed_partner_key(scopes=[SCOPE_INBOUND_WRITE])
+
+    def _post(principal, n):
+        ts = str(int(_time.time()))
+        body = f'{{"idempotency_key":"rl-{n}","event_type":"e","payload":{{}}}}'
+        sig = _crypto.compute_signature(principal.api_key, body, timestamp=ts)
+        client.app.dependency_overrides[get_current_api_key_partner] = lambda: principal
+        return client.post("/integrations/inbound/events", content=body,
+                           headers={"X-Mesaar-Signature": sig, "X-Mesaar-Timestamp": ts,
+                                    "Content-Type": "application/json"})
+
+    pa = _principal(partner_id, key_a, plain_a)
+    pb = _principal(partner_id, key_b, "x")
+    try:
+        assert _post(pa, 1).status_code == 201
+        assert _post(pa, 2).status_code == 201
+        r = _post(pa, 3)
+        assert r.status_code == 429 and "Retry-After" in r.headers
+        # a different api key has its own bucket
+        assert _post(pb, 99).status_code == 201
+    finally:
+        client.app.dependency_overrides.pop(get_current_api_key_partner, None)
+        set_inbound_rate_limiter(original)
+
+
+def _fake_request(host="1.2.3.4"):
+    return _types.SimpleNamespace(client=_types.SimpleNamespace(host=host))
+
+
+def test_auth_dependency_extract_reject_and_ip_enforcement():
     from unittest.mock import patch
     from fastapi import HTTPException
     import app.integrations.auth as authmod
-    from app.services.integration_service import ApiKeyAuthContext
 
-    # malformed / missing header → 401
+    req = _fake_request()
     for bad in (None, "Token abc", "Bearer "):
         try:
-            authmod.get_current_api_key_partner(authorization=bad)
+            authmod.get_current_api_key_partner(req, authorization=bad)
             assert False, "expected 401"
         except HTTPException as e:
             assert e.status_code == 401
@@ -206,83 +308,30 @@ def test_auth_dependency_extract_and_reject():
         def __enter__(self): return "s"
         def __exit__(self, *a): return False
 
-    ctx = ApiKeyAuthContext(api_key_id=uuid.uuid4(), partner_id=uuid.uuid4(), tenant_id=_TENANT)
+    good = ApiKeyAuthContext(api_key_id=uuid.uuid4(), partner_id=uuid.uuid4(), tenant_id=_TENANT,
+                             scopes=(SCOPE_INBOUND_WRITE,), allowed_ips=("10.0.0.0/24",))
 
     class _StubSvc:
         def __init__(self, _s): pass
-        def authenticate_api_key(self, key): return ctx if key == "mesaar_x_good" else None
+        def authenticate_api_key(self, key): return good if key == "mesaar_x_good" else None
 
-    # The dependency intentionally binds tenant context (middleware resets it in prod);
-    # in a direct unit call we restore it ourselves so no state leaks to other tests.
     from app.db.tenant import set_current_tenant, set_current_user_id
     with patch.object(authmod, "session_scope", lambda *_a, **_k: _Ctx()), \
          patch.object(authmod, "IntegrationService", _StubSvc):
-        out = authmod.get_current_api_key_partner(authorization="Bearer mesaar_x_good")
-        assert out.context is ctx and out.api_key == "mesaar_x_good"
+        # bad key → 401
         try:
-            authmod.get_current_api_key_partner(authorization="Bearer mesaar_x_bad")
+            authmod.get_current_api_key_partner(req, authorization="Bearer mesaar_x_bad")
             assert False
         except HTTPException as e:
             assert e.status_code == 401
-    # restore default (unauthenticated) context so unrelated tests see a clean slate
+        # disallowed IP → 403
+        try:
+            authmod.get_current_api_key_partner(_fake_request("1.2.3.4"), authorization="Bearer mesaar_x_good")
+            assert False
+        except HTTPException as e:
+            assert e.status_code == 403
+        # allowed IP → ok
+        out = authmod.get_current_api_key_partner(_fake_request("10.0.0.9"), authorization="Bearer mesaar_x_good")
+        assert out.context is good
     set_current_tenant(None)
     set_current_user_id(None)
-
-
-def test_inbound_malformed_body_is_client_error(client):
-    from app.integrations.auth import AuthenticatedPartner, get_current_api_key_partner
-    from app.services.integration_service import ApiKeyAuthContext
-    partner_id, key_id, plaintext = _seed_partner_key()
-    principal = AuthenticatedPartner(
-        context=ApiKeyAuthContext(api_key_id=key_id, partner_id=partner_id, tenant_id=_TENANT),
-        api_key=plaintext)
-    client.app.dependency_overrides[get_current_api_key_partner] = lambda: principal
-    try:
-        # invalid JSON
-        r1 = client.post("/integrations/inbound/events", content="{not json",
-                         headers={"Content-Type": "application/json"})
-        assert r1.status_code in (400, 422)
-        # valid JSON but missing required idempotency_key
-        r2 = client.post("/integrations/inbound/events", content='{"event_type":"e"}',
-                         headers={"Content-Type": "application/json"})
-        assert r2.status_code in (400, 422)
-    finally:
-        client.app.dependency_overrides.pop(get_current_api_key_partner, None)
-
-
-def test_inbound_rate_limit_returns_429_and_is_api_key_scoped(client):
-    """M2: inbound requests are rate-limited per (tenant, api_key) after auth."""
-    from app.integrations.auth import AuthenticatedPartner, get_current_api_key_partner
-    from app.integrations.policies import (
-        InMemoryRateLimitBackend, RateLimitPolicy, get_inbound_rate_limiter, set_inbound_rate_limiter,
-    )
-    from app.services.integration_service import ApiKeyAuthContext
-
-    original = get_inbound_rate_limiter()
-    set_inbound_rate_limiter(RateLimitPolicy(limit=2, window_seconds=60, backend=InMemoryRateLimitBackend()))
-
-    partner_id, key_a, plain_a = _seed_partner_key()
-    _pb, key_b, _plain_b = _seed_partner_key()
-    principal_a = AuthenticatedPartner(
-        context=ApiKeyAuthContext(api_key_id=key_a, partner_id=partner_id, tenant_id=_TENANT), api_key=plain_a)
-
-    def _post(n):
-        body = f'{{"idempotency_key":"rl-{n}","event_type":"e","payload":{{}}}}'
-        return client.post("/integrations/inbound/events", content=body,
-                           headers={"Content-Type": "application/json"})
-
-    client.app.dependency_overrides[get_current_api_key_partner] = lambda: principal_a
-    try:
-        assert _post(1).status_code == 201
-        assert _post(2).status_code == 201
-        r = _post(3)
-        assert r.status_code == 429 and "Retry-After" in r.headers
-
-        # a different api key has its own bucket → not blocked by key A's limit
-        principal_b = AuthenticatedPartner(
-            context=ApiKeyAuthContext(api_key_id=key_b, partner_id=partner_id, tenant_id=_TENANT), api_key="x")
-        client.app.dependency_overrides[get_current_api_key_partner] = lambda: principal_b
-        assert _post(99).status_code == 201
-    finally:
-        client.app.dependency_overrides.pop(get_current_api_key_partner, None)
-        set_inbound_rate_limiter(original)

@@ -191,11 +191,19 @@ class WebhookDeliveryRepository(_BaseRepo):
         stmt = stmt.order_by((asc if sort_dir == "asc" else desc)(col)).limit(limit).offset(offset)
         return list(self._session.scalars(stmt).all()), total
 
-    def list_due(self, *, limit: int = 100) -> List[WebhookDelivery]:
-        """Pending/failed deliveries eligible for a (re)attempt, oldest first."""
+    def list_due(self, *, now=None, limit: int = 100) -> List[WebhookDelivery]:
+        """Pending/failed deliveries whose ``next_attempt_at`` is due, oldest first.
+
+        Exhausted deliveries have ``next_attempt_at = NULL`` and are excluded, so this
+        never returns a terminally-failed (or delivered/cancelled/skipped) row.
+        """
+        from app.common.datetime import utcnow
+        cutoff = now or utcnow()
         stmt = select(WebhookDelivery).where(
             WebhookDelivery.status.in_((WebhookDeliveryStatus.PENDING, WebhookDeliveryStatus.FAILED)),
-        ).order_by(asc(WebhookDelivery.created_at)).limit(limit)
+            WebhookDelivery.next_attempt_at.isnot(None),
+            WebhookDelivery.next_attempt_at <= cutoff,
+        ).order_by(asc(WebhookDelivery.next_attempt_at)).limit(limit)
         return list(self._session.scalars(stmt).all())
 
 

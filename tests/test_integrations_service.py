@@ -211,3 +211,32 @@ def test_rate_limit_policy_allows_then_blocks_then_resets():
     assert rl.check("tenant:key", now=1061.0).allowed
     with pytest.raises(ValueError):
         RateLimitPolicy(limit=0)
+
+
+# --- Sprint 14: api-key scope/allowed_ips validation at creation ---
+
+
+def test_create_api_key_validates_scopes_and_ips():
+    from app.integrations.auth import SCOPE_INBOUND_WRITE
+    p = _partner()
+    key, _ = _svc().create_api_key(p.id, name="k", scopes=[SCOPE_INBOUND_WRITE],
+                                   allowed_ips=["10.0.0.0/24"])
+    assert key.scopes == [SCOPE_INBOUND_WRITE]
+    assert key.allowed_ips == ["10.0.0.0/24"]
+    ctx = _svc().authenticate_api_key.__self__ if False else None  # noqa
+
+    with pytest.raises(ValidationError):
+        _svc().create_api_key(p.id, name="bad", scopes=["integrations:unknown"])
+    with pytest.raises(ValidationError):
+        _svc().create_api_key(p.id, name="bad2", allowed_ips=["not-an-ip"])
+
+
+def test_authenticate_returns_scopes_and_allowed_ips():
+    from app.integrations.auth import SCOPE_INBOUND_WRITE
+    p = _partner()
+    key, plaintext = _svc().create_api_key(p.id, name="k", scopes=[SCOPE_INBOUND_WRITE],
+                                           allowed_ips=["10.0.0.0/24"])
+    ctx = _svc().authenticate_api_key(plaintext)
+    assert ctx is not None
+    assert ctx.scopes == (SCOPE_INBOUND_WRITE,)
+    assert ctx.allowed_ips == ("10.0.0.0/24",)

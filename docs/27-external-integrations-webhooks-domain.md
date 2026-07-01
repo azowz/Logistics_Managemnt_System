@@ -199,3 +199,9 @@ alembic single head `0016`.
 | `list_active_for_event` loads active subs per tenant and filters JSONB membership in Python. | LOW | Fine at current scale; a JSONB containment index / GIN query is the follow-up for very large subscription sets. |
 | API-key prefix lookup takes the first match (per-tenant unique; ~2^48 cross-tenant collision). | LOW | On the astronomically-unlikely collision the hash simply fails to verify → key rejected; no cross-tenant leak. |
 | Real outbound HTTP delivery is behind a port with a **no-network default**. | LOW | By design — no silent success; a real provider is registered per deployment and is timeout-bounded. |
+
+---
+
+## Sprint 14 — delivery worker & hardening
+
+The deferred production-hardening items in this doc's known-risks are addressed in Sprint 14 (docs/28): a real `HttpWebhookProvider` behind the delivery port, a celery-beat delivery-retry **sweep** with bounded exponential backoff, a KMS-ready `SecretEncryptionProvider` boundary (default `LocalFernetSecretProvider`), enforced API-key **scopes** + **allowed_ips**, inbound **replay-window** validation (mandatory `X-Mesaar-Timestamp`, ±300 s), and a `RedisRateLimitBackend`. Real HTTP delivery, distributed rate limiting, and KMS remain opt-in at deployment (defaults stay no-network / in-memory / local-Fernet) — see docs/28 runbook.
