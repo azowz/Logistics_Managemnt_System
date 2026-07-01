@@ -111,10 +111,30 @@ class RateLimitPolicy:
         return RateLimitDecision(True, remaining, self._limit)
 
 
+# Process-wide limiter applied to the inbound integration endpoint, scoped to
+# ``tenant:api_key``. Defaults to 120 requests/minute with the in-memory backend
+# (single-process). A Redis-backed backend with the same interface is the documented
+# distributed-enforcement path (Sprint 14). Overridable for tests / deployment tuning.
+_inbound_rate_limiter = RateLimitPolicy(limit=120, window_seconds=60)
+
+
+def get_inbound_rate_limiter() -> RateLimitPolicy:
+    """Return the process-wide inbound rate limiter (DI seam / test override)."""
+    return _inbound_rate_limiter
+
+
+def set_inbound_rate_limiter(limiter: RateLimitPolicy) -> None:
+    """Override the process-wide inbound rate limiter."""
+    global _inbound_rate_limiter
+    _inbound_rate_limiter = limiter
+
+
 __all__ = [
     "validate_target_url",
     "validate_event_types",
     "RateLimitDecision",
     "InMemoryRateLimitBackend",
     "RateLimitPolicy",
+    "get_inbound_rate_limiter",
+    "set_inbound_rate_limiter",
 ]

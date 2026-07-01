@@ -9,10 +9,11 @@ secret appear only in one-time create/rotate responses.
 from __future__ import annotations
 
 import json
+import time
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Header, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from pydantic import ValidationError as PydanticValidationError
 from sqlalchemy.orm import Session
 
@@ -20,6 +21,7 @@ from app.core.security import require_roles
 from app.db.session import get_session
 from app.integrations import crypto
 from app.integrations.auth import AuthenticatedPartner, get_current_api_key_partner
+from app.integrations.policies import get_inbound_rate_limiter
 from app.models.enums import UserRole
 from app.schemas.integration import (
     DeliveryListParams,
@@ -276,6 +278,16 @@ async def receive_inbound_event(
     x_mesaar_timestamp: Optional[str] = Header(default=None),
     session: Session = Depends(get_session),
 ) -> InboundIntegrationEventRead:
+    # M2: rate-limit per (tenant, api_key) AFTER successful API-key authentication.
+    # tenant/api_key come from the authenticated key context, never from the client.
+    decision = get_inbound_rate_limiter().check(
+        f"{principal.context.tenant_id}:{principal.context.api_key_id}", now=time.time())
+    if not decision.allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Rate limit exceeded for this API key.",
+            headers={"Retry-After": str(decision.retry_after_seconds)},
+        )
     raw = (await request.body()).decode("utf-8")
     try:
         parsed = json.loads(raw) if raw else {}

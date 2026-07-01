@@ -168,3 +168,61 @@ def test_cancel_then_cannot_retry():
     assert d.status == WebhookDeliveryStatus.CANCELLED
     with pytest.raises(ValidationError):
         _svc().retry_delivery(did, provider=_FakeProvider(succeed=True))
+
+
+def test_undecryptable_secret_fails_safely_without_signing():
+    """M1: an undecryptable subscription secret yields a FAILED, unsigned delivery + a
+    skipped attempt — never a payload signed with an empty secret."""
+    from app.models.integration import WebhookSubscription
+    svc = _svc()
+    p = svc.create_partner(name=f"P-{uuid.uuid4().hex[:8]}", partner_type=IntegrationPartnerType.CARRIER)
+    sub, _secret = svc.create_subscription(p.id, name="s", target_url="https://ex.test/hook",
+                                           event_types=["shipment.delivered"])
+    # Corrupt the stored secret so Fernet cannot decrypt it.
+    s0 = _Session()
+    row = s0.get(WebhookSubscription, sub.id)
+    row.encrypted_secret = "not-a-valid-fernet-token"
+    s0.commit()
+    s0.close()
+
+    s = _Session()
+    created = IntegrationService(s).create_deliveries_from_event(_envelope())
+    s.commit()
+    s.close()
+    mine = [d for d in created if d.subscription_id == sub.id]
+    assert len(mine) == 1
+    d = mine[0]
+    assert d.status == WebhookDeliveryStatus.FAILED
+    assert d.last_error == "secret_undecryptable"
+    assert d.signature == ""  # NOT signed with an empty secret
+    assert d.next_attempt_at is None
+
+    attempts = _svc().list_delivery_attempts(d.id)
+    assert len(attempts) == 1
+    assert attempts[0].status.value == "skipped"
+    assert attempts[0].error_code == "secret_undecryptable"
+    # no secret/plaintext leaks into the attempt record
+    assert "not-a-valid-fernet-token" not in (attempts[0].error_message or "")
+
+
+def test_retry_of_unsigned_delivery_does_not_send():
+    """M1: retrying an unsigned (secret_undecryptable) delivery must not call the provider."""
+    from app.models.integration import WebhookSubscription
+    svc = _svc()
+    p = svc.create_partner(name=f"P-{uuid.uuid4().hex[:8]}", partner_type=IntegrationPartnerType.CARRIER)
+    sub, _secret = svc.create_subscription(p.id, name="s", target_url="https://ex.test/hook",
+                                           event_types=["shipment.delivered"])
+    s0 = _Session()
+    s0.get(WebhookSubscription, sub.id).encrypted_secret = "garbage"
+    s0.commit()
+    s0.close()
+    s = _Session()
+    created = IntegrationService(s).create_deliveries_from_event(_envelope())
+    s.commit()
+    s.close()
+    did = [d for d in created if d.subscription_id == sub.id][0].id
+
+    provider = _FakeProvider(succeed=True)
+    d = _svc().retry_delivery(did, provider=provider)
+    assert d.status == WebhookDeliveryStatus.FAILED
+    assert provider.calls == []  # provider never invoked for an unsigned delivery

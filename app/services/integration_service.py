@@ -445,14 +445,49 @@ class IntegrationService:
                 "data": data,
             }
             body = _canonical_body(payload)
-            secret = crypto.decrypt_secret(sub.encrypted_secret) or ""
+            payload_hash = hashlib.sha256(body.encode("utf-8")).hexdigest()
+            secret = crypto.decrypt_secret(sub.encrypted_secret)
+            if secret is None:
+                # M1: never sign with an empty secret. Record an unsigned, failed delivery
+                # + a skipped attempt so the integrity failure is observable and the payload
+                # is not sent with a partner-unverifiable signature. No secret is exposed.
+                delivery = self._deliveries.create(
+                    tenant_id=sub.tenant_id, subscription_id=sub.id, partner_id=sub.partner_id,
+                    source_event_id=envelope.event_id, source_event_type=envelope.event_type,
+                    external_event_type=ext, aggregate_type=envelope.aggregate_type or None,
+                    aggregate_id=envelope.aggregate_id, status=WebhookDeliveryStatus.FAILED,
+                    payload=payload, payload_hash=payload_hash, signature="",
+                    next_attempt_at=None, attempt_count=0, failed_at=utcnow(),
+                    last_error="secret_undecryptable",
+                )
+                self._session.flush()
+                self._attempts.create(
+                    tenant_id=sub.tenant_id, delivery_id=delivery.id, attempt_number=1,
+                    status=WebhookAttemptStatus.SKIPPED, requested_at=utcnow(), completed_at=utcnow(),
+                    error_code="secret_undecryptable",
+                    error_message="Subscription signing secret could not be decrypted; delivery not signed.",
+                )
+                self._session.flush()
+                self._emit(
+                    WebhookDeliveryCreated(delivery_id=delivery.id, tenant_id=sub.tenant_id,
+                                           subscription_id=sub.id, source_event_id=envelope.event_id,
+                                           external_event_type=ext),
+                    aggregate_id=delivery.id, aggregate_type="WebhookDelivery", tenant_id=sub.tenant_id,
+                )
+                self._emit(
+                    WebhookDeliveryFailed(delivery_id=delivery.id, tenant_id=sub.tenant_id,
+                                          subscription_id=sub.id, reason="secret_undecryptable"),
+                    aggregate_id=delivery.id, aggregate_type="WebhookDelivery", tenant_id=sub.tenant_id,
+                )
+                created.append(delivery)
+                continue
             signature = crypto.compute_signature(secret, body)
             delivery = self._deliveries.create(
                 tenant_id=sub.tenant_id, subscription_id=sub.id, partner_id=sub.partner_id,
                 source_event_id=envelope.event_id, source_event_type=envelope.event_type,
                 external_event_type=ext, aggregate_type=envelope.aggregate_type or None,
                 aggregate_id=envelope.aggregate_id, status=WebhookDeliveryStatus.PENDING,
-                payload=payload, payload_hash=hashlib.sha256(body.encode("utf-8")).hexdigest(),
+                payload=payload, payload_hash=payload_hash,
                 signature=signature, next_attempt_at=utcnow(), attempt_count=0,
             )
             self._session.flush()
@@ -472,6 +507,30 @@ class IntegrationService:
         if delivery.status in (WebhookDeliveryStatus.DELIVERED, WebhookDeliveryStatus.CANCELLED):
             raise ValidationError(f"Delivery in status '{self._ev(delivery.status)}' cannot be attempted.")
         sub = self._subs.get_by_id(delivery.subscription_id)
+        if not delivery.signature:
+            # M1: an unsigned delivery (secret was undecryptable at creation) must never be
+            # sent. Try to (re)sign if the secret is now recoverable; otherwise record a
+            # skipped attempt and leave it failed — no unsigned payload leaves the platform.
+            secret = crypto.decrypt_secret(sub.encrypted_secret) if sub is not None else None
+            if secret is None:
+                self._attempts.create(
+                    tenant_id=tenant_id, delivery_id=delivery.id,
+                    attempt_number=self._attempts.next_attempt_number(delivery.id),
+                    status=WebhookAttemptStatus.SKIPPED, requested_at=utcnow(), completed_at=utcnow(),
+                    error_code="secret_undecryptable",
+                    error_message="Subscription signing secret could not be decrypted; delivery not signed.",
+                )
+                delivery.status = WebhookDeliveryStatus.FAILED
+                delivery.failed_at = utcnow()
+                delivery.last_error = "secret_undecryptable"
+                delivery.next_attempt_at = None
+                self._session.flush()
+                self._session.commit()
+                self._session.refresh(delivery)
+                return delivery
+            # Secret recovered (e.g. secret was re-rotated): re-sign the stored payload.
+            delivery.signature = crypto.compute_signature(secret, _canonical_body(delivery.payload))
+            self._session.flush()
         provider = provider or get_webhook_provider()
         body = _canonical_body(delivery.payload)
         headers = {

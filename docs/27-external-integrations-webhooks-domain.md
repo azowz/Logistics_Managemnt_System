@@ -108,12 +108,18 @@ a replay window can be enforced by the receiver).
 
 ## 8. Rate-limit policy
 
-`RateLimitPolicy` — a fixed-window limiter scoped to an arbitrary key (e.g.
-`tenant:api_key`), with a pluggable backend. The default `InMemoryRateLimitBackend` is
-process-local and deterministic (injectable clock; test-covered). Distributed
-enforcement across worker processes requires a Redis-backed backend with the same
-interface (Redis is already wired via `get_redis`) — that is the documented production
-path; the sprint is not blocked on it.
+`RateLimitPolicy` — a fixed-window limiter scoped to `tenant:api_key`, with a pluggable
+backend. It **is enforced on the inbound endpoint** (`POST /integrations/inbound/events`):
+the limit is applied *after* successful API-key authentication, using tenant + api_key
+from the authenticated key context (never the client), and an exceeded key receives a
+clean `429` with a `Retry-After` header. Another API key has its own bucket and is
+unaffected.
+
+The default `InMemoryRateLimitBackend` is **process-local** (single-process) and
+deterministic (injectable clock; test-covered). **Distributed** enforcement across worker
+processes requires a Redis-backed backend with the same interface (Redis is already wired
+via `get_redis`) — that is the documented production path, **deferred to Sprint 14**. The
+limiter is overridable via `set_inbound_rate_limiter` for deployment tuning/tests.
 
 ## 9. Idempotency strategy
 
@@ -186,9 +192,10 @@ alembic single head `0016`.
 
 | Risk | Severity | Mitigation |
 | --- | --- | --- |
-| Webhook secret encrypted at rest with a key **derived from `SECRET_KEY`** (not a dedicated KMS key). | MEDIUM | Reversible encryption is required to sign; a KMS/envelope-encryption key is the recommended hardening follow-up. Secret is never returned by reads. |
-| `scopes` and `allowed_ips` are persisted but **not yet enforced**. | LOW | Reserved for a follow-up; documented here and in the schema. |
-| Rate limiting default backend is **process-local**. | LOW | Correct for single-process/tests; Redis backend (same interface) is the documented distributed path. |
+| Webhook secret encrypted at rest with a key **derived from `SECRET_KEY`** (not a dedicated KMS key). | MEDIUM | Reversible encryption is required to sign; a KMS/envelope-encryption key is the recommended hardening follow-up. Secret is never returned by reads. **If a secret becomes undecryptable (e.g. key rotation), the consumer never signs with an empty secret** — it records a `FAILED`, unsigned delivery + a `skipped` attempt (`secret_undecryptable`), and a manual retry re-signs only if the secret is recoverable, otherwise stays failed. |
+| `scopes` and `allowed_ips` are persisted but **not yet enforced** (enforcement deferred to Sprint 14). | LOW | Reserved for a follow-up; documented here and in the schema. |
+| Inbound **replay-window** enforcement (rejecting stale `X-Mesaar-Timestamp`) is **deferred to Sprint 14**. | LOW | The timestamp is bound into the signature today; time-based rejection is the follow-up. |
+| Rate limiting is **enforced on inbound** with a **process-local** default backend. | LOW | Correct for single-process/tests; distributed enforcement (Redis backend, same interface) is deferred to Sprint 14. |
 | `list_active_for_event` loads active subs per tenant and filters JSONB membership in Python. | LOW | Fine at current scale; a JSONB containment index / GIN query is the follow-up for very large subscription sets. |
 | API-key prefix lookup takes the first match (per-tenant unique; ~2^48 cross-tenant collision). | LOW | On the astronomically-unlikely collision the hash simply fails to verify → key rejected; no cross-tenant leak. |
 | Real outbound HTTP delivery is behind a port with a **no-network default**. | LOW | By design — no silent success; a real provider is registered per deployment and is timeout-bounded. |

@@ -248,3 +248,41 @@ def test_inbound_malformed_body_is_client_error(client):
         assert r2.status_code in (400, 422)
     finally:
         client.app.dependency_overrides.pop(get_current_api_key_partner, None)
+
+
+def test_inbound_rate_limit_returns_429_and_is_api_key_scoped(client):
+    """M2: inbound requests are rate-limited per (tenant, api_key) after auth."""
+    from app.integrations.auth import AuthenticatedPartner, get_current_api_key_partner
+    from app.integrations.policies import (
+        InMemoryRateLimitBackend, RateLimitPolicy, get_inbound_rate_limiter, set_inbound_rate_limiter,
+    )
+    from app.services.integration_service import ApiKeyAuthContext
+
+    original = get_inbound_rate_limiter()
+    set_inbound_rate_limiter(RateLimitPolicy(limit=2, window_seconds=60, backend=InMemoryRateLimitBackend()))
+
+    partner_id, key_a, plain_a = _seed_partner_key()
+    _pb, key_b, _plain_b = _seed_partner_key()
+    principal_a = AuthenticatedPartner(
+        context=ApiKeyAuthContext(api_key_id=key_a, partner_id=partner_id, tenant_id=_TENANT), api_key=plain_a)
+
+    def _post(n):
+        body = f'{{"idempotency_key":"rl-{n}","event_type":"e","payload":{{}}}}'
+        return client.post("/integrations/inbound/events", content=body,
+                           headers={"Content-Type": "application/json"})
+
+    client.app.dependency_overrides[get_current_api_key_partner] = lambda: principal_a
+    try:
+        assert _post(1).status_code == 201
+        assert _post(2).status_code == 201
+        r = _post(3)
+        assert r.status_code == 429 and "Retry-After" in r.headers
+
+        # a different api key has its own bucket → not blocked by key A's limit
+        principal_b = AuthenticatedPartner(
+            context=ApiKeyAuthContext(api_key_id=key_b, partner_id=partner_id, tenant_id=_TENANT), api_key="x")
+        client.app.dependency_overrides[get_current_api_key_partner] = lambda: principal_b
+        assert _post(99).status_code == 201
+    finally:
+        client.app.dependency_overrides.pop(get_current_api_key_partner, None)
+        set_inbound_rate_limiter(original)
