@@ -98,9 +98,11 @@ def run_outbox_relay(
     # load and avoids any import cycle.
     from app.notifications.handlers import register_notification_handlers
     from app.analytics.handlers import register_analytics_handlers
+    from app.integrations.handlers import register_webhook_handlers
 
     register_notification_handlers(bus)
     register_analytics_handlers(bus)
+    register_webhook_handlers(bus)
     result = RelayResult()
 
     # --- 1) read the due batch under platform scope (spans all tenants) ---

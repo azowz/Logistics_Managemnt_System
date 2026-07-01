@@ -33,6 +33,7 @@ import app.events.compliance_events  # noqa: E402, F401
 import app.events.insurance_events  # noqa: E402, F401
 import app.events.billing_events  # noqa: E402, F401
 import app.events.notification_events  # noqa: E402, F401
+import app.events.integration_events  # noqa: E402, F401
 
 __all__ = [
     "DomainEvent",

@@ -523,3 +523,85 @@ class DeliveryAttemptStatus(str, Enum):
     FAILED = "failed"
     SKIPPED = "skipped"
     RETRYING = "retrying"
+
+
+# --- External Integrations & Webhooks (Sprint 13, context #21) --------------
+
+
+class IntegrationPartnerType(str, Enum):
+    """Classification of an external integration partner."""
+
+    CUSTOMER = "customer"
+    CARRIER = "carrier"
+    VENDOR = "vendor"
+    GOVERNMENT = "government"
+    INTERNAL = "internal"
+    OTHER = "other"
+
+
+class IntegrationPartnerStatus(str, Enum):
+    """Lifecycle state of an integration partner. Suspended partners cannot authenticate."""
+
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    SUSPENDED = "suspended"
+
+
+class ApiKeyStatus(str, Enum):
+    """Lifecycle state of a partner API key. Only active (non-expired) keys authenticate."""
+
+    ACTIVE = "active"
+    REVOKED = "revoked"
+    EXPIRED = "expired"
+
+
+class WebhookSubscriptionStatus(str, Enum):
+    """Lifecycle state of a webhook subscription. Only active subscriptions receive events."""
+
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    SUSPENDED = "suspended"
+
+
+class WebhookDeliveryStatus(str, Enum):
+    """Lifecycle of an outbound webhook delivery.
+
+    pending → delivering → {delivered, failed}
+    pending/failed → cancelled
+    (a delivery with no matching/active target may be recorded as skipped)
+    """
+
+    PENDING = "pending"
+    DELIVERING = "delivering"
+    DELIVERED = "delivered"
+    FAILED = "failed"
+    CANCELLED = "cancelled"
+    SKIPPED = "skipped"
+
+
+class WebhookAttemptStatus(str, Enum):
+    """Outcome of a single outbound webhook delivery attempt."""
+
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    SKIPPED = "skipped"
+
+
+class InboundEventStatus(str, Enum):
+    """Lifecycle of an inbound integration event.
+
+    received → {accepted, rejected}
+    accepted → {processed, failed}
+    """
+
+    RECEIVED = "received"
+    ACCEPTED = "accepted"
+    REJECTED = "rejected"
+    PROCESSED = "processed"
+    FAILED = "failed"
+
+
+class SigningAlgorithm(str, Enum):
+    """Supported webhook payload signing algorithms."""
+
+    HMAC_SHA256 = "hmac_sha256"

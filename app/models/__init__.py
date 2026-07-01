@@ -60,6 +60,14 @@ from app.models.projection import (  # noqa: F401
     ProjectionHealth,
     ShipmentPerformanceProjection,
 )
+from app.models.integration import (  # noqa: F401
+    InboundIntegrationEvent,
+    IntegrationPartner,
+    PartnerApiKey,
+    WebhookDelivery,
+    WebhookDeliveryAttempt,
+    WebhookSubscription,
+)
 
 __all__ = [
     "Tenant",

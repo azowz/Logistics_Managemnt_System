@@ -26,6 +26,7 @@ from app.api.routes import (
     drivers,
     equipment,
     insurance,
+    integrations,
     notifications,
     orders,
     shipments,
@@ -74,9 +75,10 @@ def build_v1_router() -> APIRouter:
     router.include_router(billing.router)
     router.include_router(notifications.router)
     router.include_router(analytics.router)
+    router.include_router(integrations.router)
 
     logger.info(
-        "Built v1 API router (prefix={prefix}, routers=16).",
+        "Built v1 API router (prefix={prefix}, routers=17).",
         prefix=settings.api_v1_prefix,
     )
     return router
