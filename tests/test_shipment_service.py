@@ -541,3 +541,42 @@ def test_create_tracking_event_out_of_order_raises():
         svc.create_tracking_event(
             **_tracking_kwargs(event_time=_dt.datetime(2026, 1, 1, tzinfo=_dt.timezone.utc))
         )
+
+
+# --- Sprint 12: emit-site enrichment assertions ---------------------------
+
+
+def test_deliver_emits_enriched_timing_fields():
+    """ShipmentDelivered carries timing + ids populated from service-owned data."""
+    svc, session, repo = _make_service()
+    sh = _shipment(status=ShipmentStatus.IN_TRANSIT)
+    sh.delivery_due_at = _dt.datetime(2026, 6, 15, 10, 0, tzinfo=_dt.timezone.utc)
+    sh.picked_up_at = _dt.datetime(2026, 6, 15, 8, 0, tzinfo=_dt.timezone.utc)
+    sh.order_id = ORDER
+    repo.get_by_id_or_raise.return_value = sh
+    svc.deliver_shipment(SHIP)
+
+    envs = [c.args[0] for c in svc._event_repo.append.call_args_list]
+    delivered = [e for e in envs if e.event_type == "ShipmentDelivered"]
+    assert delivered, "ShipmentDelivered was not emitted"
+    p = delivered[0].payload
+    assert p["planned_delivery_at"] == sh.delivery_due_at.isoformat()
+    assert p["picked_up_at"] == sh.picked_up_at.isoformat()
+    assert p["order_id"] == str(ORDER)
+    assert p["customer_id"] == str(CLIENT)
+    assert isinstance(p["delay_minutes"], int) and p["delay_minutes"] >= 0
+
+
+def test_deliver_without_due_date_leaves_delay_none():
+    """No delivery_due_at → delay_minutes is None (unknown), not a fabricated 0."""
+    svc, session, repo = _make_service()
+    sh = _shipment(status=ShipmentStatus.IN_TRANSIT)
+    sh.delivery_due_at = None
+    sh.picked_up_at = None
+    repo.get_by_id_or_raise.return_value = sh
+    svc.deliver_shipment(SHIP)
+
+    envs = [c.args[0] for c in svc._event_repo.append.call_args_list]
+    p = next(e.payload for e in envs if e.event_type == "ShipmentDelivered")
+    assert p["delay_minutes"] is None
+    assert p["planned_delivery_at"] is None

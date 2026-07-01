@@ -179,10 +179,19 @@ class ProjectionHealthRead(BaseModel):
     events_applied: int
     last_rebuilt_at: Optional[datetime] = None
     # Sprint 12 health automation.
-    status: str = Field(default="healthy", description="Operational status: healthy | stale | error.")
+    status: str = Field(
+        default="healthy",
+        description="Operational status. Currently only 'healthy' or 'stale' are written; "
+                    "'error' is RESERVED for a future out-of-band failure-capture path and is "
+                    "not emitted today (see docs/26 §4a).")
     last_success_at: Optional[datetime] = None
-    last_failure_at: Optional[datetime] = None
-    last_error: Optional[str] = None
+    last_failure_at: Optional[datetime] = Field(
+        default=None,
+        description="RESERVED / not yet populated — projection-write failures roll back with the "
+                    "dispatcher transaction, so this is always null today (see docs/26 §4a).")
+    last_error: Optional[str] = Field(
+        default=None,
+        description="RESERVED / not yet populated — always null today (see docs/26 §4a).")
     last_event_occurred_at: Optional[datetime] = None
     rebuild_count: int = 0
     updated_at: datetime

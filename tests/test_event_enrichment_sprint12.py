@@ -386,6 +386,31 @@ def test_run_projection_health_check_isolates_tenant_failures(monkeypatch):
     assert result.checked == 3       # only the surviving tenant contributed
 
 
+def test_notification_created_emit_carries_priority():
+    """Emit-site: NotificationCreated carries the notification's own priority."""
+    from unittest.mock import MagicMock, patch
+    from app.models.enums import NotificationChannel, NotificationStatus, NotificationPriority
+
+    with patch("app.services.notification_service.EventStoreRepository") as ME, \
+         patch("app.services.notification_service.get_current_user_id", return_value=uuid.uuid4()):
+        from app.services.notification_service import NotificationService
+        svc = NotificationService(MagicMock())
+        svc._event_repo = ME.return_value
+        svc._event_repo.next_aggregate_version.return_value = 1
+        n = MagicMock()
+        n.id = uuid.uuid4()
+        n.channel = NotificationChannel.IN_APP
+        n.status = NotificationStatus.PENDING
+        n.event_type = None
+        n.recipient_user_id = None
+        n.priority = NotificationPriority.URGENT
+        svc._emit_created(n, _TENANT)
+
+    env = svc._event_repo.append.call_args.args[0]
+    assert env.event_type == "NotificationCreated"
+    assert env.payload["priority"] == "urgent"
+
+
 def test_health_check_task_wrapper_returns_summary(monkeypatch):
     """The celery task is a thin wrapper that surfaces the runner's aggregate summary."""
     from app.analytics import health as health_mod
