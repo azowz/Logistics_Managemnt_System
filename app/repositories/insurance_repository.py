@@ -13,8 +13,6 @@ from sqlalchemy import asc, desc, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.enums import (
-    ClaimStatus,
-    ClaimType,
     InsurancePolicyStatus,
 )
 from app.models.insurance import (

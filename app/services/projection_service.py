@@ -26,7 +26,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.common.datetime import utcnow
-from app.common.pagination import Page, PageParams
 from app.db.tenant import get_current_tenant
 from app.events.envelope import EventEnvelope
 from app.models.enums import InvoiceStatus

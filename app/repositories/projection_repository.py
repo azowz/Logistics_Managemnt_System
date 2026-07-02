@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import date
-from typing import List, Optional, Tuple, Type
+from typing import List, Optional, Type
 
 from sqlalchemy import Integer, Numeric, asc, delete, desc, func, select
 from sqlalchemy.orm import Session

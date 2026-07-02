@@ -190,7 +190,7 @@ class RedisRateLimitBackend:
             if count == 1:
                 client.expire(redis_key, self._window + 5)
             return count
-        except Exception as exc:  # noqa: BLE001 - Redis outage must not hard-fail the request
+        except Exception:  # noqa: BLE001 - Redis outage must not hard-fail the request
             get_logger(__name__).warning("Rate-limit Redis backend error; failing %s",
                                          "open" if self._fail_open else "closed", exc_info=False)
             # fail-open → 0 (under limit); fail-closed → large value (over any limit)

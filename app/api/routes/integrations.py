@@ -26,10 +26,6 @@ from app.integrations.auth import (
     require_api_key_scopes,
 )
 from app.integrations.policies import get_inbound_rate_limiter
-
-# Inbound signed requests must carry a timestamp within this window (seconds) to bound
-# replay. The timestamp is bound into the HMAC signing input, so it cannot be forged.
-_REPLAY_WINDOW_SECONDS = 300
 from app.models.enums import UserRole
 from app.schemas.integration import (
     DeliveryListParams,
@@ -52,6 +48,10 @@ from app.schemas.integration import (
 )
 from app.services.exceptions import ValidationError
 from app.services.integration_service import IntegrationService
+
+# Inbound signed requests must carry a timestamp within this window (seconds) to bound
+# replay. The timestamp is bound into the HMAC signing input, so it cannot be forged.
+_REPLAY_WINDOW_SECONDS = 300
 
 router = APIRouter(prefix="/integrations", tags=["integrations"])
 

@@ -157,7 +157,7 @@ class NotificationService:
         return self._set_template_active(template_id, False, NotificationTemplateDeactivated)
 
     def delete_template(self, template_id) -> None:
-        tenant_id = self._tenant_id()
+        self._tenant_id()
         actor_id = self._actor_id()
         t = self._templates.get_by_id_or_raise(template_id)
         if t.is_deleted:

@@ -7,11 +7,10 @@ Owns the unit of work and outbox emission for `InsurancePolicy` and
 from __future__ import annotations
 
 import uuid
-from typing import Callable, Dict, List, Optional
+from typing import Dict, Optional
 
 from sqlalchemy.orm import Session
 
-from app.common.datetime import utcnow
 from app.common.pagination import Page, PageParams
 from app.db.tenant import get_current_tenant, get_current_user_id
 from app.events.envelope import EventEnvelope

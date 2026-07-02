@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import uuid
 from decimal import Decimal
-from typing import Callable, Dict, List, Optional
+from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
