@@ -132,8 +132,14 @@ class IntegrationService:
 
     def _emit(self, event, *, aggregate_id, aggregate_type, tenant_id) -> None:
         nv = self._event_repo.next_aggregate_version(aggregate_id)
-        env = EventEnvelope.create(event, tenant_id=tenant_id, aggregate_id=aggregate_id,
-                                   aggregate_version=nv, aggregate_type=aggregate_type, user_id=self._actor_id())
+        env = EventEnvelope.create(
+            event,
+            tenant_id=tenant_id,
+            aggregate_id=aggregate_id,
+            aggregate_version=nv,
+            aggregate_type=aggregate_type,
+            user_id=self._actor_id(),
+        )
         self._event_repo.append(env)
 
     def _owned(self, obj, tenant_id, kind, obj_id):
@@ -143,23 +149,44 @@ class IntegrationService:
 
     # ===================== Partners =====================
 
-    def create_partner(self, *, name, partner_type, contact_email=None, contact_phone=None,
-                       notes=None, partner_metadata=None) -> "IntegrationPartner":  # noqa: F821
+    def create_partner(
+        self,
+        *,
+        name,
+        partner_type,
+        contact_email=None,
+        contact_phone=None,
+        notes=None,
+        partner_metadata=None,
+    ) -> "IntegrationPartner":  # noqa: F821
         tenant_id = self._tenant_id()
         actor_id = self._actor_id()
         if self._partners.get_by_name(name) is not None:
             raise ConflictError(f"An integration partner named '{name}' already exists.")
         partner = self._partners.create(
-            tenant_id=tenant_id, name=name, partner_type=partner_type,
-            status=IntegrationPartnerStatus.ACTIVE, contact_email=contact_email,
-            contact_phone=contact_phone, notes=notes, partner_metadata=partner_metadata,
-            created_by=actor_id, updated_by=actor_id,
+            tenant_id=tenant_id,
+            name=name,
+            partner_type=partner_type,
+            status=IntegrationPartnerStatus.ACTIVE,
+            contact_email=contact_email,
+            contact_phone=contact_phone,
+            notes=notes,
+            partner_metadata=partner_metadata,
+            created_by=actor_id,
+            updated_by=actor_id,
         )
         self._session.flush()
         self._emit(
-            IntegrationPartnerCreated(partner_id=partner.id, tenant_id=tenant_id, name=partner.name,
-                                      partner_type=self._ev(partner.partner_type), status=self._ev(partner.status)),
-            aggregate_id=partner.id, aggregate_type="IntegrationPartner", tenant_id=tenant_id,
+            IntegrationPartnerCreated(
+                partner_id=partner.id,
+                tenant_id=tenant_id,
+                name=partner.name,
+                partner_type=self._ev(partner.partner_type),
+                status=self._ev(partner.status),
+            ),
+            aggregate_id=partner.id,
+            aggregate_type="IntegrationPartner",
+            tenant_id=tenant_id,
         )
         self._session.commit()
         self._session.refresh(partner)
@@ -167,66 +194,107 @@ class IntegrationService:
 
     def update_partner(self, partner_id, **data) -> "IntegrationPartner":  # noqa: F821
         tenant_id = self._tenant_id()
-        partner = self._owned(self._partners.get_by_id(partner_id), tenant_id, "IntegrationPartner", partner_id)
-        mutable = {k: v for k, v in data.items()
-                   if k in {"name", "contact_email", "contact_phone", "notes", "partner_metadata", "partner_type"}}
+        partner = self._owned(
+            self._partners.get_by_id(partner_id), tenant_id, "IntegrationPartner", partner_id
+        )
+        mutable = {
+            k: v
+            for k, v in data.items()
+            if k
+            in {
+                "name",
+                "contact_email",
+                "contact_phone",
+                "notes",
+                "partner_metadata",
+                "partner_type",
+            }
+        }
         if "name" in mutable and mutable["name"] and mutable["name"] != partner.name:
             existing = self._partners.get_by_name(mutable["name"])
             if existing is not None and existing.id != partner.id:
-                raise ConflictError(f"An integration partner named '{mutable['name']}' already exists.")
+                raise ConflictError(
+                    f"An integration partner named '{mutable['name']}' already exists."
+                )
         self._partners.update(partner, **mutable)
         partner.updated_by = self._actor_id()
         self._session.flush()
-        self._emit(IntegrationPartnerUpdated(partner_id=partner.id, tenant_id=tenant_id),
-                   aggregate_id=partner.id, aggregate_type="IntegrationPartner", tenant_id=tenant_id)
+        self._emit(
+            IntegrationPartnerUpdated(partner_id=partner.id, tenant_id=tenant_id),
+            aggregate_id=partner.id,
+            aggregate_type="IntegrationPartner",
+            tenant_id=tenant_id,
+        )
         self._session.commit()
         self._session.refresh(partner)
         return partner
 
     def suspend_partner(self, partner_id) -> "IntegrationPartner":  # noqa: F821
         tenant_id = self._tenant_id()
-        partner = self._owned(self._partners.get_by_id(partner_id), tenant_id, "IntegrationPartner", partner_id)
+        partner = self._owned(
+            self._partners.get_by_id(partner_id), tenant_id, "IntegrationPartner", partner_id
+        )
         previous = partner.status
         if previous == IntegrationPartnerStatus.SUSPENDED:
             return partner
         partner.status = IntegrationPartnerStatus.SUSPENDED
         partner.updated_by = self._actor_id()
         self._session.flush()
-        self._emit(IntegrationPartnerSuspended(partner_id=partner.id, tenant_id=tenant_id,
-                                                previous_status=self._ev(previous)),
-                   aggregate_id=partner.id, aggregate_type="IntegrationPartner", tenant_id=tenant_id)
+        self._emit(
+            IntegrationPartnerSuspended(
+                partner_id=partner.id, tenant_id=tenant_id, previous_status=self._ev(previous)
+            ),
+            aggregate_id=partner.id,
+            aggregate_type="IntegrationPartner",
+            tenant_id=tenant_id,
+        )
         self._session.commit()
         self._session.refresh(partner)
         return partner
 
     def activate_partner(self, partner_id) -> "IntegrationPartner":  # noqa: F821
         tenant_id = self._tenant_id()
-        partner = self._owned(self._partners.get_by_id(partner_id), tenant_id, "IntegrationPartner", partner_id)
+        partner = self._owned(
+            self._partners.get_by_id(partner_id), tenant_id, "IntegrationPartner", partner_id
+        )
         previous = partner.status
         if previous == IntegrationPartnerStatus.ACTIVE:
             return partner
         partner.status = IntegrationPartnerStatus.ACTIVE
         partner.updated_by = self._actor_id()
         self._session.flush()
-        self._emit(IntegrationPartnerActivated(partner_id=partner.id, tenant_id=tenant_id,
-                                               previous_status=self._ev(previous)),
-                   aggregate_id=partner.id, aggregate_type="IntegrationPartner", tenant_id=tenant_id)
+        self._emit(
+            IntegrationPartnerActivated(
+                partner_id=partner.id, tenant_id=tenant_id, previous_status=self._ev(previous)
+            ),
+            aggregate_id=partner.id,
+            aggregate_type="IntegrationPartner",
+            tenant_id=tenant_id,
+        )
         self._session.commit()
         self._session.refresh(partner)
         return partner
 
     def delete_partner(self, partner_id) -> None:
         tenant_id = self._tenant_id()
-        partner = self._owned(self._partners.get_by_id(partner_id), tenant_id, "IntegrationPartner", partner_id)
+        partner = self._owned(
+            self._partners.get_by_id(partner_id), tenant_id, "IntegrationPartner", partner_id
+        )
         self._partners.soft_delete(partner, deleted_by=self._actor_id())
         self._session.flush()
-        self._emit(IntegrationPartnerUpdated(partner_id=partner.id, tenant_id=tenant_id),
-                   aggregate_id=partner.id, aggregate_type="IntegrationPartner", tenant_id=tenant_id)
+        self._emit(
+            IntegrationPartnerUpdated(partner_id=partner.id, tenant_id=tenant_id),
+            aggregate_id=partner.id,
+            aggregate_type="IntegrationPartner",
+            tenant_id=tenant_id,
+        )
         self._session.commit()
 
     def get_partner(self, partner_id) -> "IntegrationPartner":  # noqa: F821
         tenant_id = self._tenant_id()
-        return self._owned(self._partners.get_by_id(partner_id), tenant_id, "IntegrationPartner", partner_id)
+        return self._owned(
+            self._partners.get_by_id(partner_id), tenant_id, "IntegrationPartner", partner_id
+        )
 
     def list_partners(self, **kw):
         self._tenant_id()
@@ -234,22 +302,40 @@ class IntegrationService:
 
     # ===================== API keys =====================
 
-    def create_api_key(self, partner_id, *, name, scopes=None, allowed_ips=None, expires_at=None
-                       ) -> Tuple["PartnerApiKey", str]:  # noqa: F821
+    def create_api_key(
+        self, partner_id, *, name, scopes=None, allowed_ips=None, expires_at=None
+    ) -> Tuple["PartnerApiKey", str]:  # noqa: F821
         tenant_id = self._tenant_id()
-        partner = self._owned(self._partners.get_by_id(partner_id), tenant_id, "IntegrationPartner", partner_id)
+        partner = self._owned(
+            self._partners.get_by_id(partner_id), tenant_id, "IntegrationPartner", partner_id
+        )
         scopes = validate_scopes(scopes)
         allowed_ips = validate_allowed_ips(allowed_ips)
         plaintext, key_prefix, key_hash = crypto.generate_api_key()
         key = self._keys.create(
-            tenant_id=tenant_id, partner_id=partner.id, name=name, key_prefix=key_prefix,
-            key_hash=key_hash, status=ApiKeyStatus.ACTIVE, scopes=scopes, allowed_ips=allowed_ips,
-            expires_at=expires_at, created_by=self._actor_id(),
+            tenant_id=tenant_id,
+            partner_id=partner.id,
+            name=name,
+            key_prefix=key_prefix,
+            key_hash=key_hash,
+            status=ApiKeyStatus.ACTIVE,
+            scopes=scopes,
+            allowed_ips=allowed_ips,
+            expires_at=expires_at,
+            created_by=self._actor_id(),
         )
         self._session.flush()
-        self._emit(PartnerApiKeyCreated(api_key_id=key.id, tenant_id=tenant_id, partner_id=partner.id,
-                                        key_prefix=key.key_prefix),
-                   aggregate_id=key.id, aggregate_type="PartnerApiKey", tenant_id=tenant_id)
+        self._emit(
+            PartnerApiKeyCreated(
+                api_key_id=key.id,
+                tenant_id=tenant_id,
+                partner_id=partner.id,
+                key_prefix=key.key_prefix,
+            ),
+            aggregate_id=key.id,
+            aggregate_type="PartnerApiKey",
+            tenant_id=tenant_id,
+        )
         self._session.commit()
         self._session.refresh(key)
         return key, plaintext
@@ -265,8 +351,12 @@ class IntegrationService:
         key.revoked_at = utcnow()
         key.revoked_by = self._actor_id()
         self._session.flush()
-        self._emit(PartnerApiKeyRevoked(api_key_id=key.id, tenant_id=tenant_id, partner_id=key.partner_id),
-                   aggregate_id=key.id, aggregate_type="PartnerApiKey", tenant_id=tenant_id)
+        self._emit(
+            PartnerApiKeyRevoked(api_key_id=key.id, tenant_id=tenant_id, partner_id=key.partner_id),
+            aggregate_id=key.id,
+            aggregate_type="PartnerApiKey",
+            tenant_id=tenant_id,
+        )
         self._session.commit()
         self._session.refresh(key)
         return key
@@ -283,21 +373,38 @@ class IntegrationService:
             old.revoked_by = self._actor_id()
         plaintext, key_prefix, key_hash = crypto.generate_api_key()
         new = self._keys.create(
-            tenant_id=tenant_id, partner_id=old.partner_id, name=old.name, key_prefix=key_prefix,
-            key_hash=key_hash, status=ApiKeyStatus.ACTIVE, scopes=old.scopes, allowed_ips=old.allowed_ips,
-            expires_at=old.expires_at, created_by=self._actor_id(),
+            tenant_id=tenant_id,
+            partner_id=old.partner_id,
+            name=old.name,
+            key_prefix=key_prefix,
+            key_hash=key_hash,
+            status=ApiKeyStatus.ACTIVE,
+            scopes=old.scopes,
+            allowed_ips=old.allowed_ips,
+            expires_at=old.expires_at,
+            created_by=self._actor_id(),
         )
         self._session.flush()
-        self._emit(PartnerApiKeyRotated(api_key_id=new.id, tenant_id=tenant_id, partner_id=new.partner_id,
-                                        new_key_prefix=new.key_prefix),
-                   aggregate_id=new.id, aggregate_type="PartnerApiKey", tenant_id=tenant_id)
+        self._emit(
+            PartnerApiKeyRotated(
+                api_key_id=new.id,
+                tenant_id=tenant_id,
+                partner_id=new.partner_id,
+                new_key_prefix=new.key_prefix,
+            ),
+            aggregate_id=new.id,
+            aggregate_type="PartnerApiKey",
+            tenant_id=tenant_id,
+        )
         self._session.commit()
         self._session.refresh(new)
         return new, plaintext
 
     def list_api_keys(self, partner_id) -> List["PartnerApiKey"]:  # noqa: F821
         tenant_id = self._tenant_id()
-        self._owned(self._partners.get_by_id(partner_id), tenant_id, "IntegrationPartner", partner_id)
+        self._owned(
+            self._partners.get_by_id(partner_id), tenant_id, "IntegrationPartner", partner_id
+        )
         return self._keys.list_for_partner(partner_id)
 
     def authenticate_api_key(self, plaintext: str) -> Optional[ApiKeyAuthContext]:
@@ -319,13 +426,20 @@ class IntegrationService:
         if key.expires_at is not None and _aware(key.expires_at) < now:
             return None
         partner = self._partners.get_by_id(key.partner_id)
-        if partner is None or partner.is_deleted or partner.status != IntegrationPartnerStatus.ACTIVE:
+        if (
+            partner is None
+            or partner.is_deleted
+            or partner.status != IntegrationPartnerStatus.ACTIVE
+        ):
             return None
         key.last_used_at = now
         self._session.flush()
         return ApiKeyAuthContext(
-            api_key_id=key.id, partner_id=key.partner_id, tenant_id=key.tenant_id,
-            scopes=tuple(key.scopes or ()), allowed_ips=tuple(key.allowed_ips or ()),
+            api_key_id=key.id,
+            partner_id=key.partner_id,
+            tenant_id=key.tenant_id,
+            scopes=tuple(key.scopes or ()),
+            allowed_ips=tuple(key.allowed_ips or ()),
         )
 
     @staticmethod
@@ -334,11 +448,22 @@ class IntegrationService:
 
     # ===================== Webhook subscriptions =====================
 
-    def create_subscription(self, partner_id, *, name, target_url, event_types, max_retries=5,
-                            timeout_seconds=10, subscription_metadata=None, allow_insecure_url=False
-                            ) -> Tuple["WebhookSubscription", str]:  # noqa: F821
+    def create_subscription(
+        self,
+        partner_id,
+        *,
+        name,
+        target_url,
+        event_types,
+        max_retries=5,
+        timeout_seconds=10,
+        subscription_metadata=None,
+        allow_insecure_url=False,
+    ) -> Tuple["WebhookSubscription", str]:  # noqa: F821
         tenant_id = self._tenant_id()
-        partner = self._owned(self._partners.get_by_id(partner_id), tenant_id, "IntegrationPartner", partner_id)
+        partner = self._owned(
+            self._partners.get_by_id(partner_id), tenant_id, "IntegrationPartner", partner_id
+        )
         if partner.status != IntegrationPartnerStatus.ACTIVE:
             raise ValidationError("Subscriptions can only be created for an active partner.")
         target_url = validate_target_url(target_url, allow_insecure=allow_insecure_url)
@@ -346,84 +471,144 @@ class IntegrationService:
         secret = crypto.generate_webhook_secret()
         enc = get_secret_provider()
         sub = self._subs.create(
-            tenant_id=tenant_id, partner_id=partner.id, name=name, target_url=target_url,
-            event_types=event_types, status=WebhookSubscriptionStatus.ACTIVE,
-            encrypted_secret=enc.encrypt(secret), encryption_provider=enc.provider_name,
-            encryption_key_id=enc.key_id, max_retries=max_retries,
-            timeout_seconds=timeout_seconds, subscription_metadata=subscription_metadata,
-            created_by=self._actor_id(), updated_by=self._actor_id(),
+            tenant_id=tenant_id,
+            partner_id=partner.id,
+            name=name,
+            target_url=target_url,
+            event_types=event_types,
+            status=WebhookSubscriptionStatus.ACTIVE,
+            encrypted_secret=enc.encrypt(secret),
+            encryption_provider=enc.provider_name,
+            encryption_key_id=enc.key_id,
+            max_retries=max_retries,
+            timeout_seconds=timeout_seconds,
+            subscription_metadata=subscription_metadata,
+            created_by=self._actor_id(),
+            updated_by=self._actor_id(),
         )
         self._session.flush()
-        self._emit(WebhookSubscriptionCreated(subscription_id=sub.id, tenant_id=tenant_id,
-                                              partner_id=partner.id, status=self._ev(sub.status)),
-                   aggregate_id=sub.id, aggregate_type="WebhookSubscription", tenant_id=tenant_id)
+        self._emit(
+            WebhookSubscriptionCreated(
+                subscription_id=sub.id,
+                tenant_id=tenant_id,
+                partner_id=partner.id,
+                status=self._ev(sub.status),
+            ),
+            aggregate_id=sub.id,
+            aggregate_type="WebhookSubscription",
+            tenant_id=tenant_id,
+        )
         self._session.commit()
         self._session.refresh(sub)
         return sub, secret
 
-    def update_subscription(self, subscription_id, *, allow_insecure_url=False, **data) -> "WebhookSubscription":  # noqa: F821
+    def update_subscription(
+        self, subscription_id, *, allow_insecure_url=False, **data
+    ) -> "WebhookSubscription":  # noqa: F821
         tenant_id = self._tenant_id()
-        sub = self._owned(self._subs.get_by_id(subscription_id), tenant_id, "WebhookSubscription", subscription_id)
+        sub = self._owned(
+            self._subs.get_by_id(subscription_id), tenant_id, "WebhookSubscription", subscription_id
+        )
         if "target_url" in data and data["target_url"]:
-            data["target_url"] = validate_target_url(data["target_url"], allow_insecure=allow_insecure_url)
+            data["target_url"] = validate_target_url(
+                data["target_url"], allow_insecure=allow_insecure_url
+            )
         if "event_types" in data and data["event_types"] is not None:
             data["event_types"] = validate_event_types(data["event_types"])
-        mutable = {k: v for k, v in data.items()
-                   if k in {"name", "target_url", "event_types", "max_retries", "timeout_seconds",
-                            "subscription_metadata"}}
+        mutable = {
+            k: v
+            for k, v in data.items()
+            if k
+            in {
+                "name",
+                "target_url",
+                "event_types",
+                "max_retries",
+                "timeout_seconds",
+                "subscription_metadata",
+            }
+        }
         self._subs.update(sub, **mutable)
         sub.updated_by = self._actor_id()
         self._session.flush()
-        self._emit(WebhookSubscriptionUpdated(subscription_id=sub.id, tenant_id=tenant_id),
-                   aggregate_id=sub.id, aggregate_type="WebhookSubscription", tenant_id=tenant_id)
+        self._emit(
+            WebhookSubscriptionUpdated(subscription_id=sub.id, tenant_id=tenant_id),
+            aggregate_id=sub.id,
+            aggregate_type="WebhookSubscription",
+            tenant_id=tenant_id,
+        )
         self._session.commit()
         self._session.refresh(sub)
         return sub
 
     def activate_subscription(self, subscription_id) -> "WebhookSubscription":  # noqa: F821
         tenant_id = self._tenant_id()
-        sub = self._owned(self._subs.get_by_id(subscription_id), tenant_id, "WebhookSubscription", subscription_id)
+        sub = self._owned(
+            self._subs.get_by_id(subscription_id), tenant_id, "WebhookSubscription", subscription_id
+        )
         previous = sub.status
         if previous == WebhookSubscriptionStatus.ACTIVE:
             return sub
         sub.status = WebhookSubscriptionStatus.ACTIVE
         sub.updated_by = self._actor_id()
         self._session.flush()
-        self._emit(WebhookSubscriptionActivated(subscription_id=sub.id, tenant_id=tenant_id,
-                                                previous_status=self._ev(previous)),
-                   aggregate_id=sub.id, aggregate_type="WebhookSubscription", tenant_id=tenant_id)
+        self._emit(
+            WebhookSubscriptionActivated(
+                subscription_id=sub.id, tenant_id=tenant_id, previous_status=self._ev(previous)
+            ),
+            aggregate_id=sub.id,
+            aggregate_type="WebhookSubscription",
+            tenant_id=tenant_id,
+        )
         self._session.commit()
         self._session.refresh(sub)
         return sub
 
     def deactivate_subscription(self, subscription_id) -> "WebhookSubscription":  # noqa: F821
         tenant_id = self._tenant_id()
-        sub = self._owned(self._subs.get_by_id(subscription_id), tenant_id, "WebhookSubscription", subscription_id)
+        sub = self._owned(
+            self._subs.get_by_id(subscription_id), tenant_id, "WebhookSubscription", subscription_id
+        )
         previous = sub.status
         if previous == WebhookSubscriptionStatus.INACTIVE:
             return sub
         sub.status = WebhookSubscriptionStatus.INACTIVE
         sub.updated_by = self._actor_id()
         self._session.flush()
-        self._emit(WebhookSubscriptionDeactivated(subscription_id=sub.id, tenant_id=tenant_id,
-                                                  previous_status=self._ev(previous)),
-                   aggregate_id=sub.id, aggregate_type="WebhookSubscription", tenant_id=tenant_id)
+        self._emit(
+            WebhookSubscriptionDeactivated(
+                subscription_id=sub.id, tenant_id=tenant_id, previous_status=self._ev(previous)
+            ),
+            aggregate_id=sub.id,
+            aggregate_type="WebhookSubscription",
+            tenant_id=tenant_id,
+        )
         self._session.commit()
         self._session.refresh(sub)
         return sub
 
     def delete_subscription(self, subscription_id) -> None:
         tenant_id = self._tenant_id()
-        sub = self._owned(self._subs.get_by_id(subscription_id), tenant_id, "WebhookSubscription", subscription_id)
+        sub = self._owned(
+            self._subs.get_by_id(subscription_id), tenant_id, "WebhookSubscription", subscription_id
+        )
         self._subs.soft_delete(sub, deleted_by=self._actor_id())
         self._session.flush()
-        self._emit(WebhookSubscriptionUpdated(subscription_id=sub.id, tenant_id=tenant_id),
-                   aggregate_id=sub.id, aggregate_type="WebhookSubscription", tenant_id=tenant_id)
+        self._emit(
+            WebhookSubscriptionUpdated(subscription_id=sub.id, tenant_id=tenant_id),
+            aggregate_id=sub.id,
+            aggregate_type="WebhookSubscription",
+            tenant_id=tenant_id,
+        )
         self._session.commit()
 
-    def rotate_subscription_secret(self, subscription_id) -> Tuple["WebhookSubscription", str]:  # noqa: F821
+    def rotate_subscription_secret(
+        self, subscription_id
+    ) -> Tuple["WebhookSubscription", str]:  # noqa: F821
         tenant_id = self._tenant_id()
-        sub = self._owned(self._subs.get_by_id(subscription_id), tenant_id, "WebhookSubscription", subscription_id)
+        sub = self._owned(
+            self._subs.get_by_id(subscription_id), tenant_id, "WebhookSubscription", subscription_id
+        )
         secret = crypto.generate_webhook_secret()
         enc = get_secret_provider()
         sub.encrypted_secret = enc.encrypt(secret)
@@ -431,15 +616,21 @@ class IntegrationService:
         sub.encryption_key_id = enc.key_id
         sub.updated_by = self._actor_id()
         self._session.flush()
-        self._emit(WebhookSubscriptionUpdated(subscription_id=sub.id, tenant_id=tenant_id),
-                   aggregate_id=sub.id, aggregate_type="WebhookSubscription", tenant_id=tenant_id)
+        self._emit(
+            WebhookSubscriptionUpdated(subscription_id=sub.id, tenant_id=tenant_id),
+            aggregate_id=sub.id,
+            aggregate_type="WebhookSubscription",
+            tenant_id=tenant_id,
+        )
         self._session.commit()
         self._session.refresh(sub)
         return sub, secret
 
     def get_subscription(self, subscription_id) -> "WebhookSubscription":  # noqa: F821
         tenant_id = self._tenant_id()
-        return self._owned(self._subs.get_by_id(subscription_id), tenant_id, "WebhookSubscription", subscription_id)
+        return self._owned(
+            self._subs.get_by_id(subscription_id), tenant_id, "WebhookSubscription", subscription_id
+        )
 
     def list_subscriptions(self, **kw):
         self._tenant_id()
@@ -460,7 +651,11 @@ class IntegrationService:
         created = []
         for sub in self._subs.list_active_for_event(ext):
             partner = self._partners.get_by_id(sub.partner_id)
-            if partner is None or partner.is_deleted or partner.status != IntegrationPartnerStatus.ACTIVE:
+            if (
+                partner is None
+                or partner.is_deleted
+                or partner.status != IntegrationPartnerStatus.ACTIVE
+            ):
                 continue
             if self._deliveries.find_for_source(sub.id, envelope.event_id) is not None:
                 continue  # idempotent skip
@@ -481,50 +676,89 @@ class IntegrationService:
                 # + a skipped attempt so the integrity failure is observable and the payload
                 # is not sent with a partner-unverifiable signature. No secret is exposed.
                 delivery = self._deliveries.create(
-                    tenant_id=sub.tenant_id, subscription_id=sub.id, partner_id=sub.partner_id,
-                    source_event_id=envelope.event_id, source_event_type=envelope.event_type,
-                    external_event_type=ext, aggregate_type=envelope.aggregate_type or None,
-                    aggregate_id=envelope.aggregate_id, status=WebhookDeliveryStatus.FAILED,
-                    payload=payload, payload_hash=payload_hash, signature="",
-                    next_attempt_at=None, attempt_count=0, failed_at=utcnow(),
+                    tenant_id=sub.tenant_id,
+                    subscription_id=sub.id,
+                    partner_id=sub.partner_id,
+                    source_event_id=envelope.event_id,
+                    source_event_type=envelope.event_type,
+                    external_event_type=ext,
+                    aggregate_type=envelope.aggregate_type or None,
+                    aggregate_id=envelope.aggregate_id,
+                    status=WebhookDeliveryStatus.FAILED,
+                    payload=payload,
+                    payload_hash=payload_hash,
+                    signature="",
+                    next_attempt_at=None,
+                    attempt_count=0,
+                    failed_at=utcnow(),
                     last_error="secret_undecryptable",
                 )
                 self._session.flush()
                 self._attempts.create(
-                    tenant_id=sub.tenant_id, delivery_id=delivery.id, attempt_number=1,
-                    status=WebhookAttemptStatus.SKIPPED, requested_at=utcnow(), completed_at=utcnow(),
+                    tenant_id=sub.tenant_id,
+                    delivery_id=delivery.id,
+                    attempt_number=1,
+                    status=WebhookAttemptStatus.SKIPPED,
+                    requested_at=utcnow(),
+                    completed_at=utcnow(),
                     error_code="secret_undecryptable",
                     error_message="Subscription signing secret could not be decrypted; delivery not signed.",
                 )
                 self._session.flush()
                 self._emit(
-                    WebhookDeliveryCreated(delivery_id=delivery.id, tenant_id=sub.tenant_id,
-                                           subscription_id=sub.id, source_event_id=envelope.event_id,
-                                           external_event_type=ext),
-                    aggregate_id=delivery.id, aggregate_type="WebhookDelivery", tenant_id=sub.tenant_id,
+                    WebhookDeliveryCreated(
+                        delivery_id=delivery.id,
+                        tenant_id=sub.tenant_id,
+                        subscription_id=sub.id,
+                        source_event_id=envelope.event_id,
+                        external_event_type=ext,
+                    ),
+                    aggregate_id=delivery.id,
+                    aggregate_type="WebhookDelivery",
+                    tenant_id=sub.tenant_id,
                 )
                 self._emit(
-                    WebhookDeliveryFailed(delivery_id=delivery.id, tenant_id=sub.tenant_id,
-                                          subscription_id=sub.id, reason="secret_undecryptable"),
-                    aggregate_id=delivery.id, aggregate_type="WebhookDelivery", tenant_id=sub.tenant_id,
+                    WebhookDeliveryFailed(
+                        delivery_id=delivery.id,
+                        tenant_id=sub.tenant_id,
+                        subscription_id=sub.id,
+                        reason="secret_undecryptable",
+                    ),
+                    aggregate_id=delivery.id,
+                    aggregate_type="WebhookDelivery",
+                    tenant_id=sub.tenant_id,
                 )
                 created.append(delivery)
                 continue
             signature = crypto.compute_signature(secret, body)
             delivery = self._deliveries.create(
-                tenant_id=sub.tenant_id, subscription_id=sub.id, partner_id=sub.partner_id,
-                source_event_id=envelope.event_id, source_event_type=envelope.event_type,
-                external_event_type=ext, aggregate_type=envelope.aggregate_type or None,
-                aggregate_id=envelope.aggregate_id, status=WebhookDeliveryStatus.PENDING,
-                payload=payload, payload_hash=payload_hash,
-                signature=signature, next_attempt_at=utcnow(), attempt_count=0,
+                tenant_id=sub.tenant_id,
+                subscription_id=sub.id,
+                partner_id=sub.partner_id,
+                source_event_id=envelope.event_id,
+                source_event_type=envelope.event_type,
+                external_event_type=ext,
+                aggregate_type=envelope.aggregate_type or None,
+                aggregate_id=envelope.aggregate_id,
+                status=WebhookDeliveryStatus.PENDING,
+                payload=payload,
+                payload_hash=payload_hash,
+                signature=signature,
+                next_attempt_at=utcnow(),
+                attempt_count=0,
             )
             self._session.flush()
             self._emit(
-                WebhookDeliveryCreated(delivery_id=delivery.id, tenant_id=sub.tenant_id,
-                                       subscription_id=sub.id, source_event_id=envelope.event_id,
-                                       external_event_type=ext),
-                aggregate_id=delivery.id, aggregate_type="WebhookDelivery", tenant_id=sub.tenant_id,
+                WebhookDeliveryCreated(
+                    delivery_id=delivery.id,
+                    tenant_id=sub.tenant_id,
+                    subscription_id=sub.id,
+                    source_event_id=envelope.event_id,
+                    external_event_type=ext,
+                ),
+                aggregate_id=delivery.id,
+                aggregate_type="WebhookDelivery",
+                tenant_id=sub.tenant_id,
             )
             created.append(delivery)
         return created
@@ -534,18 +768,25 @@ class IntegrationService:
         tenant_id = self._tenant_id()
         delivery = self._owned_delivery(delivery_id, tenant_id)
         if delivery.status in (WebhookDeliveryStatus.DELIVERED, WebhookDeliveryStatus.CANCELLED):
-            raise ValidationError(f"Delivery in status '{self._ev(delivery.status)}' cannot be attempted.")
+            raise ValidationError(
+                f"Delivery in status '{self._ev(delivery.status)}' cannot be attempted."
+            )
         sub = self._subs.get_by_id(delivery.subscription_id)
         if not delivery.signature:
             # M1: an unsigned delivery (secret was undecryptable at creation) must never be
             # sent. Try to (re)sign if the secret is now recoverable; otherwise record a
             # skipped attempt and leave it failed — no unsigned payload leaves the platform.
-            secret = get_secret_provider().decrypt(sub.encrypted_secret) if sub is not None else None
+            secret = (
+                get_secret_provider().decrypt(sub.encrypted_secret) if sub is not None else None
+            )
             if secret is None:
                 self._attempts.create(
-                    tenant_id=tenant_id, delivery_id=delivery.id,
+                    tenant_id=tenant_id,
+                    delivery_id=delivery.id,
                     attempt_number=self._attempts.next_attempt_number(delivery.id),
-                    status=WebhookAttemptStatus.SKIPPED, requested_at=utcnow(), completed_at=utcnow(),
+                    status=WebhookAttemptStatus.SKIPPED,
+                    requested_at=utcnow(),
+                    completed_at=utcnow(),
                     error_code="secret_undecryptable",
                     error_message="Subscription signing secret could not be decrypted; delivery not signed.",
                 )
@@ -577,22 +818,47 @@ class IntegrationService:
         delivery.last_attempt_at = started
         self._session.flush()
 
-        result = provider.send(target_url=(sub.target_url if sub else ""), body=body,
-                               headers=headers, timeout_seconds=timeout)
+        result = provider.send(
+            target_url=(sub.target_url if sub else ""),
+            body=body,
+            headers=headers,
+            timeout_seconds=timeout,
+        )
 
-        attempt_status = (WebhookAttemptStatus.SUCCEEDED if result.succeeded
-                          else (WebhookAttemptStatus.SKIPPED if result.error_code == "provider_not_configured"
-                                else WebhookAttemptStatus.FAILED))
+        attempt_status = (
+            WebhookAttemptStatus.SUCCEEDED
+            if result.succeeded
+            else (
+                WebhookAttemptStatus.SKIPPED
+                if result.error_code == "provider_not_configured"
+                else WebhookAttemptStatus.FAILED
+            )
+        )
         self._attempts.create(
-            tenant_id=tenant_id, delivery_id=delivery.id, attempt_number=attempt_number,
-            status=attempt_status, requested_at=started, completed_at=utcnow(),
-            http_status_code=result.http_status_code, response_body=result.response_body,
-            error_code=result.error_code, error_message=result.error_message, duration_ms=result.duration_ms,
+            tenant_id=tenant_id,
+            delivery_id=delivery.id,
+            attempt_number=attempt_number,
+            status=attempt_status,
+            requested_at=started,
+            completed_at=utcnow(),
+            http_status_code=result.http_status_code,
+            response_body=result.response_body,
+            error_code=result.error_code,
+            error_message=result.error_message,
+            duration_ms=result.duration_ms,
         )
         self._session.flush()
-        self._emit(WebhookDeliveryAttempted(delivery_id=delivery.id, tenant_id=tenant_id,
-                                            attempt_number=attempt_number, status=self._ev(attempt_status)),
-                   aggregate_id=delivery.id, aggregate_type="WebhookDelivery", tenant_id=tenant_id)
+        self._emit(
+            WebhookDeliveryAttempted(
+                delivery_id=delivery.id,
+                tenant_id=tenant_id,
+                attempt_number=attempt_number,
+                status=self._ev(attempt_status),
+            ),
+            aggregate_id=delivery.id,
+            aggregate_type="WebhookDelivery",
+            tenant_id=tenant_id,
+        )
 
         if result.succeeded:
             delivery.status = WebhookDeliveryStatus.DELIVERED
@@ -600,23 +866,41 @@ class IntegrationService:
             delivery.last_error = None
             delivery.next_attempt_at = None
             self._session.flush()
-            self._emit(WebhookDeliverySucceeded(delivery_id=delivery.id, tenant_id=tenant_id,
-                                                subscription_id=delivery.subscription_id),
-                       aggregate_id=delivery.id, aggregate_type="WebhookDelivery", tenant_id=tenant_id)
+            self._emit(
+                WebhookDeliverySucceeded(
+                    delivery_id=delivery.id,
+                    tenant_id=tenant_id,
+                    subscription_id=delivery.subscription_id,
+                ),
+                aggregate_id=delivery.id,
+                aggregate_type="WebhookDelivery",
+                tenant_id=tenant_id,
+            )
         else:
             delivery.status = WebhookDeliveryStatus.FAILED
             delivery.failed_at = utcnow()
-            delivery.last_error = (result.error_message or result.error_code or "delivery failed")[:1024]
+            delivery.last_error = (result.error_message or result.error_code or "delivery failed")[
+                :1024
+            ]
             max_retries = sub.max_retries if sub is not None else 0
             # Exponential backoff (bounded) while retries remain; terminal once exhausted.
             delivery.next_attempt_at = (
                 utcnow() + timedelta(seconds=_retry_backoff_seconds(delivery.attempt_count))
-                if delivery.attempt_count <= max_retries else None
+                if delivery.attempt_count <= max_retries
+                else None
             )
             self._session.flush()
-            self._emit(WebhookDeliveryFailed(delivery_id=delivery.id, tenant_id=tenant_id,
-                                             subscription_id=delivery.subscription_id, reason=delivery.last_error),
-                       aggregate_id=delivery.id, aggregate_type="WebhookDelivery", tenant_id=tenant_id)
+            self._emit(
+                WebhookDeliveryFailed(
+                    delivery_id=delivery.id,
+                    tenant_id=tenant_id,
+                    subscription_id=delivery.subscription_id,
+                    reason=delivery.last_error,
+                ),
+                aggregate_id=delivery.id,
+                aggregate_type="WebhookDelivery",
+                tenant_id=tenant_id,
+            )
         self._session.commit()
         self._session.refresh(delivery)
         return delivery
@@ -669,8 +953,16 @@ class IntegrationService:
 
     # ===================== Inbound events =====================
 
-    def receive_inbound_event(self, *, partner_id, api_key_id, idempotency_key, event_type,
-                              payload=None, signature_valid: bool) -> "InboundIntegrationEvent":  # noqa: F821
+    def receive_inbound_event(
+        self,
+        *,
+        partner_id,
+        api_key_id,
+        idempotency_key,
+        event_type,
+        payload=None,
+        signature_valid: bool,
+    ) -> "InboundIntegrationEvent":  # noqa: F821
         """Persist + audit an authenticated inbound event. Idempotent per (api_key, key).
 
         A duplicate idempotency key returns the existing row (no double-process). An
@@ -683,36 +975,68 @@ class IntegrationService:
         now = utcnow()
         rejected = not signature_valid
         row = self._inbound.create(
-            tenant_id=tenant_id, partner_id=partner_id, api_key_id=api_key_id,
-            idempotency_key=idempotency_key, event_type=event_type, payload=payload,
+            tenant_id=tenant_id,
+            partner_id=partner_id,
+            api_key_id=api_key_id,
+            idempotency_key=idempotency_key,
+            event_type=event_type,
+            payload=payload,
             signature_valid=signature_valid,
             status=InboundEventStatus.REJECTED if rejected else InboundEventStatus.ACCEPTED,
-            received_at=now, rejected_at=now if rejected else None,
+            received_at=now,
+            rejected_at=now if rejected else None,
             rejection_reason="invalid signature" if rejected else None,
         )
         self._session.flush()
-        self._emit(InboundIntegrationEventReceived(inbound_event_id=row.id, tenant_id=tenant_id,
-                                                   partner_id=partner_id, api_key_id=api_key_id,
-                                                   inbound_type=event_type),
-                   aggregate_id=row.id, aggregate_type="InboundIntegrationEvent", tenant_id=tenant_id)
+        self._emit(
+            InboundIntegrationEventReceived(
+                inbound_event_id=row.id,
+                tenant_id=tenant_id,
+                partner_id=partner_id,
+                api_key_id=api_key_id,
+                inbound_type=event_type,
+            ),
+            aggregate_id=row.id,
+            aggregate_type="InboundIntegrationEvent",
+            tenant_id=tenant_id,
+        )
         if rejected:
-            self._emit(InboundIntegrationEventRejected(inbound_event_id=row.id, tenant_id=tenant_id,
-                                                       partner_id=partner_id, reason="invalid signature"),
-                       aggregate_id=row.id, aggregate_type="InboundIntegrationEvent", tenant_id=tenant_id)
+            self._emit(
+                InboundIntegrationEventRejected(
+                    inbound_event_id=row.id,
+                    tenant_id=tenant_id,
+                    partner_id=partner_id,
+                    reason="invalid signature",
+                ),
+                aggregate_id=row.id,
+                aggregate_type="InboundIntegrationEvent",
+                tenant_id=tenant_id,
+            )
         else:
-            self._emit(InboundIntegrationEventAccepted(inbound_event_id=row.id, tenant_id=tenant_id,
-                                                       partner_id=partner_id),
-                       aggregate_id=row.id, aggregate_type="InboundIntegrationEvent", tenant_id=tenant_id)
+            self._emit(
+                InboundIntegrationEventAccepted(
+                    inbound_event_id=row.id, tenant_id=tenant_id, partner_id=partner_id
+                ),
+                aggregate_id=row.id,
+                aggregate_type="InboundIntegrationEvent",
+                tenant_id=tenant_id,
+            )
         self._session.commit()
         self._session.refresh(row)
         return row
 
     def process_inbound_event(self, inbound_event_id) -> "InboundIntegrationEvent":  # noqa: F821
         tenant_id = self._tenant_id()
-        row = self._owned(self._inbound.get_by_id(inbound_event_id), tenant_id,
-                          "InboundIntegrationEvent", inbound_event_id)
+        row = self._owned(
+            self._inbound.get_by_id(inbound_event_id),
+            tenant_id,
+            "InboundIntegrationEvent",
+            inbound_event_id,
+        )
         if row.status not in (InboundEventStatus.ACCEPTED, InboundEventStatus.RECEIVED):
-            raise ValidationError(f"Inbound event in status '{self._ev(row.status)}' cannot be processed.")
+            raise ValidationError(
+                f"Inbound event in status '{self._ev(row.status)}' cannot be processed."
+            )
         row.status = InboundEventStatus.PROCESSED
         row.processed_at = utcnow()
         self._session.flush()
@@ -720,17 +1044,31 @@ class IntegrationService:
         self._session.refresh(row)
         return row
 
-    def reject_inbound_event(self, inbound_event_id, *, reason=None) -> "InboundIntegrationEvent":  # noqa: F821
+    def reject_inbound_event(
+        self, inbound_event_id, *, reason=None
+    ) -> "InboundIntegrationEvent":  # noqa: F821
         tenant_id = self._tenant_id()
-        row = self._owned(self._inbound.get_by_id(inbound_event_id), tenant_id,
-                          "InboundIntegrationEvent", inbound_event_id)
+        row = self._owned(
+            self._inbound.get_by_id(inbound_event_id),
+            tenant_id,
+            "InboundIntegrationEvent",
+            inbound_event_id,
+        )
         row.status = InboundEventStatus.REJECTED
         row.rejected_at = utcnow()
         row.rejection_reason = (reason or "rejected")[:512]
         self._session.flush()
-        self._emit(InboundIntegrationEventRejected(inbound_event_id=row.id, tenant_id=tenant_id,
-                                                   partner_id=row.partner_id, reason=row.rejection_reason),
-                   aggregate_id=row.id, aggregate_type="InboundIntegrationEvent", tenant_id=tenant_id)
+        self._emit(
+            InboundIntegrationEventRejected(
+                inbound_event_id=row.id,
+                tenant_id=tenant_id,
+                partner_id=row.partner_id,
+                reason=row.rejection_reason,
+            ),
+            aggregate_id=row.id,
+            aggregate_type="InboundIntegrationEvent",
+            tenant_id=tenant_id,
+        )
         self._session.commit()
         self._session.refresh(row)
         return row

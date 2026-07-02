@@ -85,8 +85,18 @@ class QuoteRepository(_BaseRepo):
         return self._session.scalars(stmt).first()
 
     def list_quotes(
-        self, *, q=None, status=None, customer_id=None, order_id=None, shipment_id=None,
-        include_deleted=False, sort_by="created_at", sort_dir="desc", limit=50, offset=0,
+        self,
+        *,
+        q=None,
+        status=None,
+        customer_id=None,
+        order_id=None,
+        shipment_id=None,
+        include_deleted=False,
+        sort_by="created_at",
+        sort_dir="desc",
+        limit=50,
+        offset=0,
     ) -> Tuple[List[Quote], int]:
         stmt = select(Quote)
         if not include_deleted:
@@ -110,14 +120,18 @@ class QuoteRepository(_BaseRepo):
 class InvoiceRepository(_BaseRepo):
     model = Invoice
 
-    def get_by_number(self, invoice_number: str, *, include_deleted: bool = False) -> Optional[Invoice]:
+    def get_by_number(
+        self, invoice_number: str, *, include_deleted: bool = False
+    ) -> Optional[Invoice]:
         stmt = select(Invoice).where(Invoice.invoice_number == invoice_number)
         if not include_deleted:
             stmt = stmt.where(Invoice.deleted_at.is_(None))
         return self._session.scalars(stmt).first()
 
     def list_invoices_for_customer(self, customer_id: uuid.UUID) -> List[Invoice]:
-        stmt = select(Invoice).where(Invoice.customer_id == customer_id, Invoice.deleted_at.is_(None))
+        stmt = select(Invoice).where(
+            Invoice.customer_id == customer_id, Invoice.deleted_at.is_(None)
+        )
         return list(self._session.scalars(stmt).all())
 
     def list_invoices_for_order(self, order_id: uuid.UUID) -> List[Invoice]:
@@ -125,7 +139,9 @@ class InvoiceRepository(_BaseRepo):
         return list(self._session.scalars(stmt).all())
 
     def list_invoices_for_shipment(self, shipment_id: uuid.UUID) -> List[Invoice]:
-        stmt = select(Invoice).where(Invoice.shipment_id == shipment_id, Invoice.deleted_at.is_(None))
+        stmt = select(Invoice).where(
+            Invoice.shipment_id == shipment_id, Invoice.deleted_at.is_(None)
+        )
         return list(self._session.scalars(stmt).all())
 
     def get_invoice_balance(self, invoice: Invoice) -> Decimal:
@@ -140,8 +156,19 @@ class InvoiceRepository(_BaseRepo):
         return Decimal(str(invoice.total_amount or 0)) - Decimal(str(paid))
 
     def list_invoices(
-        self, *, q=None, status=None, customer_id=None, order_id=None, shipment_id=None, claim_id=None,
-        include_deleted=False, sort_by="created_at", sort_dir="desc", limit=50, offset=0,
+        self,
+        *,
+        q=None,
+        status=None,
+        customer_id=None,
+        order_id=None,
+        shipment_id=None,
+        claim_id=None,
+        include_deleted=False,
+        sort_by="created_at",
+        sort_dir="desc",
+        limit=50,
+        offset=0,
     ) -> Tuple[List[Invoice], int]:
         stmt = select(Invoice)
         if not include_deleted:
@@ -168,14 +195,20 @@ class InvoiceLineRepository(_BaseRepo):
     model = InvoiceLine
 
     def list_lines_for_invoice(self, invoice_id: uuid.UUID) -> List[InvoiceLine]:
-        stmt = select(InvoiceLine).where(InvoiceLine.invoice_id == invoice_id).order_by(InvoiceLine.created_at)
+        stmt = (
+            select(InvoiceLine)
+            .where(InvoiceLine.invoice_id == invoice_id)
+            .order_by(InvoiceLine.created_at)
+        )
         return list(self._session.scalars(stmt).all())
 
 
 class PaymentRepository(_BaseRepo):
     model = Payment
 
-    def list_payments_for_invoice(self, invoice_id: uuid.UUID, *, include_deleted: bool = False) -> List[Payment]:
+    def list_payments_for_invoice(
+        self, invoice_id: uuid.UUID, *, include_deleted: bool = False
+    ) -> List[Payment]:
         stmt = select(Payment).where(Payment.invoice_id == invoice_id)
         if not include_deleted:
             stmt = stmt.where(Payment.deleted_at.is_(None))
@@ -195,19 +228,33 @@ class PaymentRepository(_BaseRepo):
 class SettlementRepository(_BaseRepo):
     model = Settlement
 
-    def get_by_number(self, settlement_number: str, *, include_deleted: bool = False) -> Optional[Settlement]:
+    def get_by_number(
+        self, settlement_number: str, *, include_deleted: bool = False
+    ) -> Optional[Settlement]:
         stmt = select(Settlement).where(Settlement.settlement_number == settlement_number)
         if not include_deleted:
             stmt = stmt.where(Settlement.deleted_at.is_(None))
         return self._session.scalars(stmt).first()
 
     def list_settlements_for_claim(self, claim_id: uuid.UUID) -> List[Settlement]:
-        stmt = select(Settlement).where(Settlement.claim_id == claim_id, Settlement.deleted_at.is_(None))
+        stmt = select(Settlement).where(
+            Settlement.claim_id == claim_id, Settlement.deleted_at.is_(None)
+        )
         return list(self._session.scalars(stmt).all())
 
     def list_settlements(
-        self, *, q=None, status=None, settlement_type=None, claim_id=None, customer_id=None,
-        include_deleted=False, sort_by="created_at", sort_dir="desc", limit=50, offset=0,
+        self,
+        *,
+        q=None,
+        status=None,
+        settlement_type=None,
+        claim_id=None,
+        customer_id=None,
+        include_deleted=False,
+        sort_by="created_at",
+        sort_dir="desc",
+        limit=50,
+        offset=0,
     ) -> Tuple[List[Settlement], int]:
         stmt = select(Settlement)
         if not include_deleted:
@@ -232,7 +279,9 @@ class PayoutRepository(_BaseRepo):
     model = Payout
 
     def list_payouts_for_settlement(self, settlement_id: uuid.UUID) -> List[Payout]:
-        stmt = select(Payout).where(Payout.settlement_id == settlement_id, Payout.deleted_at.is_(None))
+        stmt = select(Payout).where(
+            Payout.settlement_id == settlement_id, Payout.deleted_at.is_(None)
+        )
         return list(self._session.scalars(stmt.order_by(Payout.created_at)).all())
 
 
@@ -244,12 +293,23 @@ class PenaltyRepository(_BaseRepo):
         return list(self._session.scalars(stmt).all())
 
     def list_penalties_for_shipment(self, shipment_id: uuid.UUID) -> List[Penalty]:
-        stmt = select(Penalty).where(Penalty.shipment_id == shipment_id, Penalty.deleted_at.is_(None))
+        stmt = select(Penalty).where(
+            Penalty.shipment_id == shipment_id, Penalty.deleted_at.is_(None)
+        )
         return list(self._session.scalars(stmt).all())
 
     def list_penalties(
-        self, *, penalty_type=None, order_id=None, shipment_id=None, invoice_id=None,
-        include_deleted=False, sort_by="created_at", sort_dir="desc", limit=50, offset=0,
+        self,
+        *,
+        penalty_type=None,
+        order_id=None,
+        shipment_id=None,
+        invoice_id=None,
+        include_deleted=False,
+        sort_by="created_at",
+        sort_dir="desc",
+        limit=50,
+        offset=0,
     ) -> Tuple[List[Penalty], int]:
         stmt = select(Penalty)
         if not include_deleted:

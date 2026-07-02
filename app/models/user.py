@@ -24,9 +24,7 @@ class User(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
 
     __tablename__ = "users"
     # Email is unique PER TENANT (ADR-001 / docs/03 §3.2), not globally.
-    __table_args__ = (
-        UniqueConstraint("tenant_id", "email", name="uq_users_tenant_id_email"),
-    )
+    __table_args__ = (UniqueConstraint("tenant_id", "email", name="uq_users_tenant_id_email"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

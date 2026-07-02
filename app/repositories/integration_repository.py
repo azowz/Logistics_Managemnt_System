@@ -79,22 +79,37 @@ class _SoftDeleteRepo(_BaseRepo):
 class IntegrationPartnerRepository(_SoftDeleteRepo):
     model = IntegrationPartner
 
-    def get_by_name(self, name: str, *, include_deleted: bool = False) -> Optional[IntegrationPartner]:
+    def get_by_name(
+        self, name: str, *, include_deleted: bool = False
+    ) -> Optional[IntegrationPartner]:
         stmt = select(IntegrationPartner).where(IntegrationPartner.name == name)
         if not include_deleted:
             stmt = stmt.where(IntegrationPartner.deleted_at.is_(None))
         return self._session.scalars(stmt).first()
 
-    def list_partners(self, *, q=None, partner_type=None, status=None, include_deleted=False,
-                      sort_by="created_at", sort_dir="desc", limit=50, offset=0
-                      ) -> Tuple[List[IntegrationPartner], int]:
+    def list_partners(
+        self,
+        *,
+        q=None,
+        partner_type=None,
+        status=None,
+        include_deleted=False,
+        sort_by="created_at",
+        sort_dir="desc",
+        limit=50,
+        offset=0,
+    ) -> Tuple[List[IntegrationPartner], int]:
         stmt = select(IntegrationPartner)
         if not include_deleted:
             stmt = stmt.where(IntegrationPartner.deleted_at.is_(None))
         if q:
             like = f"%{q}%"
-            stmt = stmt.where(or_(IntegrationPartner.name.ilike(like),
-                                  IntegrationPartner.contact_email.ilike(like)))
+            stmt = stmt.where(
+                or_(
+                    IntegrationPartner.name.ilike(like),
+                    IntegrationPartner.contact_email.ilike(like),
+                )
+            )
         if partner_type is not None:
             stmt = stmt.where(IntegrationPartner.partner_type == partner_type)
         if status is not None:
@@ -121,9 +136,11 @@ class PartnerApiKeyRepository(_BaseRepo):
         return self._session.scalars(stmt).first()
 
     def list_for_partner(self, partner_id) -> List[PartnerApiKey]:
-        stmt = select(PartnerApiKey).where(
-            PartnerApiKey.partner_id == partner_id
-        ).order_by(desc(PartnerApiKey.created_at))
+        stmt = (
+            select(PartnerApiKey)
+            .where(PartnerApiKey.partner_id == partner_id)
+            .order_by(desc(PartnerApiKey.created_at))
+        )
         return list(self._session.scalars(stmt).all())
 
 
@@ -143,16 +160,28 @@ class WebhookSubscriptionRepository(_SoftDeleteRepo):
         rows = self._session.scalars(stmt).all()
         return [s for s in rows if external_event_type in (s.event_types or [])]
 
-    def list_subscriptions(self, *, q=None, partner_id=None, status=None, include_deleted=False,
-                           sort_by="created_at", sort_dir="desc", limit=50, offset=0
-                           ) -> Tuple[List[WebhookSubscription], int]:
+    def list_subscriptions(
+        self,
+        *,
+        q=None,
+        partner_id=None,
+        status=None,
+        include_deleted=False,
+        sort_by="created_at",
+        sort_dir="desc",
+        limit=50,
+        offset=0,
+    ) -> Tuple[List[WebhookSubscription], int]:
         stmt = select(WebhookSubscription)
         if not include_deleted:
             stmt = stmt.where(WebhookSubscription.deleted_at.is_(None))
         if q:
             like = f"%{q}%"
-            stmt = stmt.where(or_(WebhookSubscription.name.ilike(like),
-                                  WebhookSubscription.target_url.ilike(like)))
+            stmt = stmt.where(
+                or_(
+                    WebhookSubscription.name.ilike(like), WebhookSubscription.target_url.ilike(like)
+                )
+            )
         if partner_id is not None:
             stmt = stmt.where(WebhookSubscription.partner_id == partner_id)
         if status is not None:
@@ -174,9 +203,18 @@ class WebhookDeliveryRepository(_BaseRepo):
         )
         return self._session.scalars(stmt).first()
 
-    def list_deliveries(self, *, subscription_id=None, partner_id=None, status=None,
-                        external_event_type=None, sort_by="created_at", sort_dir="desc",
-                        limit=50, offset=0) -> Tuple[List[WebhookDelivery], int]:
+    def list_deliveries(
+        self,
+        *,
+        subscription_id=None,
+        partner_id=None,
+        status=None,
+        external_event_type=None,
+        sort_by="created_at",
+        sort_dir="desc",
+        limit=50,
+        offset=0,
+    ) -> Tuple[List[WebhookDelivery], int]:
         stmt = select(WebhookDelivery)
         if subscription_id is not None:
             stmt = stmt.where(WebhookDelivery.subscription_id == subscription_id)
@@ -198,12 +236,20 @@ class WebhookDeliveryRepository(_BaseRepo):
         never returns a terminally-failed (or delivered/cancelled/skipped) row.
         """
         from app.common.datetime import utcnow
+
         cutoff = now or utcnow()
-        stmt = select(WebhookDelivery).where(
-            WebhookDelivery.status.in_((WebhookDeliveryStatus.PENDING, WebhookDeliveryStatus.FAILED)),
-            WebhookDelivery.next_attempt_at.isnot(None),
-            WebhookDelivery.next_attempt_at <= cutoff,
-        ).order_by(asc(WebhookDelivery.next_attempt_at)).limit(limit)
+        stmt = (
+            select(WebhookDelivery)
+            .where(
+                WebhookDelivery.status.in_(
+                    (WebhookDeliveryStatus.PENDING, WebhookDeliveryStatus.FAILED)
+                ),
+                WebhookDelivery.next_attempt_at.isnot(None),
+                WebhookDelivery.next_attempt_at <= cutoff,
+            )
+            .order_by(asc(WebhookDelivery.next_attempt_at))
+            .limit(limit)
+        )
         return list(self._session.scalars(stmt).all())
 
 
@@ -219,25 +265,37 @@ class WebhookDeliveryAttemptRepository(_BaseRepo):
         return int(current or 0) + 1
 
     def list_for_delivery(self, delivery_id) -> List[WebhookDeliveryAttempt]:
-        stmt = select(WebhookDeliveryAttempt).where(
-            WebhookDeliveryAttempt.delivery_id == delivery_id
-        ).order_by(asc(WebhookDeliveryAttempt.attempt_number))
+        stmt = (
+            select(WebhookDeliveryAttempt)
+            .where(WebhookDeliveryAttempt.delivery_id == delivery_id)
+            .order_by(asc(WebhookDeliveryAttempt.attempt_number))
+        )
         return list(self._session.scalars(stmt).all())
 
 
 class InboundIntegrationEventRepository(_BaseRepo):
     model = InboundIntegrationEvent
 
-    def find_by_idempotency(self, api_key_id, idempotency_key: str) -> Optional[InboundIntegrationEvent]:
+    def find_by_idempotency(
+        self, api_key_id, idempotency_key: str
+    ) -> Optional[InboundIntegrationEvent]:
         stmt = select(InboundIntegrationEvent).where(
             InboundIntegrationEvent.api_key_id == api_key_id,
             InboundIntegrationEvent.idempotency_key == idempotency_key,
         )
         return self._session.scalars(stmt).first()
 
-    def list_inbound(self, *, partner_id=None, status=None, event_type=None,
-                     sort_by="created_at", sort_dir="desc", limit=50, offset=0
-                     ) -> Tuple[List[InboundIntegrationEvent], int]:
+    def list_inbound(
+        self,
+        *,
+        partner_id=None,
+        status=None,
+        event_type=None,
+        sort_by="created_at",
+        sort_dir="desc",
+        limit=50,
+        offset=0,
+    ) -> Tuple[List[InboundIntegrationEvent], int]:
         stmt = select(InboundIntegrationEvent)
         if partner_id is not None:
             stmt = stmt.where(InboundIntegrationEvent.partner_id == partner_id)

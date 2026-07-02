@@ -40,12 +40,8 @@ class ShipmentStateMachine:
 
     #: status → set of statuses reachable from it.
     ALLOWED_TRANSITIONS: Dict[ShipmentStatus, FrozenSet[ShipmentStatus]] = {
-        ShipmentStatus.CREATED: frozenset(
-            {ShipmentStatus.READY, ShipmentStatus.CANCELLED}
-        ),
-        ShipmentStatus.READY: frozenset(
-            {ShipmentStatus.ASSIGNED, ShipmentStatus.CANCELLED}
-        ),
+        ShipmentStatus.CREATED: frozenset({ShipmentStatus.READY, ShipmentStatus.CANCELLED}),
+        ShipmentStatus.READY: frozenset({ShipmentStatus.ASSIGNED, ShipmentStatus.CANCELLED}),
         ShipmentStatus.ASSIGNED: frozenset(
             {ShipmentStatus.PICKED_UP, ShipmentStatus.CANCELLED, ShipmentStatus.FAILED}
         ),
@@ -122,9 +118,7 @@ class ShipmentStateMachine:
         return target in cls.ALLOWED_TRANSITIONS.get(current, frozenset())
 
     @classmethod
-    def validate_transition(
-        cls, current: ShipmentStatus, target: ShipmentStatus
-    ) -> None:
+    def validate_transition(cls, current: ShipmentStatus, target: ShipmentStatus) -> None:
         """Raise :exc:`StatusTransitionError` if ``current → target`` is illegal."""
         if not cls.can_transition(current, target):
             raise StatusTransitionError(

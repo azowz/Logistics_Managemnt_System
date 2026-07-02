@@ -95,9 +95,7 @@ def search_customers(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=50, ge=1, le=200),
     session: Session = Depends(get_session),
-    current_user=Depends(
-        require_roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.CLIENT)
-    ),
+    current_user=Depends(require_roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.CLIENT)),
 ) -> Page[CustomerRead]:
     """Full-text + faceted search across the tenant's customer portfolio.
 
@@ -154,9 +152,7 @@ def list_customers(
     page: int = Query(default=1, ge=1),
     size: int = Query(default=50, ge=1, le=200),
     session: Session = Depends(get_session),
-    current_user=Depends(
-        require_roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.CLIENT)
-    ),
+    current_user=Depends(require_roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.CLIENT)),
 ) -> Page[CustomerRead]:
     """Return a paginated list of customers visible to the current tenant."""
     params = CustomerListParams(
@@ -198,9 +194,7 @@ def get_customer(
     customer_id: uuid.UUID,
     include_deleted: bool = Query(default=False),
     session: Session = Depends(get_session),
-    current_user=Depends(
-        require_roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.CLIENT)
-    ),
+    current_user=Depends(require_roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.CLIENT)),
 ) -> CustomerRead:
     """Fetch a single customer; returns **404** when not found or soft-deleted."""
     svc = CustomerService(session)
@@ -231,9 +225,7 @@ def update_customer(
     on a uniqueness collision and **404** when the customer is not found.
     """
     svc = CustomerService(session)
-    customer = svc.update_customer(
-        customer_id, **payload.model_dump(exclude_unset=True)
-    )
+    customer = svc.update_customer(customer_id, **payload.model_dump(exclude_unset=True))
     return CustomerRead.model_validate(customer)
 
 

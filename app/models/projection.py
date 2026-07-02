@@ -36,12 +36,17 @@ class ProjectionHealth(TimestampMixin, Base):
 
     __tablename__ = "projection_health"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "projection_name", name="uq_projection_health_tenant_id_projection_name"),
+        UniqueConstraint(
+            "tenant_id", "projection_name", name="uq_projection_health_tenant_id_projection_name"
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     projection_name: Mapped[str] = mapped_column(String(64), nullable=False)
     last_event_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
@@ -66,12 +71,17 @@ class ProjectionHealth(TimestampMixin, Base):
 class ShipmentPerformanceProjection(TimestampMixin, Base):
     __tablename__ = "proj_shipment_performance"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "period_date", name="uq_proj_shipment_performance_tenant_id_period_date"),
+        UniqueConstraint(
+            "tenant_id", "period_date", name="uq_proj_shipment_performance_tenant_id_period_date"
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     period_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     total_shipments: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
@@ -84,11 +94,15 @@ class ShipmentPerformanceProjection(TimestampMixin, Base):
     cancelled_shipments: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     on_time_deliveries: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     late_deliveries: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
-    average_delivery_duration_minutes: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, server_default="0")
+    average_delivery_duration_minutes: Mapped[Decimal] = mapped_column(
+        Numeric(12, 2), nullable=False, server_default="0"
+    )
     # Sprint 12 (additive): sample count backing the incremental delivery-duration mean.
     # Only deliveries carrying both pickup + delivery timestamps contribute, so this can
     # be < delivered_shipments. Kept internal (not exposed in the read schema).
-    delivery_duration_sample_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    delivery_duration_sample_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="0"
+    )
     delay_rate: Mapped[Decimal] = mapped_column(Numeric(6, 4), nullable=False, server_default="0")
     failure_rate: Mapped[Decimal] = mapped_column(Numeric(6, 4), nullable=False, server_default="0")
 
@@ -96,13 +110,20 @@ class ShipmentPerformanceProjection(TimestampMixin, Base):
 class FinancialSummaryProjection(TimestampMixin, Base):
     __tablename__ = "proj_financial_summary"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "period_date", "currency_code",
-                         name="uq_proj_financial_summary_tenant_period_currency"),
+        UniqueConstraint(
+            "tenant_id",
+            "period_date",
+            "currency_code",
+            name="uq_proj_financial_summary_tenant_period_currency",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     period_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     currency_code: Mapped[str] = mapped_column(String(3), nullable=False, server_default="SAR")
@@ -111,49 +132,84 @@ class FinancialSummaryProjection(TimestampMixin, Base):
     issued_invoices: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     paid_invoices: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     overdue_invoices: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
-    gross_revenue: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
-    collected_revenue: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
+    gross_revenue: Mapped[Decimal] = mapped_column(
+        Numeric(16, 2), nullable=False, server_default="0"
+    )
+    collected_revenue: Mapped[Decimal] = mapped_column(
+        Numeric(16, 2), nullable=False, server_default="0"
+    )
     # Per-period net receivable change (gross issued − collected this period); NOT
     # the authoritative outstanding AR balance — see proj_ar_aging for that.
-    net_receivable_change: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
-    claim_adjustments: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
-    penalties_amount: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
-    settlement_amount: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
+    net_receivable_change: Mapped[Decimal] = mapped_column(
+        Numeric(16, 2), nullable=False, server_default="0"
+    )
+    claim_adjustments: Mapped[Decimal] = mapped_column(
+        Numeric(16, 2), nullable=False, server_default="0"
+    )
+    penalties_amount: Mapped[Decimal] = mapped_column(
+        Numeric(16, 2), nullable=False, server_default="0"
+    )
+    settlement_amount: Mapped[Decimal] = mapped_column(
+        Numeric(16, 2), nullable=False, server_default="0"
+    )
 
 
 class ARAgingProjection(TimestampMixin, Base):
     __tablename__ = "proj_ar_aging"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "customer_id", "currency_code",
-                         name="uq_proj_ar_aging_tenant_customer_currency"),
+        UniqueConstraint(
+            "tenant_id",
+            "customer_id",
+            "currency_code",
+            name="uq_proj_ar_aging_tenant_customer_currency",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     customer_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("customers.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("customers.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     currency_code: Mapped[str] = mapped_column(String(3), nullable=False, server_default="SAR")
-    current_amount: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
+    current_amount: Mapped[Decimal] = mapped_column(
+        Numeric(16, 2), nullable=False, server_default="0"
+    )
     days_1_30: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
     days_31_60: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
     days_61_90: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
-    days_over_90: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
-    total_outstanding: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
+    days_over_90: Mapped[Decimal] = mapped_column(
+        Numeric(16, 2), nullable=False, server_default="0"
+    )
+    total_outstanding: Mapped[Decimal] = mapped_column(
+        Numeric(16, 2), nullable=False, server_default="0"
+    )
 
 
 class ClaimsMetricsProjection(TimestampMixin, Base):
     __tablename__ = "proj_claims_metrics"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "period_date", "currency_code",
-                         name="uq_proj_claims_metrics_tenant_period_currency"),
+        UniqueConstraint(
+            "tenant_id",
+            "period_date",
+            "currency_code",
+            name="uq_proj_claims_metrics_tenant_period_currency",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     period_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     currency_code: Mapped[str] = mapped_column(String(3), nullable=False, server_default="SAR")
@@ -162,25 +218,40 @@ class ClaimsMetricsProjection(TimestampMixin, Base):
     rejected_claims: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     settled_claims: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     open_claims: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
-    total_claimed_amount: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
-    total_approved_amount: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
-    total_settled_amount: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
-    average_claim_cycle_days: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False, server_default="0")
+    total_claimed_amount: Mapped[Decimal] = mapped_column(
+        Numeric(16, 2), nullable=False, server_default="0"
+    )
+    total_approved_amount: Mapped[Decimal] = mapped_column(
+        Numeric(16, 2), nullable=False, server_default="0"
+    )
+    total_settled_amount: Mapped[Decimal] = mapped_column(
+        Numeric(16, 2), nullable=False, server_default="0"
+    )
+    average_claim_cycle_days: Mapped[Decimal] = mapped_column(
+        Numeric(10, 2), nullable=False, server_default="0"
+    )
     # Sprint 12 (additive): sample count backing the incremental claim-cycle mean. Only
     # settled claims carrying a cycle_days value contribute, so this can be < settled_claims.
     # Kept internal (not exposed in the read schema).
-    claim_cycle_sample_count: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    claim_cycle_sample_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="0"
+    )
 
 
 class ComplianceMetricsProjection(TimestampMixin, Base):
     __tablename__ = "proj_compliance_metrics"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "period_date", name="uq_proj_compliance_metrics_tenant_id_period_date"),
+        UniqueConstraint(
+            "tenant_id", "period_date", name="uq_proj_compliance_metrics_tenant_id_period_date"
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     period_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     permits_created: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
@@ -196,12 +267,19 @@ class ComplianceMetricsProjection(TimestampMixin, Base):
 class NotificationDeliverabilityProjection(TimestampMixin, Base):
     __tablename__ = "proj_notification_deliverability"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "period_date", name="uq_proj_notification_deliverability_tenant_id_period_date"),
+        UniqueConstraint(
+            "tenant_id",
+            "period_date",
+            name="uq_proj_notification_deliverability_tenant_id_period_date",
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     period_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     total_notifications: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
@@ -229,13 +307,22 @@ class OperationsDashboardProjection(TimestampMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     active_shipments: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     delayed_shipments: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
-    pending_compliance_blocks: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
-    unread_urgent_notifications: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    pending_compliance_blocks: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="0"
+    )
+    unread_urgent_notifications: Mapped[int] = mapped_column(
+        Integer, nullable=False, server_default="0"
+    )
     open_claims: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     outstanding_invoices: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
     # Cumulative collected revenue (lifetime running sum of confirmed payments), not a period figure.
-    cumulative_collected_revenue: Mapped[Decimal] = mapped_column(Numeric(16, 2), nullable=False, server_default="0")
+    cumulative_collected_revenue: Mapped[Decimal] = mapped_column(
+        Numeric(16, 2), nullable=False, server_default="0"
+    )

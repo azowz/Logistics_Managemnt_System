@@ -47,33 +47,83 @@ _ZERO = Decimal("0")
 
 # Event-type → projection mapping. The analytics consumer subscribes to the union.
 _SHIPMENT = {
-    "ShipmentCreated", "ShipmentAssigned", "ShipmentPickedUp", "ShipmentInTransit",
-    "ShipmentDelayed", "ShipmentDelivered", "ShipmentFailed", "ShipmentReturned", "ShipmentCancelled",
+    "ShipmentCreated",
+    "ShipmentAssigned",
+    "ShipmentPickedUp",
+    "ShipmentInTransit",
+    "ShipmentDelayed",
+    "ShipmentDelivered",
+    "ShipmentFailed",
+    "ShipmentReturned",
+    "ShipmentCancelled",
 }
 _COMPLIANCE = {
-    "PermitCreated", "PermitApproved", "PermitRejected", "PermitExpired",
-    "DispatchBlockedByCompliance", "DispatchClearedByCompliance",
-    "ComplianceCheckFailed", "ComplianceOverrideApplied",
+    "PermitCreated",
+    "PermitApproved",
+    "PermitRejected",
+    "PermitExpired",
+    "DispatchBlockedByCompliance",
+    "DispatchClearedByCompliance",
+    "ComplianceCheckFailed",
+    "ComplianceOverrideApplied",
 }
 _CLAIMS = {
-    "ClaimCreated", "ClaimApproved", "ClaimRejected", "ClaimSettled", "ClaimClosed",
-    "DamageReportCreated", "LiabilityRecordCreated",
+    "ClaimCreated",
+    "ClaimApproved",
+    "ClaimRejected",
+    "ClaimSettled",
+    "ClaimClosed",
+    "DamageReportCreated",
+    "LiabilityRecordCreated",
 }
 _BILLING = {
-    "QuoteCreated", "QuoteIssued", "QuoteApproved", "QuoteExpired",
-    "InvoiceCreated", "InvoiceIssued", "InvoicePartiallyPaid", "InvoicePaid", "InvoiceOverdue",
-    "PaymentRecorded", "PaymentFailed", "SettlementCreated", "SettlementApproved",
-    "SettlementSettled", "PenaltyApplied", "CancellationFeeApplied", "ClaimSettlementConsumed",
+    "QuoteCreated",
+    "QuoteIssued",
+    "QuoteApproved",
+    "QuoteExpired",
+    "InvoiceCreated",
+    "InvoiceIssued",
+    "InvoicePartiallyPaid",
+    "InvoicePaid",
+    "InvoiceOverdue",
+    "PaymentRecorded",
+    "PaymentFailed",
+    "SettlementCreated",
+    "SettlementApproved",
+    "SettlementSettled",
+    "PenaltyApplied",
+    "CancellationFeeApplied",
+    "ClaimSettlementConsumed",
 }
 _NOTIFICATION = {
-    "NotificationCreated", "NotificationSent", "NotificationFailed",
-    "NotificationRetried", "NotificationRead", "NotificationDeliveryAttemptCreated",
+    "NotificationCreated",
+    "NotificationSent",
+    "NotificationFailed",
+    "NotificationRetried",
+    "NotificationRead",
+    "NotificationDeliveryAttemptCreated",
 }
-_AR_AGING_EVENTS = {"InvoiceCreated", "InvoiceIssued", "InvoicePartiallyPaid", "InvoicePaid",
-                    "InvoiceOverdue", "PaymentRecorded"}
-_OPS_EVENTS = _SHIPMENT | _CLAIMS | {"InvoiceIssued", "InvoicePaid", "PaymentRecorded",
-                                     "DispatchBlockedByCompliance", "DispatchClearedByCompliance",
-                                     "NotificationCreated", "NotificationRead"}
+_AR_AGING_EVENTS = {
+    "InvoiceCreated",
+    "InvoiceIssued",
+    "InvoicePartiallyPaid",
+    "InvoicePaid",
+    "InvoiceOverdue",
+    "PaymentRecorded",
+}
+_OPS_EVENTS = (
+    _SHIPMENT
+    | _CLAIMS
+    | {
+        "InvoiceIssued",
+        "InvoicePaid",
+        "PaymentRecorded",
+        "DispatchBlockedByCompliance",
+        "DispatchClearedByCompliance",
+        "NotificationCreated",
+        "NotificationRead",
+    }
+)
 
 ALL_EVENT_TYPES = frozenset(_SHIPMENT | _COMPLIANCE | _CLAIMS | _BILLING | _NOTIFICATION)
 
@@ -313,7 +363,9 @@ class ProjectionService:
             return
         n = (row.claim_cycle_sample_count or 0) + 1
         prev = row.average_claim_cycle_days or _ZERO
-        row.average_claim_cycle_days = ((prev * (n - 1) + sample) / Decimal(n)).quantize(Decimal("0.01"))
+        row.average_claim_cycle_days = ((prev * (n - 1) + sample) / Decimal(n)).quantize(
+            Decimal("0.01")
+        )
         row.claim_cycle_sample_count = n
 
     def update_compliance_metrics(self, envelope: EventEnvelope) -> bool:
@@ -322,10 +374,14 @@ class ProjectionService:
             return False
         row = self._comp.get_or_create(envelope.tenant_id, self._period(envelope))
         mapping = {
-            "PermitCreated": "permits_created", "PermitApproved": "permits_approved",
-            "PermitRejected": "permits_rejected", "PermitExpired": "permits_expired",
-            "DispatchBlockedByCompliance": "dispatch_blocks", "DispatchClearedByCompliance": "dispatch_clears",
-            "ComplianceCheckFailed": "compliance_failures", "ComplianceOverrideApplied": "override_count",
+            "PermitCreated": "permits_created",
+            "PermitApproved": "permits_approved",
+            "PermitRejected": "permits_rejected",
+            "PermitExpired": "permits_expired",
+            "DispatchBlockedByCompliance": "dispatch_blocks",
+            "DispatchClearedByCompliance": "dispatch_clears",
+            "ComplianceCheckFailed": "compliance_failures",
+            "ComplianceOverrideApplied": "override_count",
         }
         attr = mapping.get(et)
         if attr:
@@ -348,8 +404,12 @@ class ProjectionService:
                 row.in_app_sent += 1
         elif et == "NotificationFailed":
             row.failed_notifications += 1
-            per_channel = {"email": "email_failed", "sms": "sms_failed",
-                           "push": "push_failed", "webhook": "webhook_failed"}
+            per_channel = {
+                "email": "email_failed",
+                "sms": "sms_failed",
+                "push": "push_failed",
+                "webhook": "webhook_failed",
+            }
             attr = per_channel.get(channel)
             if attr:
                 setattr(row, attr, getattr(row, attr) + 1)
@@ -371,12 +431,22 @@ class ProjectionService:
             return False
         p = envelope.payload or {}
         invoice = self._invoices.get_by_id(p.get("invoice_id")) if p.get("invoice_id") else None
-        if invoice is None or invoice.customer_id is None or invoice.tenant_id != envelope.tenant_id:
+        if (
+            invoice is None
+            or invoice.customer_id is None
+            or invoice.tenant_id != envelope.tenant_id
+        ):
             return False
         customer_id = invoice.customer_id
         currency = invoice.currency_code or "SAR"
         as_of = self._period(envelope)
-        buckets = {"current": _ZERO, "1_30": _ZERO, "31_60": _ZERO, "61_90": _ZERO, "over_90": _ZERO}
+        buckets = {
+            "current": _ZERO,
+            "1_30": _ZERO,
+            "31_60": _ZERO,
+            "61_90": _ZERO,
+            "over_90": _ZERO,
+        }
         open_states = (InvoiceStatus.ISSUED, InvoiceStatus.PARTIALLY_PAID, InvoiceStatus.OVERDUE)
         for inv in self._invoices.list_invoices_for_customer(customer_id):
             if inv.currency_code != currency or inv.status not in open_states:
@@ -412,7 +482,12 @@ class ProjectionService:
             return False
         p = envelope.payload or {}
         row = self._ops.get_or_create(envelope.tenant_id)
-        terminal_ship = {"ShipmentDelivered", "ShipmentFailed", "ShipmentReturned", "ShipmentCancelled"}
+        terminal_ship = {
+            "ShipmentDelivered",
+            "ShipmentFailed",
+            "ShipmentReturned",
+            "ShipmentCancelled",
+        }
         if et == "ShipmentCreated":
             row.active_shipments += 1
         elif et in terminal_ship:
@@ -445,8 +520,12 @@ class ProjectionService:
         return True
 
     _UPDATERS = (
-        "update_shipment_performance", "update_financial_summary", "update_ar_aging",
-        "update_claims_metrics", "update_compliance_metrics", "update_notification_deliverability",
+        "update_shipment_performance",
+        "update_financial_summary",
+        "update_ar_aging",
+        "update_claims_metrics",
+        "update_compliance_metrics",
+        "update_notification_deliverability",
         "update_operations_dashboard",
     )
 
@@ -467,16 +546,20 @@ class ProjectionService:
         # The secondary keys make order-sensitive updaters (e.g. clamped operations-
         # dashboard counters) replay identically even when occurred_at ties.
         rows = self._session.scalars(
-            select(EventStore).where(EventStore.tenant_id == tenant_id).order_by(
-                EventStore.occurred_at, EventStore.aggregate_version, EventStore.event_id
-            )
+            select(EventStore)
+            .where(EventStore.tenant_id == tenant_id)
+            .order_by(EventStore.occurred_at, EventStore.aggregate_version, EventStore.event_id)
         ).all()
         return [EventEnvelope.from_record(r) for r in rows]
 
     _TRUNCATE_REPOS = {
-        "shipment_performance": "_ship", "financial_summary": "_fin", "ar_aging": "_ar",
-        "claims_metrics": "_claims", "compliance_metrics": "_comp",
-        "notification_deliverability": "_notif", "operations_dashboard": "_ops",
+        "shipment_performance": "_ship",
+        "financial_summary": "_fin",
+        "ar_aging": "_ar",
+        "claims_metrics": "_claims",
+        "compliance_metrics": "_comp",
+        "notification_deliverability": "_notif",
+        "operations_dashboard": "_ops",
     }
 
     def rebuild_all_projections(self, *, dry_run: bool = False) -> dict:
@@ -484,8 +567,13 @@ class ProjectionService:
         events = self._load_events(tenant_id)
         relevant = [e for e in events if e.event_type in ALL_EVENT_TYPES]
         if dry_run:
-            return {"tenant_id": str(tenant_id), "events_total": len(events),
-                    "events_relevant": len(relevant), "applied": 0, "dry_run": True}
+            return {
+                "tenant_id": str(tenant_id),
+                "events_total": len(events),
+                "events_relevant": len(relevant),
+                "applied": 0,
+                "dry_run": True,
+            }
         for attr in self._TRUNCATE_REPOS.values():
             getattr(self, attr).truncate_for_tenant(tenant_id)
         self._session.flush()
@@ -495,8 +583,13 @@ class ProjectionService:
                 applied += 1
         self._stamp_rebuilt(tenant_id, list(self._TRUNCATE_REPOS.keys()))
         self._session.commit()
-        return {"tenant_id": str(tenant_id), "events_total": len(events),
-                "events_relevant": len(relevant), "applied": applied, "dry_run": False}
+        return {
+            "tenant_id": str(tenant_id),
+            "events_total": len(events),
+            "events_relevant": len(relevant),
+            "applied": applied,
+            "dry_run": False,
+        }
 
     def rebuild_projection(self, projection_type: str, *, dry_run: bool = False) -> dict:
         if projection_type not in PROJECTION_TYPES:
@@ -507,8 +600,13 @@ class ProjectionService:
         event_set = PROJECTION_TYPES[projection_type]
         events = [e for e in self._load_events(tenant_id) if e.event_type in event_set]
         if dry_run:
-            return {"tenant_id": str(tenant_id), "projection_type": projection_type,
-                    "events_relevant": len(events), "applied": 0, "dry_run": True}
+            return {
+                "tenant_id": str(tenant_id),
+                "projection_type": projection_type,
+                "events_relevant": len(events),
+                "applied": 0,
+                "dry_run": True,
+            }
         getattr(self, self._TRUNCATE_REPOS[projection_type]).truncate_for_tenant(tenant_id)
         self._session.flush()
         updater = getattr(self, f"update_{projection_type}")
@@ -519,8 +617,13 @@ class ProjectionService:
                 self._session.flush()
         self._stamp_rebuilt(tenant_id, [projection_type])
         self._session.commit()
-        return {"tenant_id": str(tenant_id), "projection_type": projection_type,
-                "events_relevant": len(events), "applied": applied, "dry_run": False}
+        return {
+            "tenant_id": str(tenant_id),
+            "projection_type": projection_type,
+            "events_relevant": len(events),
+            "applied": applied,
+            "dry_run": False,
+        }
 
     def _stamp_rebuilt(self, tenant_id, names: Iterable[str]) -> None:
         now = utcnow()
@@ -542,13 +645,19 @@ class ProjectionService:
         return self._ship.list_for_period(self._tenant_id(), start=start, end=end)
 
     def get_financial_summary(self, *, start=None, end=None, currency_code=None):
-        return self._fin.list_for_period(self._tenant_id(), start=start, end=end, currency_code=currency_code)
+        return self._fin.list_for_period(
+            self._tenant_id(), start=start, end=end, currency_code=currency_code
+        )
 
     def get_ar_aging(self, *, customer_id=None, currency_code=None):
-        return self._ar.list_for_tenant(self._tenant_id(), customer_id=customer_id, currency_code=currency_code)
+        return self._ar.list_for_tenant(
+            self._tenant_id(), customer_id=customer_id, currency_code=currency_code
+        )
 
     def get_claims_metrics(self, *, start=None, end=None, currency_code=None):
-        return self._claims.list_for_period(self._tenant_id(), start=start, end=end, currency_code=currency_code)
+        return self._claims.list_for_period(
+            self._tenant_id(), start=start, end=end, currency_code=currency_code
+        )
 
     def get_compliance_metrics(self, *, start=None, end=None):
         return self._comp.list_for_period(self._tenant_id(), start=start, end=end)
@@ -589,5 +698,10 @@ class ProjectionService:
             else:
                 h.status = "healthy"
                 healthy += 1
-        return {"tenant_id": str(tenant_id), "checked": checked,
-                "healthy": healthy, "stale": stale, "error": errored}
+        return {
+            "tenant_id": str(tenant_id),
+            "checked": checked,
+            "healthy": healthy,
+            "stale": stale,
+            "error": errored,
+        }

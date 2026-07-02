@@ -50,9 +50,7 @@ logger = get_logger(__name__)
 class RequestContextMiddleware(BaseHTTPMiddleware):
     """Establish request-id + tenant context and emit access logs."""
 
-    async def dispatch(
-        self, request: Request, call_next: "RequestResponseEndpoint"
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: "RequestResponseEndpoint") -> Response:
         settings = get_settings()
         request_id_header = settings.request_id_header
         tenant_header = settings.tenant_header

@@ -54,22 +54,54 @@ ALLOWED_EXTERNAL_EVENT_TYPES = frozenset(EXTERNAL_EVENT_MAP.values())
 
 # Deny-by-default field allow-list for outbound payloads. Only these keys are copied
 # from an internal event payload into the external webhook payload.
-SAFE_FIELDS = frozenset({
-    # shipment
-    "shipment_id", "reference_code", "client_id", "customer_id", "order_id",
-    "origin_warehouse_id", "destination_warehouse_id", "driver_id", "vehicle_id",
-    "status", "previous_status", "new_status", "priority",
-    "delivered_at", "picked_up_at", "planned_delivery_at", "delay_minutes",
-    # compliance / permits
-    "permit_id", "permit_type", "permit_number",
-    # claims
-    "claim_id", "claim_number", "claim_type", "approved_amount", "claimed_amount", "cycle_days",
-    # billing
-    "invoice_id", "invoice_number", "total_amount", "payment_id", "amount", "method",
-    "settlement_id", "settlement_number", "settlement_type", "currency_code",
-    # notifications
-    "notification_id", "channel", "source_event_type",
-})
+SAFE_FIELDS = frozenset(
+    {
+        # shipment
+        "shipment_id",
+        "reference_code",
+        "client_id",
+        "customer_id",
+        "order_id",
+        "origin_warehouse_id",
+        "destination_warehouse_id",
+        "driver_id",
+        "vehicle_id",
+        "status",
+        "previous_status",
+        "new_status",
+        "priority",
+        "delivered_at",
+        "picked_up_at",
+        "planned_delivery_at",
+        "delay_minutes",
+        # compliance / permits
+        "permit_id",
+        "permit_type",
+        "permit_number",
+        # claims
+        "claim_id",
+        "claim_number",
+        "claim_type",
+        "approved_amount",
+        "claimed_amount",
+        "cycle_days",
+        # billing
+        "invoice_id",
+        "invoice_number",
+        "total_amount",
+        "payment_id",
+        "amount",
+        "method",
+        "settlement_id",
+        "settlement_number",
+        "settlement_type",
+        "currency_code",
+        # notifications
+        "notification_id",
+        "channel",
+        "source_event_type",
+    }
+)
 
 
 def external_name(internal_event_type: str) -> Optional[str]:

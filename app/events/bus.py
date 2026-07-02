@@ -65,7 +65,9 @@ class EventBus(abc.ABC):
         """Subscribe a handler; returns it (so it can be used as a decorator)."""
 
     @abc.abstractmethod
-    def publish(self, envelope: EventEnvelope, session: Optional[Session] = None) -> DispatchOutcome:
+    def publish(
+        self, envelope: EventEnvelope, session: Optional[Session] = None
+    ) -> DispatchOutcome:
         """Publish an envelope to its subscribers.
 
         In-process transports dispatch synchronously and require ``session``;
@@ -103,7 +105,9 @@ class InProcessEventBus(EventBus):
     def handlers(self) -> tuple[EventHandler, ...]:
         return tuple(self._handlers)
 
-    def publish(self, envelope: EventEnvelope, session: Optional[Session] = None) -> DispatchOutcome:
+    def publish(
+        self, envelope: EventEnvelope, session: Optional[Session] = None
+    ) -> DispatchOutcome:
         from app.events import metrics  # local import avoids any import cycle at module load
 
         if session is None:  # pragma: no cover - misuse guard

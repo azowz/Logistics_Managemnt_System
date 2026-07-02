@@ -35,9 +35,7 @@ class EquipmentStateMachine:
             }
         ),
         EquipmentStatus.UNDER_MAINTENANCE: frozenset({EquipmentStatus.ACTIVE}),
-        EquipmentStatus.RESERVED: frozenset(
-            {EquipmentStatus.ACTIVE, EquipmentStatus.IN_TRANSIT}
-        ),
+        EquipmentStatus.RESERVED: frozenset({EquipmentStatus.ACTIVE, EquipmentStatus.IN_TRANSIT}),
         EquipmentStatus.IN_TRANSIT: frozenset({EquipmentStatus.ACTIVE}),
         EquipmentStatus.INACTIVE: frozenset(
             {EquipmentStatus.ACTIVE, EquipmentStatus.DECOMMISSIONED}
@@ -46,9 +44,7 @@ class EquipmentStateMachine:
     }
 
     #: Terminal status — no transition permitted out.
-    TERMINAL_STATES: FrozenSet[EquipmentStatus] = frozenset(
-        {EquipmentStatus.DECOMMISSIONED}
-    )
+    TERMINAL_STATES: FrozenSet[EquipmentStatus] = frozenset({EquipmentStatus.DECOMMISSIONED})
 
     #: Statuses from which a unit may NOT be assigned to a movement.
     NON_ASSIGNABLE_STATES: FrozenSet[EquipmentStatus] = frozenset(
@@ -70,9 +66,7 @@ class EquipmentStateMachine:
         return target in cls.ALLOWED_TRANSITIONS.get(current, frozenset())
 
     @classmethod
-    def validate_transition(
-        cls, current: EquipmentStatus, target: EquipmentStatus
-    ) -> None:
+    def validate_transition(cls, current: EquipmentStatus, target: EquipmentStatus) -> None:
         """Raise :exc:`StatusTransitionError` if ``current → target`` is illegal."""
         if not cls.can_transition(current, target):
             raise StatusTransitionError(

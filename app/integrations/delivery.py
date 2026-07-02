@@ -31,8 +31,9 @@ class WebhookDeliveryProvider(Protocol):
 
     name: str
 
-    def send(self, *, target_url: str, body: str, headers: dict, timeout_seconds: int) -> WebhookSendResult:
-        ...
+    def send(
+        self, *, target_url: str, body: str, headers: dict, timeout_seconds: int
+    ) -> WebhookSendResult: ...
 
 
 class NoNetworkWebhookProvider:
@@ -45,7 +46,9 @@ class NoNetworkWebhookProvider:
 
     name = "no_network"
 
-    def send(self, *, target_url: str, body: str, headers: dict, timeout_seconds: int) -> WebhookSendResult:
+    def send(
+        self, *, target_url: str, body: str, headers: dict, timeout_seconds: int
+    ) -> WebhookSendResult:
         return WebhookSendResult(
             succeeded=False,
             error_code="provider_not_configured",
@@ -70,7 +73,9 @@ class HttpWebhookProvider:
         self._user_agent = user_agent
         self._client = client  # injectable httpx.Client for tests
 
-    def send(self, *, target_url: str, body: str, headers: dict, timeout_seconds: int) -> WebhookSendResult:
+    def send(
+        self, *, target_url: str, body: str, headers: dict, timeout_seconds: int
+    ) -> WebhookSendResult:
         import httpx  # local import keeps httpx off the hot import path
 
         merged = {**(headers or {}), "User-Agent": self._user_agent}
@@ -80,11 +85,19 @@ class HttpWebhookProvider:
         try:
             resp = client.post(target_url, content=body.encode("utf-8"), headers=merged)
         except httpx.TimeoutException as exc:
-            return WebhookSendResult(succeeded=False, error_code="timeout",
-                                     error_message=str(exc)[:512], duration_ms=_elapsed_ms(started))
+            return WebhookSendResult(
+                succeeded=False,
+                error_code="timeout",
+                error_message=str(exc)[:512],
+                duration_ms=_elapsed_ms(started),
+            )
         except httpx.HTTPError as exc:  # connection/transport errors, invalid URL, etc.
-            return WebhookSendResult(succeeded=False, error_code="connection_error",
-                                     error_message=str(exc)[:512], duration_ms=_elapsed_ms(started))
+            return WebhookSendResult(
+                succeeded=False,
+                error_code="connection_error",
+                error_message=str(exc)[:512],
+                duration_ms=_elapsed_ms(started),
+            )
         finally:
             if owns_client:
                 client.close()
@@ -92,11 +105,20 @@ class HttpWebhookProvider:
         duration = _elapsed_ms(started)
         text = (resp.text or "")[: self._MAX_BODY]
         if 200 <= resp.status_code < 300:
-            return WebhookSendResult(succeeded=True, http_status_code=resp.status_code,
-                                     response_body=text, duration_ms=duration)
-        return WebhookSendResult(succeeded=False, http_status_code=resp.status_code, response_body=text,
-                                 error_code=f"http_{resp.status_code}",
-                                 error_message=f"HTTP {resp.status_code}", duration_ms=duration)
+            return WebhookSendResult(
+                succeeded=True,
+                http_status_code=resp.status_code,
+                response_body=text,
+                duration_ms=duration,
+            )
+        return WebhookSendResult(
+            succeeded=False,
+            http_status_code=resp.status_code,
+            response_body=text,
+            error_code=f"http_{resp.status_code}",
+            error_message=f"HTTP {resp.status_code}",
+            duration_ms=duration,
+        )
 
 
 def _elapsed_ms(started: float) -> int:

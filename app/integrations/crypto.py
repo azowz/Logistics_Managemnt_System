@@ -34,8 +34,8 @@ from app.core.security import pwd_context
 
 # Public prefix scheme for issued API keys: ``mesaar_<prefix>_<secret>``.
 _KEY_NAMESPACE = "mesaar"
-_PREFIX_BYTES = 6      # → 8 base32-ish chars, safe to display/store in the clear
-_SECRET_BYTES = 32     # 256 bits of entropy for the secret portion
+_PREFIX_BYTES = 6  # → 8 base32-ish chars, safe to display/store in the clear
+_SECRET_BYTES = 32  # 256 bits of entropy for the secret portion
 _WEBHOOK_SECRET_BYTES = 32
 
 
@@ -116,11 +116,15 @@ def compute_signature(secret: str, body: str, *, timestamp: str | None = None) -
     signature also binds the send time (enabling a replay window on verification).
     """
     signing_input = f"{timestamp}.{body}" if timestamp else body
-    digest = hmac.new(secret.encode("utf-8"), signing_input.encode("utf-8"), hashlib.sha256).hexdigest()
+    digest = hmac.new(
+        secret.encode("utf-8"), signing_input.encode("utf-8"), hashlib.sha256
+    ).hexdigest()
     return f"sha256={digest}"
 
 
-def verify_signature(secret: str, body: str, signature: str, *, timestamp: str | None = None) -> bool:
+def verify_signature(
+    secret: str, body: str, signature: str, *, timestamp: str | None = None
+) -> bool:
     """Constant-time verification of an HMAC-SHA256 signature over ``[timestamp.]body``."""
     if not secret or not signature:
         return False

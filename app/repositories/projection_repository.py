@@ -46,27 +46,35 @@ class _BaseProjectionRepo:
             for col in self.model.__table__.columns:
                 if col.name in key or col.primary_key:
                     continue
-                if isinstance(col.type, (Integer, Numeric)) and getattr(row, col.name, None) is None:
+                if (
+                    isinstance(col.type, (Integer, Numeric))
+                    and getattr(row, col.name, None) is None
+                ):
                     setattr(row, col.name, 0)
             self._session.add(row)
         return row
 
     def truncate_for_tenant(self, tenant_id: uuid.UUID) -> int:
-        result = self._session.execute(
-            delete(self.model).where(self.model.tenant_id == tenant_id)
-        )
+        result = self._session.execute(delete(self.model).where(self.model.tenant_id == tenant_id))
         return int(result.rowcount or 0)
 
     def count_for_tenant(self, tenant_id: uuid.UUID) -> int:
-        return int(self._session.scalar(
-            select(func.count()).select_from(self.model).where(self.model.tenant_id == tenant_id)
-        ) or 0)
+        return int(
+            self._session.scalar(
+                select(func.count())
+                .select_from(self.model)
+                .where(self.model.tenant_id == tenant_id)
+            )
+            or 0
+        )
 
 
 class _PeriodRepoMixin:
     """List helper for period-keyed projections (filter by [start, end])."""
 
-    def list_for_period(self, tenant_id, *, start=None, end=None, currency_code=None, sort_dir="asc", limit=400):
+    def list_for_period(
+        self, tenant_id, *, start=None, end=None, currency_code=None, sort_dir="asc", limit=400
+    ):
         stmt = select(self.model).where(self.model.tenant_id == tenant_id)
         if start is not None:
             stmt = stmt.where(self.model.period_date >= start)
@@ -92,14 +100,18 @@ class FinancialSummaryProjectionRepository(_BaseProjectionRepo, _PeriodRepoMixin
     model = FinancialSummaryProjection
 
     def get_or_create(self, tenant_id, period_date: date, currency_code: str = "SAR"):
-        return self._get_or_create(tenant_id=tenant_id, period_date=period_date, currency_code=currency_code)
+        return self._get_or_create(
+            tenant_id=tenant_id, period_date=period_date, currency_code=currency_code
+        )
 
 
 class ARAgingProjectionRepository(_BaseProjectionRepo):
     model = ARAgingProjection
 
     def get_or_create(self, tenant_id, customer_id, currency_code: str = "SAR"):
-        return self._get_or_create(tenant_id=tenant_id, customer_id=customer_id, currency_code=currency_code)
+        return self._get_or_create(
+            tenant_id=tenant_id, customer_id=customer_id, currency_code=currency_code
+        )
 
     def list_for_tenant(self, tenant_id, *, customer_id=None, currency_code=None, limit=400):
         stmt = select(ARAgingProjection).where(ARAgingProjection.tenant_id == tenant_id)
@@ -114,7 +126,9 @@ class ClaimsMetricsProjectionRepository(_BaseProjectionRepo, _PeriodRepoMixin):
     model = ClaimsMetricsProjection
 
     def get_or_create(self, tenant_id, period_date: date, currency_code: str = "SAR"):
-        return self._get_or_create(tenant_id=tenant_id, period_date=period_date, currency_code=currency_code)
+        return self._get_or_create(
+            tenant_id=tenant_id, period_date=period_date, currency_code=currency_code
+        )
 
 
 class ComplianceMetricsProjectionRepository(_BaseProjectionRepo, _PeriodRepoMixin):
@@ -139,7 +153,9 @@ class OperationsDashboardProjectionRepository(_BaseProjectionRepo):
 
     def get_for_tenant(self, tenant_id) -> Optional[OperationsDashboardProjection]:
         return self._session.scalars(
-            select(OperationsDashboardProjection).where(OperationsDashboardProjection.tenant_id == tenant_id)
+            select(OperationsDashboardProjection).where(
+                OperationsDashboardProjection.tenant_id == tenant_id
+            )
         ).first()
 
 
@@ -150,7 +166,10 @@ class ProjectionHealthRepository(_BaseProjectionRepo):
         return self._get_or_create(tenant_id=tenant_id, projection_name=projection_name)
 
     def list_for_tenant(self, tenant_id) -> List[ProjectionHealth]:
-        return list(self._session.scalars(
-            select(ProjectionHealth).where(ProjectionHealth.tenant_id == tenant_id)
-            .order_by(ProjectionHealth.projection_name)
-        ).all())
+        return list(
+            self._session.scalars(
+                select(ProjectionHealth)
+                .where(ProjectionHealth.tenant_id == tenant_id)
+                .order_by(ProjectionHealth.projection_name)
+            ).all()
+        )

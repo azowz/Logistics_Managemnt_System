@@ -25,9 +25,7 @@ class Driver(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     # Driver natural keys are unique PER TENANT (ADR-001 / docs/03 §3.2).
     __table_args__ = (
         UniqueConstraint("tenant_id", "user_id", name="uq_drivers_tenant_id_user_id"),
-        UniqueConstraint(
-            "tenant_id", "license_number", name="uq_drivers_tenant_id_license_number"
-        ),
+        UniqueConstraint("tenant_id", "license_number", name="uq_drivers_tenant_id_license_number"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(

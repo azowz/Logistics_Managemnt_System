@@ -46,31 +46,39 @@ def _enum_values(enum_cls) -> list[str]:
 class NotificationTemplate(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     __tablename__ = "notification_templates"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "template_code", name="uq_notification_templates_tenant_id_template_code"),
-        CheckConstraint(
-            "channel IN ('in_app', 'email', 'sms', 'push', 'webhook')", name="channel"
+        UniqueConstraint(
+            "tenant_id", "template_code", name="uq_notification_templates_tenant_id_template_code"
         ),
+        CheckConstraint("channel IN ('in_app', 'email', 'sms', 'push', 'webhook')", name="channel"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     template_code: Mapped[str] = mapped_column(String(128), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     channel: Mapped[NotificationChannel] = mapped_column(
         SAEnum(NotificationChannel, native_enum=False, length=16, values_callable=_enum_values),
-        nullable=False, index=True,
+        nullable=False,
+        index=True,
     )
     subject_template: Mapped[Optional[str]] = mapped_column(String(512))
     body_template: Mapped[str] = mapped_column(Text, nullable=False)
     language: Mapped[str] = mapped_column(String(8), nullable=False, server_default="en")
-    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")
+    active: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="true"
+    )
     event_type: Mapped[Optional[str]] = mapped_column(String(128), index=True)
     variables_schema: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text)
 
-    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True, default=None)
+    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), nullable=True, default=None
+    )
     version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
     __mapper_args__ = {"version_id_col": version}
 
@@ -79,13 +87,13 @@ class Notification(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     __tablename__ = "notifications"
     __table_args__ = (
         # Domain-level idempotency: one notification per (tenant, event, channel, recipient).
-        UniqueConstraint("tenant_id", "idempotency_key", name="uq_notifications_tenant_id_idempotency_key"),
+        UniqueConstraint(
+            "tenant_id", "idempotency_key", name="uq_notifications_tenant_id_idempotency_key"
+        ),
         CheckConstraint(
             "status IN ('pending', 'queued', 'sent', 'failed', 'cancelled', 'read')", name="status"
         ),
-        CheckConstraint(
-            "channel IN ('in_app', 'email', 'sms', 'push', 'webhook')", name="channel"
-        ),
+        CheckConstraint("channel IN ('in_app', 'email', 'sms', 'push', 'webhook')", name="channel"),
         CheckConstraint("priority IN ('low', 'normal', 'high', 'urgent')", name="priority"),
         CheckConstraint("retry_count >= 0", name="retry_count_non_negative"),
         CheckConstraint(
@@ -100,13 +108,20 @@ class Notification(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     template_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("notification_templates.id", ondelete="SET NULL"), nullable=True
+        UUID(as_uuid=True),
+        ForeignKey("notification_templates.id", ondelete="SET NULL"),
+        nullable=True,
     )
     idempotency_key: Mapped[str] = mapped_column(String(255), nullable=False)
-    event_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True, index=True)
+    event_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), nullable=True, index=True
+    )
     event_type: Mapped[Optional[str]] = mapped_column(String(128), index=True)
     aggregate_type: Mapped[Optional[str]] = mapped_column(String(64))
     aggregate_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
@@ -117,17 +132,23 @@ class Notification(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     recipient_phone: Mapped[Optional[str]] = mapped_column(String(32))
     channel: Mapped[NotificationChannel] = mapped_column(
         SAEnum(NotificationChannel, native_enum=False, length=16, values_callable=_enum_values),
-        nullable=False, index=True,
+        nullable=False,
+        index=True,
     )
     subject: Mapped[Optional[str]] = mapped_column(String(512))
     body: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[NotificationStatus] = mapped_column(
         SAEnum(NotificationStatus, native_enum=False, length=16, values_callable=_enum_values),
-        nullable=False, default=NotificationStatus.PENDING, server_default="pending", index=True,
+        nullable=False,
+        default=NotificationStatus.PENDING,
+        server_default="pending",
+        index=True,
     )
     priority: Mapped[NotificationPriority] = mapped_column(
         SAEnum(NotificationPriority, native_enum=False, length=16, values_callable=_enum_values),
-        nullable=False, default=NotificationPriority.NORMAL, server_default="normal",
+        nullable=False,
+        default=NotificationPriority.NORMAL,
+        server_default="normal",
     )
     scheduled_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     queued_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
@@ -139,7 +160,9 @@ class Notification(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     last_error: Mapped[Optional[str]] = mapped_column(String(1024))
     notification_metadata: Mapped[Optional[dict]] = mapped_column("metadata", JSONB, nullable=True)
 
-    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True, default=None)
+    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), nullable=True, default=None
+    )
     version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
     __mapper_args__ = {"version_id_col": version}
 
@@ -149,9 +172,7 @@ class NotificationDeliveryAttempt(TimestampMixin, Base):
 
     __tablename__ = "notification_delivery_attempts"
     __table_args__ = (
-        CheckConstraint(
-            "channel IN ('in_app', 'email', 'sms', 'push', 'webhook')", name="channel"
-        ),
+        CheckConstraint("channel IN ('in_app', 'email', 'sms', 'push', 'webhook')", name="channel"),
         CheckConstraint(
             "status IN ('pending', 'succeeded', 'failed', 'skipped', 'retrying')", name="status"
         ),
@@ -160,17 +181,25 @@ class NotificationDeliveryAttempt(TimestampMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     notification_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("notifications.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("notifications.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     channel: Mapped[NotificationChannel] = mapped_column(
-        SAEnum(NotificationChannel, native_enum=False, length=16, values_callable=_enum_values), nullable=False
+        SAEnum(NotificationChannel, native_enum=False, length=16, values_callable=_enum_values),
+        nullable=False,
     )
     provider: Mapped[Optional[str]] = mapped_column(String(64))
     status: Mapped[DeliveryAttemptStatus] = mapped_column(
-        SAEnum(DeliveryAttemptStatus, native_enum=False, length=16, values_callable=_enum_values), nullable=False
+        SAEnum(DeliveryAttemptStatus, native_enum=False, length=16, values_callable=_enum_values),
+        nullable=False,
     )
     attempt_number: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
     requested_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))

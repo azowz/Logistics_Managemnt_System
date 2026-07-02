@@ -17,8 +17,12 @@ from app.models.enums import (
 )
 from app.schemas.common import IdModel, TimestampMixin
 
-_TEMPLATE_SORT = frozenset({"template_code", "name", "channel", "language", "created_at", "updated_at"})
-_NOTIFICATION_SORT = frozenset({"status", "channel", "priority", "scheduled_at", "created_at", "updated_at"})
+_TEMPLATE_SORT = frozenset(
+    {"template_code", "name", "channel", "language", "created_at", "updated_at"}
+)
+_NOTIFICATION_SORT = frozenset(
+    {"status", "channel", "priority", "scheduled_at", "created_at", "updated_at"}
+)
 
 _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 _PHONE_RE = re.compile(r"^\+?[0-9][0-9\-\s()]{4,30}$")
@@ -162,7 +166,9 @@ class NotificationCreate(BaseModel):
     @model_validator(mode="after")
     def recipient_and_body(self) -> "NotificationCreate":
         if not (self.recipient_user_id or self.recipient_email or self.recipient_phone):
-            raise ValueError("At least one recipient target (user_id, email, or phone) is required.")
+            raise ValueError(
+                "At least one recipient target (user_id, email, or phone) is required."
+            )
         if not self.body and not self.event_type:
             raise ValueError("Provide a body, or an event_type that resolves to a template.")
         return self

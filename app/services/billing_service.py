@@ -94,12 +94,22 @@ class BillingService:
 
     def _emit(self, event, *, aggregate_id, aggregate_type, tenant_id):
         nv = self._event_repo.next_aggregate_version(aggregate_id)
-        env = EventEnvelope.create(event, tenant_id=tenant_id, aggregate_id=aggregate_id,
-                                   aggregate_version=nv, aggregate_type=aggregate_type, user_id=self._actor_id())
+        env = EventEnvelope.create(
+            event,
+            tenant_id=tenant_id,
+            aggregate_id=aggregate_id,
+            aggregate_version=nv,
+            aggregate_type=aggregate_type,
+            user_id=self._actor_id(),
+        )
         self._event_repo.append(env)
 
     def _owned(self, obj, tenant_id, label, ident):
-        if obj is None or getattr(obj, "is_deleted", False) or getattr(obj, "tenant_id", None) != tenant_id:
+        if (
+            obj is None
+            or getattr(obj, "is_deleted", False)
+            or getattr(obj, "tenant_id", None) != tenant_id
+        ):
             raise ValidationError(f"{label} {ident} does not exist in this tenant.")
         return obj
 
@@ -147,18 +157,34 @@ class BillingService:
         data.pop("status", None)
         total = _money(subtotal + tax - discount)
         if total < 0:
-            raise ValidationError("Quote total cannot be negative (discount exceeds subtotal + tax).")
+            raise ValidationError(
+                "Quote total cannot be negative (discount exceeds subtotal + tax)."
+            )
         quote = self._quotes.create(
-            tenant_id=tenant_id, quote_number=number, status=QuoteStatus.DRAFT,
-            subtotal_amount=subtotal, tax_amount=tax, discount_amount=discount, total_amount=total,
-            created_by=actor_id, updated_by=actor_id, **data,
+            tenant_id=tenant_id,
+            quote_number=number,
+            status=QuoteStatus.DRAFT,
+            subtotal_amount=subtotal,
+            tax_amount=tax,
+            discount_amount=discount,
+            total_amount=total,
+            created_by=actor_id,
+            updated_by=actor_id,
+            **data,
         )
         self._session.flush()
         self._emit(
-            QuoteCreated(quote_id=quote.id, tenant_id=tenant_id, quote_number=number,
-                         status=quote.status.value, total_amount=_str(total),
-                         currency_code=quote.currency_code),
-            aggregate_id=quote.id, aggregate_type="Quote", tenant_id=tenant_id,
+            QuoteCreated(
+                quote_id=quote.id,
+                tenant_id=tenant_id,
+                quote_number=number,
+                status=quote.status.value,
+                total_amount=_str(total),
+                currency_code=quote.currency_code,
+            ),
+            aggregate_id=quote.id,
+            aggregate_type="Quote",
+            tenant_id=tenant_id,
         )
         self._session.commit()
         self._session.refresh(quote)
@@ -180,8 +206,12 @@ class BillingService:
         quote.updated_by = actor_id
         self._session.flush()
         for factory in extra_events or []:
-            self._emit(factory(quote, previous), aggregate_id=quote.id, aggregate_type="Quote",
-                       tenant_id=quote.tenant_id)
+            self._emit(
+                factory(quote, previous),
+                aggregate_id=quote.id,
+                aggregate_type="Quote",
+                tenant_id=quote.tenant_id,
+            )
         self._session.commit()
         self._session.refresh(quote)
         return quote
@@ -189,46 +219,89 @@ class BillingService:
     def issue_quote(self, quote_id):
         def _m(q: Quote):
             q.issued_at = utcnow()
+
         return self._quote_transition(
-            quote_id, QuoteStatus.ISSUED, mutate=_m,
-            extra_events=[lambda q, prev: QuoteIssued(quote_id=q.id, tenant_id=q.tenant_id, previous_status=prev.value)],
+            quote_id,
+            QuoteStatus.ISSUED,
+            mutate=_m,
+            extra_events=[
+                lambda q, prev: QuoteIssued(
+                    quote_id=q.id, tenant_id=q.tenant_id, previous_status=prev.value
+                )
+            ],
         )
 
     def approve_quote(self, quote_id):
         quote = self._quotes.get_by_id_or_raise(quote_id)
-        if not quote.is_deleted and quote.valid_until is not None and _aware(quote.valid_until) < utcnow():
-            raise ValidationError("Quote has passed its valid_until date and cannot be approved (expire it instead).")
+        if (
+            not quote.is_deleted
+            and quote.valid_until is not None
+            and _aware(quote.valid_until) < utcnow()
+        ):
+            raise ValidationError(
+                "Quote has passed its valid_until date and cannot be approved (expire it instead)."
+            )
 
         def _m(q: Quote):
             q.approved_at = utcnow()
+
         return self._quote_transition(
-            quote_id, QuoteStatus.APPROVED, mutate=_m,
-            extra_events=[lambda q, prev: QuoteApproved(quote_id=q.id, tenant_id=q.tenant_id, previous_status=prev.value,
-                                                         currency_code=q.currency_code)],
+            quote_id,
+            QuoteStatus.APPROVED,
+            mutate=_m,
+            extra_events=[
+                lambda q, prev: QuoteApproved(
+                    quote_id=q.id,
+                    tenant_id=q.tenant_id,
+                    previous_status=prev.value,
+                    currency_code=q.currency_code,
+                )
+            ],
         )
 
     def reject_quote(self, quote_id, *, reason=None):
         def _m(q: Quote):
             q.rejected_at = utcnow()
+
         return self._quote_transition(
-            quote_id, QuoteStatus.REJECTED, mutate=_m,
-            extra_events=[lambda q, prev: QuoteRejected(quote_id=q.id, tenant_id=q.tenant_id, previous_status=prev.value, reason=reason)],
+            quote_id,
+            QuoteStatus.REJECTED,
+            mutate=_m,
+            extra_events=[
+                lambda q, prev: QuoteRejected(
+                    quote_id=q.id, tenant_id=q.tenant_id, previous_status=prev.value, reason=reason
+                )
+            ],
         )
 
     def expire_quote(self, quote_id):
         def _m(q: Quote):
             q.expired_at = utcnow()
+
         return self._quote_transition(
-            quote_id, QuoteStatus.EXPIRED, mutate=_m,
-            extra_events=[lambda q, prev: QuoteExpired(quote_id=q.id, tenant_id=q.tenant_id, previous_status=prev.value)],
+            quote_id,
+            QuoteStatus.EXPIRED,
+            mutate=_m,
+            extra_events=[
+                lambda q, prev: QuoteExpired(
+                    quote_id=q.id, tenant_id=q.tenant_id, previous_status=prev.value
+                )
+            ],
         )
 
     def cancel_quote(self, quote_id, *, reason=None):
         def _m(q: Quote):
             q.cancelled_at = utcnow()
+
         return self._quote_transition(
-            quote_id, QuoteStatus.CANCELLED, mutate=_m,
-            extra_events=[lambda q, prev: QuoteCancelled(quote_id=q.id, tenant_id=q.tenant_id, previous_status=prev.value, reason=reason)],
+            quote_id,
+            QuoteStatus.CANCELLED,
+            mutate=_m,
+            extra_events=[
+                lambda q, prev: QuoteCancelled(
+                    quote_id=q.id, tenant_id=q.tenant_id, previous_status=prev.value, reason=reason
+                )
+            ],
         )
 
     def get_quote(self, quote_id, *, include_deleted=False) -> Quote:
@@ -250,18 +323,29 @@ class BillingService:
                 data[key] = _money(data[key])
         data["updated_by"] = actor_id
         self._quotes.update(quote, **data)
-        quote.total_amount = _money(quote.subtotal_amount + quote.tax_amount - quote.discount_amount)
+        quote.total_amount = _money(
+            quote.subtotal_amount + quote.tax_amount - quote.discount_amount
+        )
         self._session.commit()
         self._session.refresh(quote)
         return quote
 
     def list_quotes(self, params) -> Page[Quote]:
         items, total = self._quotes.list_quotes(
-            q=params.q, status=params.status, customer_id=params.customer_id, order_id=params.order_id,
-            shipment_id=params.shipment_id, include_deleted=params.include_deleted,
-            sort_by=params.sort_by, sort_dir=params.sort_dir, limit=params.size, offset=params.offset,
+            q=params.q,
+            status=params.status,
+            customer_id=params.customer_id,
+            order_id=params.order_id,
+            shipment_id=params.shipment_id,
+            include_deleted=params.include_deleted,
+            sort_by=params.sort_by,
+            sort_dir=params.sort_dir,
+            limit=params.size,
+            offset=params.offset,
         )
-        return Page.create(items=items, total=total, params=PageParams(page=params.page, size=params.size))
+        return Page.create(
+            items=items, total=total, params=PageParams(page=params.page, size=params.size)
+        )
 
     # ===================== Invoices =====================
 
@@ -283,10 +367,14 @@ class BillingService:
         tax = Decimal("0.00")
         discount = Decimal("0.00")
         for ln in lines:
-            net, ln_tax, _ = self._line_amounts({
-                "quantity": ln.quantity, "unit_price": ln.unit_price,
-                "discount_amount": ln.discount_amount, "tax_rate": ln.tax_rate,
-            })
+            net, ln_tax, _ = self._line_amounts(
+                {
+                    "quantity": ln.quantity,
+                    "unit_price": ln.unit_price,
+                    "discount_amount": ln.discount_amount,
+                    "tax_rate": ln.tax_rate,
+                }
+            )
             subtotal += net
             tax += ln_tax
             discount += _money(ln.discount_amount)
@@ -294,7 +382,10 @@ class BillingService:
         invoice.tax_amount = _money(tax)
         invoice.discount_amount = _money(discount)
         invoice.total_amount = _money(
-            subtotal + tax + _money(invoice.penalty_amount) - _money(invoice.claim_adjustment_amount)
+            subtotal
+            + tax
+            + _money(invoice.penalty_amount)
+            - _money(invoice.claim_adjustment_amount)
         )
         if invoice.total_amount < 0:
             invoice.total_amount = Decimal("0.00")
@@ -302,12 +393,16 @@ class BillingService:
     def calculate_invoice_balance(self, invoice: Invoice) -> Decimal:
         return _money(self._invoices.get_invoice_balance(invoice))
 
-    def create_invoice(self, *, invoice_number: Optional[str] = None, lines: Optional[List[dict]] = None, **data) -> Invoice:
+    def create_invoice(
+        self, *, invoice_number: Optional[str] = None, lines: Optional[List[dict]] = None, **data
+    ) -> Invoice:
         tenant_id = self._tenant_id()
         actor_id = self._actor_id()
         self._validate_commercial_refs(tenant_id, data)
         if data.get("quote_id") is not None:
-            quote = self._owned(self._quotes.get_by_id(data["quote_id"]), tenant_id, "Quote", data["quote_id"])
+            quote = self._owned(
+                self._quotes.get_by_id(data["quote_id"]), tenant_id, "Quote", data["quote_id"]
+            )
             if quote.status == QuoteStatus.EXPIRED:
                 raise ValidationError("An expired quote cannot be converted to an invoice.")
         number = invoice_number or self._gen("INV")
@@ -315,21 +410,34 @@ class BillingService:
             raise ConflictError(f"Invoice number '{number}' already exists in this tenant.")
         data.pop("status", None)
         invoice = self._invoices.create(
-            tenant_id=tenant_id, invoice_number=number, status=InvoiceStatus.DRAFT,
-            created_by=actor_id, updated_by=actor_id, **data,
+            tenant_id=tenant_id,
+            invoice_number=number,
+            status=InvoiceStatus.DRAFT,
+            created_by=actor_id,
+            updated_by=actor_id,
+            **data,
         )
         self._session.flush()
         for ln in lines or []:
             _, _, line_total = self._line_amounts(ln)
-            self._lines.create(tenant_id=tenant_id, invoice_id=invoice.id, line_total=line_total, **ln)
+            self._lines.create(
+                tenant_id=tenant_id, invoice_id=invoice.id, line_total=line_total, **ln
+            )
         self._session.flush()
         self.calculate_invoice_totals(invoice)
         self._session.flush()
         self._emit(
-            InvoiceCreated(invoice_id=invoice.id, tenant_id=tenant_id, invoice_number=number,
-                           status=invoice.status.value, total_amount=_str(invoice.total_amount),
-                           currency_code=invoice.currency_code),
-            aggregate_id=invoice.id, aggregate_type="Invoice", tenant_id=tenant_id,
+            InvoiceCreated(
+                invoice_id=invoice.id,
+                tenant_id=tenant_id,
+                invoice_number=number,
+                status=invoice.status.value,
+                total_amount=_str(invoice.total_amount),
+                currency_code=invoice.currency_code,
+            ),
+            aggregate_id=invoice.id,
+            aggregate_type="Invoice",
+            tenant_id=tenant_id,
         )
         self._session.commit()
         self._session.refresh(invoice)
@@ -371,8 +479,14 @@ class BillingService:
             raise NotFoundError(f"Invoice {invoice_id} not found (deleted).")
         self.calculate_invoice_totals(invoice)
         if _money(invoice.total_amount) <= 0 and not invoice.is_credit_note:
-            raise ValidationError("An invoice must have a positive total to be issued (unless it is a credit note).")
-        if invoice.due_date is not None and invoice.issued_at is None and _aware(invoice.due_date) < utcnow():
+            raise ValidationError(
+                "An invoice must have a positive total to be issued (unless it is a credit note)."
+            )
+        if (
+            invoice.due_date is not None
+            and invoice.issued_at is None
+            and _aware(invoice.due_date) < utcnow()
+        ):
             raise ValidationError("due_date cannot be in the past at issue time.")
         previous = invoice.status
         InvoiceStateMachine.validate_transition(previous, InvoiceStatus.ISSUED)
@@ -381,16 +495,30 @@ class BillingService:
         invoice.updated_by = actor_id
         self._session.flush()
         self._emit(
-            InvoiceIssued(invoice_id=invoice.id, tenant_id=invoice.tenant_id, previous_status=previous.value,
-                          total_amount=_str(invoice.total_amount), currency_code=invoice.currency_code),
-            aggregate_id=invoice.id, aggregate_type="Invoice", tenant_id=invoice.tenant_id,
+            InvoiceIssued(
+                invoice_id=invoice.id,
+                tenant_id=invoice.tenant_id,
+                previous_status=previous.value,
+                total_amount=_str(invoice.total_amount),
+                currency_code=invoice.currency_code,
+            ),
+            aggregate_id=invoice.id,
+            aggregate_type="Invoice",
+            tenant_id=invoice.tenant_id,
         )
         self._session.commit()
         self._session.refresh(invoice)
         return invoice
 
-    def validate_payment(self, invoice: Invoice, amount: Decimal, currency_code: str, *,
-                         allow_override=False, check_balance=True) -> None:
+    def validate_payment(
+        self,
+        invoice: Invoice,
+        amount: Decimal,
+        currency_code: str,
+        *,
+        allow_override=False,
+        check_balance=True,
+    ) -> None:
         """Validate a payment against an invoice.
 
         Currency-match and invoice-status guards apply to **every** payment,
@@ -399,11 +527,21 @@ class BillingService:
         being capped by the live balance — but never in the wrong currency nor
         against a draft/voided/cancelled/paid invoice.
         """
-        if invoice.status in (InvoiceStatus.DRAFT, InvoiceStatus.VOIDED, InvoiceStatus.CANCELLED, InvoiceStatus.PAID):
-            raise ValidationError(f"Cannot record a payment against a '{invoice.status.value}' invoice.")
+        if invoice.status in (
+            InvoiceStatus.DRAFT,
+            InvoiceStatus.VOIDED,
+            InvoiceStatus.CANCELLED,
+            InvoiceStatus.PAID,
+        ):
+            raise ValidationError(
+                f"Cannot record a payment against a '{invoice.status.value}' invoice."
+            )
         if _money(amount) <= 0:
             raise ValidationError("Payment amount must be positive.")
-        if currency_code is not None and currency_code.upper() != (invoice.currency_code or "").upper():
+        if (
+            currency_code is not None
+            and currency_code.upper() != (invoice.currency_code or "").upper()
+        ):
             raise ValidationError("Payment currency must match the invoice currency.")
         if check_balance:
             balance = self.calculate_invoice_balance(invoice)
@@ -412,29 +550,61 @@ class BillingService:
                     f"Payment amount {amount} exceeds the remaining balance {balance} (override required)."
                 )
 
-    def record_payment(self, invoice_id, *, amount, method, currency_code=None, payment_reference=None,
-                       notes=None, confirm=True, allow_override=False) -> Payment:
+    def record_payment(
+        self,
+        invoice_id,
+        *,
+        amount,
+        method,
+        currency_code=None,
+        payment_reference=None,
+        notes=None,
+        confirm=True,
+        allow_override=False,
+    ) -> Payment:
         tenant_id = self._tenant_id()
         actor_id = self._actor_id()
         invoice = self._invoices.get_by_id_or_raise(invoice_id)
         if invoice.is_deleted:
             raise NotFoundError(f"Invoice {invoice_id} not found (deleted).")
-        currency = (currency_code or invoice.currency_code)
+        currency = currency_code or invoice.currency_code
         # Currency + invoice-status guards apply to every payment; the balance
         # (over-payment) check is only meaningful for a confirmed payment.
-        self.validate_payment(invoice, amount, currency, allow_override=allow_override, check_balance=confirm)
+        self.validate_payment(
+            invoice, amount, currency, allow_override=allow_override, check_balance=confirm
+        )
         status = PaymentStatus.CONFIRMED if confirm else PaymentStatus.PENDING
         payment = self._payments.create(
-            tenant_id=tenant_id, invoice_id=invoice.id, amount=_money(amount), currency_code=currency.upper(),
-            method=method, status=status, paid_at=utcnow() if confirm else None, received_by=actor_id,
-            payment_reference=payment_reference, notes=notes, created_by=actor_id, updated_by=actor_id,
+            tenant_id=tenant_id,
+            invoice_id=invoice.id,
+            amount=_money(amount),
+            currency_code=currency.upper(),
+            method=method,
+            status=status,
+            paid_at=utcnow() if confirm else None,
+            received_by=actor_id,
+            payment_reference=payment_reference,
+            notes=notes,
+            created_by=actor_id,
+            updated_by=actor_id,
         )
         self._session.flush()
         self._emit(
-            PaymentRecorded(payment_id=payment.id, tenant_id=tenant_id, invoice_id=invoice.id,
-                            amount=_str(_money(amount)), method=payment.method.value if hasattr(payment.method, "value") else str(payment.method),
-                            currency_code=invoice.currency_code),
-            aggregate_id=invoice.id, aggregate_type="Invoice", tenant_id=tenant_id,
+            PaymentRecorded(
+                payment_id=payment.id,
+                tenant_id=tenant_id,
+                invoice_id=invoice.id,
+                amount=_str(_money(amount)),
+                method=(
+                    payment.method.value
+                    if hasattr(payment.method, "value")
+                    else str(payment.method)
+                ),
+                currency_code=invoice.currency_code,
+            ),
+            aggregate_id=invoice.id,
+            aggregate_type="Invoice",
+            tenant_id=tenant_id,
         )
         if confirm:
             self._recompute_invoice_payment_status(invoice)
@@ -454,13 +624,23 @@ class BillingService:
         invoice.status = target
         if target == InvoiceStatus.PAID:
             invoice.paid_at = utcnow()
-            event = InvoicePaid(invoice_id=invoice.id, tenant_id=invoice.tenant_id, previous_status=previous.value,
-                                currency_code=invoice.currency_code)
+            event = InvoicePaid(
+                invoice_id=invoice.id,
+                tenant_id=invoice.tenant_id,
+                previous_status=previous.value,
+                currency_code=invoice.currency_code,
+            )
         else:
-            event = InvoicePartiallyPaid(invoice_id=invoice.id, tenant_id=invoice.tenant_id,
-                                         previous_status=previous.value, balance=_str(balance))
+            event = InvoicePartiallyPaid(
+                invoice_id=invoice.id,
+                tenant_id=invoice.tenant_id,
+                previous_status=previous.value,
+                balance=_str(balance),
+            )
         self._session.flush()
-        self._emit(event, aggregate_id=invoice.id, aggregate_type="Invoice", tenant_id=invoice.tenant_id)
+        self._emit(
+            event, aggregate_id=invoice.id, aggregate_type="Invoice", tenant_id=invoice.tenant_id
+        )
 
     def mark_payment_failed(self, payment_id, *, reason=None) -> Payment:
         tenant_id = self._tenant_id()
@@ -469,13 +649,22 @@ class BillingService:
         if payment.is_deleted:
             raise NotFoundError(f"Payment {payment_id} not found (deleted).")
         if payment.status != PaymentStatus.PENDING:
-            raise ValidationError(f"Only pending payments can be marked failed (was '{payment.status.value}').")
+            raise ValidationError(
+                f"Only pending payments can be marked failed (was '{payment.status.value}')."
+            )
         payment.status = PaymentStatus.FAILED
         payment.updated_by = actor_id
         self._session.flush()
         self._emit(
-            PaymentFailed(payment_id=payment.id, tenant_id=tenant_id, invoice_id=payment.invoice_id, reason=reason),
-            aggregate_id=payment.invoice_id, aggregate_type="Invoice", tenant_id=tenant_id,
+            PaymentFailed(
+                payment_id=payment.id,
+                tenant_id=tenant_id,
+                invoice_id=payment.invoice_id,
+                reason=reason,
+            ),
+            aggregate_id=payment.invoice_id,
+            aggregate_type="Invoice",
+            tenant_id=tenant_id,
         )
         self._session.commit()
         self._session.refresh(payment)
@@ -490,7 +679,9 @@ class BillingService:
         previous = invoice.status
         if previous == InvoiceStatus.PAID:
             if not allow_override:
-                raise ValidationError("A paid invoice cannot be voided without an authorized override.")
+                raise ValidationError(
+                    "A paid invoice cannot be voided without an authorized override."
+                )
         elif not InvoiceStateMachine.can_transition(previous, InvoiceStatus.VOIDED):
             InvoiceStateMachine.validate_transition(previous, InvoiceStatus.VOIDED)
         invoice.status = InvoiceStatus.VOIDED
@@ -498,8 +689,15 @@ class BillingService:
         invoice.updated_by = actor_id
         self._session.flush()
         self._emit(
-            InvoiceVoided(invoice_id=invoice.id, tenant_id=tenant_id, previous_status=previous.value, reason=reason),
-            aggregate_id=invoice.id, aggregate_type="Invoice", tenant_id=tenant_id,
+            InvoiceVoided(
+                invoice_id=invoice.id,
+                tenant_id=tenant_id,
+                previous_status=previous.value,
+                reason=reason,
+            ),
+            aggregate_id=invoice.id,
+            aggregate_type="Invoice",
+            tenant_id=tenant_id,
         )
         self._session.commit()
         self._session.refresh(invoice)
@@ -518,8 +716,15 @@ class BillingService:
         invoice.updated_by = actor_id
         self._session.flush()
         self._emit(
-            InvoiceCancelled(invoice_id=invoice.id, tenant_id=tenant_id, previous_status=previous.value, reason=reason),
-            aggregate_id=invoice.id, aggregate_type="Invoice", tenant_id=tenant_id,
+            InvoiceCancelled(
+                invoice_id=invoice.id,
+                tenant_id=tenant_id,
+                previous_status=previous.value,
+                reason=reason,
+            ),
+            aggregate_id=invoice.id,
+            aggregate_type="Invoice",
+            tenant_id=tenant_id,
         )
         self._session.commit()
         self._session.refresh(invoice)
@@ -540,9 +745,15 @@ class BillingService:
         invoice.updated_by = actor_id
         self._session.flush()
         self._emit(
-            InvoiceOverdue(invoice_id=invoice.id, tenant_id=tenant_id, previous_status=previous.value,
-                           currency_code=invoice.currency_code),
-            aggregate_id=invoice.id, aggregate_type="Invoice", tenant_id=tenant_id,
+            InvoiceOverdue(
+                invoice_id=invoice.id,
+                tenant_id=tenant_id,
+                previous_status=previous.value,
+                currency_code=invoice.currency_code,
+            ),
+            aggregate_id=invoice.id,
+            aggregate_type="Invoice",
+            tenant_id=tenant_id,
         )
         self._session.commit()
         self._session.refresh(invoice)
@@ -550,18 +761,37 @@ class BillingService:
 
     def list_invoices(self, params) -> Page[Invoice]:
         items, total = self._invoices.list_invoices(
-            q=params.q, status=params.status, customer_id=params.customer_id, order_id=params.order_id,
-            shipment_id=params.shipment_id, claim_id=params.claim_id, include_deleted=params.include_deleted,
-            sort_by=params.sort_by, sort_dir=params.sort_dir, limit=params.size, offset=params.offset,
+            q=params.q,
+            status=params.status,
+            customer_id=params.customer_id,
+            order_id=params.order_id,
+            shipment_id=params.shipment_id,
+            claim_id=params.claim_id,
+            include_deleted=params.include_deleted,
+            sort_by=params.sort_by,
+            sort_dir=params.sort_dir,
+            limit=params.size,
+            offset=params.offset,
         )
-        return Page.create(items=items, total=total, params=PageParams(page=params.page, size=params.size))
+        return Page.create(
+            items=items, total=total, params=PageParams(page=params.page, size=params.size)
+        )
 
     search_invoices = list_invoices
 
     # ===================== Penalties / cancellation fees =====================
 
-    def apply_penalty(self, *, penalty_type, amount, order_id=None, shipment_id=None, invoice_id=None,
-                     reason=None, currency_code="SAR") -> Penalty:
+    def apply_penalty(
+        self,
+        *,
+        penalty_type,
+        amount,
+        order_id=None,
+        shipment_id=None,
+        invoice_id=None,
+        reason=None,
+        currency_code="SAR",
+    ) -> Penalty:
         tenant_id = self._tenant_id()
         actor_id = self._actor_id()
         if _money(amount) < 0:
@@ -570,11 +800,21 @@ class BillingService:
         self.validate_shipment_reference(tenant_id, shipment_id)
         invoice = None
         if invoice_id is not None:
-            invoice = self._owned(self._invoices.get_by_id(invoice_id), tenant_id, "Invoice", invoice_id)
+            invoice = self._owned(
+                self._invoices.get_by_id(invoice_id), tenant_id, "Invoice", invoice_id
+            )
         penalty = self._penalties.create(
-            tenant_id=tenant_id, penalty_type=penalty_type, amount=_money(amount), currency_code=currency_code.upper(),
-            order_id=order_id, shipment_id=shipment_id, invoice_id=invoice_id, reason=reason,
-            applied_at=utcnow(), created_by=actor_id, updated_by=actor_id,
+            tenant_id=tenant_id,
+            penalty_type=penalty_type,
+            amount=_money(amount),
+            currency_code=currency_code.upper(),
+            order_id=order_id,
+            shipment_id=shipment_id,
+            invoice_id=invoice_id,
+            reason=reason,
+            applied_at=utcnow(),
+            created_by=actor_id,
+            updated_by=actor_id,
         )
         self._session.flush()
         if invoice is not None and not InvoiceStateMachine.is_terminal(invoice.status):
@@ -582,18 +822,38 @@ class BillingService:
             self.calculate_invoice_totals(invoice)
             self._session.flush()
         self._emit(
-            PenaltyApplied(penalty_id=penalty.id, tenant_id=tenant_id,
-                           penalty_type=penalty.penalty_type.value if hasattr(penalty.penalty_type, "value") else str(penalty.penalty_type),
-                           amount=_str(_money(amount)), order_id=order_id, shipment_id=shipment_id, invoice_id=invoice_id,
-                           currency_code=penalty.currency_code),
-            aggregate_id=penalty.id, aggregate_type="Penalty", tenant_id=tenant_id,
+            PenaltyApplied(
+                penalty_id=penalty.id,
+                tenant_id=tenant_id,
+                penalty_type=(
+                    penalty.penalty_type.value
+                    if hasattr(penalty.penalty_type, "value")
+                    else str(penalty.penalty_type)
+                ),
+                amount=_str(_money(amount)),
+                order_id=order_id,
+                shipment_id=shipment_id,
+                invoice_id=invoice_id,
+                currency_code=penalty.currency_code,
+            ),
+            aggregate_id=penalty.id,
+            aggregate_type="Penalty",
+            tenant_id=tenant_id,
         )
         self._session.commit()
         self._session.refresh(penalty)
         return penalty
 
-    def apply_cancellation_fee(self, *, amount, order_id=None, shipment_id=None, invoice_id=None,
-                              reason=None, currency_code="SAR") -> Penalty:
+    def apply_cancellation_fee(
+        self,
+        *,
+        amount,
+        order_id=None,
+        shipment_id=None,
+        invoice_id=None,
+        reason=None,
+        currency_code="SAR",
+    ) -> Penalty:
         if order_id is None and shipment_id is None:
             raise ValidationError("A cancellation fee must be linked to an order or a shipment.")
         tenant_id = self._tenant_id()
@@ -604,11 +864,21 @@ class BillingService:
         self.validate_shipment_reference(tenant_id, shipment_id)
         invoice = None
         if invoice_id is not None:
-            invoice = self._owned(self._invoices.get_by_id(invoice_id), tenant_id, "Invoice", invoice_id)
+            invoice = self._owned(
+                self._invoices.get_by_id(invoice_id), tenant_id, "Invoice", invoice_id
+            )
         penalty = self._penalties.create(
-            tenant_id=tenant_id, penalty_type=PenaltyType.CANCELLATION_FEE, amount=_money(amount),
-            currency_code=currency_code.upper(), order_id=order_id, shipment_id=shipment_id, invoice_id=invoice_id,
-            reason=reason, applied_at=utcnow(), created_by=actor_id, updated_by=actor_id,
+            tenant_id=tenant_id,
+            penalty_type=PenaltyType.CANCELLATION_FEE,
+            amount=_money(amount),
+            currency_code=currency_code.upper(),
+            order_id=order_id,
+            shipment_id=shipment_id,
+            invoice_id=invoice_id,
+            reason=reason,
+            applied_at=utcnow(),
+            created_by=actor_id,
+            updated_by=actor_id,
         )
         self._session.flush()
         if invoice is not None and not InvoiceStateMachine.is_terminal(invoice.status):
@@ -616,9 +886,16 @@ class BillingService:
             self.calculate_invoice_totals(invoice)
             self._session.flush()
         self._emit(
-            CancellationFeeApplied(penalty_id=penalty.id, tenant_id=tenant_id, amount=_str(_money(amount)),
-                                   order_id=order_id, shipment_id=shipment_id),
-            aggregate_id=penalty.id, aggregate_type="Penalty", tenant_id=tenant_id,
+            CancellationFeeApplied(
+                penalty_id=penalty.id,
+                tenant_id=tenant_id,
+                amount=_str(_money(amount)),
+                order_id=order_id,
+                shipment_id=shipment_id,
+            ),
+            aggregate_id=penalty.id,
+            aggregate_type="Penalty",
+            tenant_id=tenant_id,
         )
         self._session.commit()
         self._session.refresh(penalty)
@@ -626,11 +903,19 @@ class BillingService:
 
     def list_penalties(self, params) -> Page[Penalty]:
         items, total = self._penalties.list_penalties(
-            penalty_type=params.penalty_type, order_id=params.order_id, shipment_id=params.shipment_id,
-            invoice_id=params.invoice_id, include_deleted=params.include_deleted,
-            sort_by=params.sort_by, sort_dir=params.sort_dir, limit=params.size, offset=params.offset,
+            penalty_type=params.penalty_type,
+            order_id=params.order_id,
+            shipment_id=params.shipment_id,
+            invoice_id=params.invoice_id,
+            include_deleted=params.include_deleted,
+            sort_by=params.sort_by,
+            sort_dir=params.sort_dir,
+            limit=params.size,
+            offset=params.offset,
         )
-        return Page.create(items=items, total=total, params=PageParams(page=params.page, size=params.size))
+        return Page.create(
+            items=items, total=total, params=PageParams(page=params.page, size=params.size)
+        )
 
 
 def _aware(dt):

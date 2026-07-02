@@ -91,7 +91,9 @@ class EventStoreRepository:
         return (current or 0) + 1
 
     # ---- outbox (relay side) ------------------------------------------
-    def fetch_unpublished(self, *, limit: int = 100, now: Optional[datetime] = None) -> Sequence[EventStore]:
+    def fetch_unpublished(
+        self, *, limit: int = 100, now: Optional[datetime] = None
+    ) -> Sequence[EventStore]:
         """Return due, unpublished events ordered by time (FIFO-ish via UUIDv7)."""
         now = now or utcnow()
         stmt = (
@@ -105,7 +107,9 @@ class EventStoreRepository:
         )
         return self._session.scalars(stmt).all()
 
-    def mark_published(self, event_id: uuid.UUID, *, published_at: Optional[datetime] = None) -> None:
+    def mark_published(
+        self, event_id: uuid.UUID, *, published_at: Optional[datetime] = None
+    ) -> None:
         """Stamp ``published_at`` so the relay stops considering this row."""
         record = self._session.get(EventStore, event_id)
         if record is not None:
@@ -237,11 +241,7 @@ class EventStoreRepository:
                        ``None`` → no filter.
             limit:     Maximum rows returned.
         """
-        stmt = (
-            select(DeadLetterEvent)
-            .order_by(DeadLetterEvent.last_failed_at.desc())
-            .limit(limit)
-        )
+        stmt = select(DeadLetterEvent).order_by(DeadLetterEvent.last_failed_at.desc()).limit(limit)
         if tenant_id is not None:
             stmt = stmt.where(DeadLetterEvent.tenant_id == tenant_id)
         if consumer is not None:

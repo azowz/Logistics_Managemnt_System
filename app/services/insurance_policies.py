@@ -79,9 +79,7 @@ class ClaimStateMachine:
 
     ALLOWED_TRANSITIONS: Dict[ClaimStatus, FrozenSet[ClaimStatus]] = {
         ClaimStatus.CREATED: frozenset({ClaimStatus.UNDER_REVIEW}),
-        ClaimStatus.UNDER_REVIEW: frozenset(
-            {ClaimStatus.APPROVED, ClaimStatus.REJECTED}
-        ),
+        ClaimStatus.UNDER_REVIEW: frozenset({ClaimStatus.APPROVED, ClaimStatus.REJECTED}),
         ClaimStatus.APPROVED: frozenset({ClaimStatus.SETTLED}),
         ClaimStatus.SETTLED: frozenset({ClaimStatus.CLOSED}),
         ClaimStatus.REJECTED: frozenset({ClaimStatus.CLOSED}),

@@ -39,9 +39,7 @@ class Tenant(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         # Short logical names: the ``ck`` naming convention expands these to
         # ``ck_tenants_<name>`` (matching the migration-authored DB names).
         CheckConstraint("status IN ('active', 'suspended')", name="status"),
-        CheckConstraint(
-            "isolation_mode IN ('shared', 'dedicated')", name="isolation_mode"
-        ),
+        CheckConstraint("isolation_mode IN ('shared', 'dedicated')", name="isolation_mode"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(

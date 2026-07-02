@@ -88,9 +88,7 @@ class EventStore(Base):
 
     # ``event_id`` is the PK AND the cross-system idempotency key (UUIDv7 →
     # time-ordered for index locality on this append-heavy table).
-    event_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid7
-    )
+    event_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid7)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("tenants.id", ondelete="RESTRICT"),
