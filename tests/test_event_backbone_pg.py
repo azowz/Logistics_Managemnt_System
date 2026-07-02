@@ -46,6 +46,7 @@ def backbone():
     import app.models.warehouse, app.models.shipment, app.models.shipment_tracking_event  # noqa: F401
     import app.models.event_store, app.models.audit_log  # noqa: F401
     from app.events.bus import InProcessEventBus, BaseEventHandler
+    from app.events.dispatcher import Dispatcher
     from app.events.domain_event import DomainEvent
     from app.events.registry import EventRegistry
 
@@ -79,7 +80,13 @@ def backbone():
         def handle(self, event, envelope, session):
             captured.append(event.widget_id)
 
-    bus = InProcessEventBus()
+    # The bus's default dispatcher deserializes via the process-global
+    # ``event_registry``; ``WidgetCreated`` lives only in this test's local
+    # registry, so bind a dispatcher factory to it — otherwise every dispatch
+    # dead-letters as undeserializable and the projection never fires.
+    bus = InProcessEventBus(
+        dispatcher_factory=lambda session: Dispatcher(session, registry=registry)
+    )
     bus.register(WidgetProjection())
 
     # Seed a tenant to satisfy the FK.
