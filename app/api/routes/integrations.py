@@ -13,14 +13,18 @@ import time
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
 from pydantic import ValidationError as PydanticValidationError
 from sqlalchemy.orm import Session
 
 from app.core.security import require_roles
 from app.db.session import get_session
 from app.integrations import crypto
-from app.integrations.auth import AuthenticatedPartner, get_current_api_key_partner
+from app.integrations.auth import (
+    SCOPE_INBOUND_WRITE,
+    AuthenticatedPartner,
+    require_api_key_scopes,
+)
 from app.integrations.policies import get_inbound_rate_limiter
 from app.models.enums import UserRole
 from app.schemas.integration import (
@@ -44,6 +48,10 @@ from app.schemas.integration import (
 )
 from app.services.exceptions import ValidationError
 from app.services.integration_service import IntegrationService
+
+# Inbound signed requests must carry a timestamp within this window (seconds) to bound
+# replay. The timestamp is bound into the HMAC signing input, so it cannot be forged.
+_REPLAY_WINDOW_SECONDS = 300
 
 router = APIRouter(prefix="/integrations", tags=["integrations"])
 
@@ -238,6 +246,14 @@ def list_deliveries(params: DeliveryListParams = Depends(), session: Session = D
     return [WebhookDeliveryRead.model_validate(d) for d in items]
 
 
+@router.get("/webhooks/deliveries/due", response_model=list[WebhookDeliveryRead],
+            summary="List deliveries currently due for a (re)attempt.")
+def list_due_deliveries(limit: int = Query(default=100, ge=1, le=500), session: Session = Depends(get_session),
+                        current_user=Depends(require_roles(*_MANAGE))) -> list[WebhookDeliveryRead]:
+    rows = IntegrationService(session).list_due_deliveries(limit=limit)
+    return [WebhookDeliveryRead.model_validate(d) for d in rows]
+
+
 @router.get("/webhooks/deliveries/{delivery_id}", response_model=WebhookDeliveryRead, summary="Get a webhook delivery.")
 def get_delivery(delivery_id: uuid.UUID, session: Session = Depends(get_session),
                  current_user=Depends(require_roles(*_MANAGE))) -> WebhookDeliveryRead:
@@ -273,12 +289,12 @@ def list_delivery_attempts(delivery_id: uuid.UUID, session: Session = Depends(ge
              summary="Receive an authenticated, signed inbound integration event.")
 async def receive_inbound_event(
     request: Request,
-    principal: AuthenticatedPartner = Depends(get_current_api_key_partner),
+    principal: AuthenticatedPartner = Depends(require_api_key_scopes(SCOPE_INBOUND_WRITE)),
     x_mesaar_signature: Optional[str] = Header(default=None),
     x_mesaar_timestamp: Optional[str] = Header(default=None),
     session: Session = Depends(get_session),
 ) -> InboundIntegrationEventRead:
-    # M2: rate-limit per (tenant, api_key) AFTER successful API-key authentication.
+    # Rate-limit per (tenant, api_key) AFTER successful API-key authentication.
     # tenant/api_key come from the authenticated key context, never from the client.
     decision = get_inbound_rate_limiter().check(
         f"{principal.context.tenant_id}:{principal.context.api_key_id}", now=time.time())
@@ -287,6 +303,19 @@ async def receive_inbound_event(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Rate limit exceeded for this API key.",
             headers={"Retry-After": str(decision.retry_after_seconds)},
+        )
+    # Replay-window enforcement: the timestamp is required, must parse, and must be within
+    # ±_REPLAY_WINDOW_SECONDS of now. It is bound into the signature so it can't be forged.
+    if not x_mesaar_timestamp:
+        raise ValidationError("X-Mesaar-Timestamp header is required.")
+    try:
+        skew = abs(int(time.time()) - int(x_mesaar_timestamp))
+    except (ValueError, TypeError):
+        raise ValidationError("X-Mesaar-Timestamp must be an integer Unix timestamp (seconds).")
+    if skew > _REPLAY_WINDOW_SECONDS:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Request timestamp is outside the allowed replay window.",
         )
     raw = (await request.body()).decode("utf-8")
     try:
@@ -300,7 +329,7 @@ async def receive_inbound_event(
     except PydanticValidationError as exc:
         raise ValidationError(f"Invalid inbound event body: {exc.errors()[0]['msg']}")
 
-    # Verify the HMAC signature using the presented plaintext key as the shared secret.
+    # Verify the HMAC signature (timestamp-bound) using the presented plaintext key.
     signature_valid = bool(
         x_mesaar_signature
         and crypto.verify_signature(principal.api_key, raw, x_mesaar_signature, timestamp=x_mesaar_timestamp)

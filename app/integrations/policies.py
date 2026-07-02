@@ -7,6 +7,7 @@ object the caller acts on.
 
 from __future__ import annotations
 
+import ipaddress
 from dataclasses import dataclass
 from typing import Dict, Optional, Tuple
 from urllib.parse import urlparse
@@ -56,6 +57,79 @@ def validate_event_types(event_types) -> list:
     return normalized
 
 
+# --- API-key scopes ---------------------------------------------------------
+
+SCOPE_INBOUND_WRITE = "integrations:inbound:write"
+SCOPE_DELIVERIES_READ = "integrations:deliveries:read"
+SCOPE_WEBHOOKS_READ = "integrations:webhooks:read"
+SCOPE_WEBHOOKS_WRITE = "integrations:webhooks:write"
+
+ALL_SCOPES = frozenset({
+    SCOPE_INBOUND_WRITE, SCOPE_DELIVERIES_READ, SCOPE_WEBHOOKS_READ, SCOPE_WEBHOOKS_WRITE,
+})
+
+
+def validate_scopes(scopes) -> Optional[list]:
+    """Validate/normalize requested API-key scopes against the known set. None → None."""
+    if scopes is None:
+        return None
+    if not isinstance(scopes, (list, tuple, set)):
+        raise ValidationError("scopes must be a list.")
+    normalized, seen = [], set()
+    for scope in scopes:
+        name = str(scope).strip()
+        if not name or name in seen:
+            continue
+        if name not in ALL_SCOPES:
+            raise ValidationError(
+                f"Unknown scope '{name}'. Allowed: {', '.join(sorted(ALL_SCOPES))}."
+            )
+        seen.add(name)
+        normalized.append(name)
+    return normalized or None
+
+
+# --- Allowed-IP validation + matching ---------------------------------------
+
+
+def validate_allowed_ips(allowed_ips) -> Optional[list]:
+    """Validate a list of exact IPs / CIDR networks. ``None``/empty → allow any (None)."""
+    if allowed_ips is None:
+        return None
+    if not isinstance(allowed_ips, (list, tuple)):
+        raise ValidationError("allowed_ips must be a list of IPs or CIDR ranges.")
+    normalized = []
+    for entry in allowed_ips:
+        text = str(entry).strip()
+        if not text:
+            continue
+        try:
+            ipaddress.ip_network(text, strict=False)
+        except ValueError:
+            raise ValidationError(f"Invalid IP or CIDR in allowed_ips: '{text}'.")
+        normalized.append(text)
+    return normalized or None
+
+
+def ip_allowed(client_ip: Optional[str], allowed_ips) -> bool:
+    """Whether ``client_ip`` matches ``allowed_ips`` (exact or CIDR). Empty list → allow any."""
+    if not allowed_ips:
+        return True
+    if not client_ip:
+        return False
+    try:
+        addr = ipaddress.ip_address(client_ip)
+    except ValueError:
+        return False
+    for entry in allowed_ips:
+        try:
+            if addr in ipaddress.ip_network(str(entry), strict=False):
+                return True
+        except ValueError:
+            continue
+    return False
+
+
 # --- Rate limiting ----------------------------------------------------------
 
 
@@ -84,6 +158,43 @@ class InMemoryRateLimitBackend:
         count += 1
         self._windows[key] = (window_start, count)
         return count
+
+
+class RedisRateLimitBackend:
+    """Distributed fixed-window backend using Redis ``INCR`` + ``EXPIRE``.
+
+    Shares the ``incr(key, window_start)`` interface with the in-memory backend. Keys are
+    namespaced and window-scoped so windows expire on their own. **Fail-open (availability
+    mode) by default:** on any Redis error it logs a warning and returns 0 (treated as
+    under-limit) so a Redis outage never blocks partner traffic. Set ``fail_open=False`` for
+    a high-security fail-closed posture (returns a value above any limit). The client is
+    injectable for tests; otherwise the process-wide :func:`app.core.redis.get_redis`.
+    """
+
+    def __init__(self, *, client=None, window_seconds: int = 60, key_prefix: str = "ratelimit",
+                 fail_open: bool = True) -> None:
+        self._client = client
+        self._window = window_seconds
+        self._prefix = key_prefix
+        self._fail_open = fail_open
+
+    def incr(self, key: str, window_start: int) -> int:
+        from app.observability.logging import get_logger
+        redis_key = f"{self._prefix}:{key}:{window_start}"
+        try:
+            client = self._client
+            if client is None:
+                from app.core.redis import get_redis
+                client = get_redis()
+            count = int(client.incr(redis_key))
+            if count == 1:
+                client.expire(redis_key, self._window + 5)
+            return count
+        except Exception:  # noqa: BLE001 - Redis outage must not hard-fail the request
+            get_logger(__name__).warning("Rate-limit Redis backend error; failing %s",
+                                         "open" if self._fail_open else "closed", exc_info=False)
+            # fail-open → 0 (under limit); fail-closed → large value (over any limit)
+            return 0 if self._fail_open else 10 ** 9
 
 
 class RateLimitPolicy:
@@ -134,7 +245,16 @@ __all__ = [
     "validate_event_types",
     "RateLimitDecision",
     "InMemoryRateLimitBackend",
+    "RedisRateLimitBackend",
     "RateLimitPolicy",
     "get_inbound_rate_limiter",
     "set_inbound_rate_limiter",
+    "validate_allowed_ips",
+    "ip_allowed",
+    "validate_scopes",
+    "SCOPE_INBOUND_WRITE",
+    "SCOPE_DELIVERIES_READ",
+    "SCOPE_WEBHOOKS_READ",
+    "SCOPE_WEBHOOKS_WRITE",
+    "ALL_SCOPES",
 ]

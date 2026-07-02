@@ -18,7 +18,7 @@ Event emission pattern (ADR-007 / docs/03 §7):
 from __future__ import annotations
 
 import uuid
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Optional
 
 from sqlalchemy.orm import Session
 

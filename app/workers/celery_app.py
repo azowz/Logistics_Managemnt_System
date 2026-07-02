@@ -81,6 +81,15 @@ celery_app.conf.update(
             "kwargs": {},
             "options": {"expires": 280},  # discard if previous is still running
         },
+        # Webhook delivery sweep: every 60 s, re-attempt due webhook deliveries.
+        # Non-destructive (never replays/rebuilds), per-delivery isolated, overlap-guarded.
+        "webhook-delivery-sweep-every-60s": {
+            "task": "mesaar.webhook_delivery_sweep",
+            "schedule": 60.0,
+            "args": [],
+            "kwargs": {"batch_per_tenant": 100},
+            "options": {"expires": 55},  # discard if previous is still running
+        },
     },
 )
 

@@ -47,7 +47,6 @@ from app.events.shipment_events import (
     ShipmentDelayed,
     ShipmentDeleted,
     ShipmentDelivered,
-    ShipmentDriverChanged,
     ShipmentFailed,
     ShipmentInTransit,
     ShipmentMarkedReady,
@@ -56,7 +55,6 @@ from app.events.shipment_events import (
     ShipmentReturned,
     ShipmentStatusChanged,
     ShipmentUpdated,
-    ShipmentVehicleChanged,
 )
 from app.models.enums import (
     ShipmentStatus,
@@ -82,7 +80,6 @@ from app.services.exceptions import (
     CapacityError,
     ConflictError,
     NotFoundError,
-    StatusTransitionError,
     TrackingEventError,
     ValidationError,
 )

@@ -17,7 +17,7 @@ from __future__ import annotations
 
 from typing import Dict, FrozenSet
 
-from app.models.enums import EquipmentAvailability, EquipmentStatus
+from app.models.enums import EquipmentStatus
 from app.services.exceptions import StatusTransitionError
 
 

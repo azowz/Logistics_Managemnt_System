@@ -16,7 +16,6 @@ soft-deletable + auditable via the shared mixins.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
 from decimal import Decimal
 from typing import Optional
 

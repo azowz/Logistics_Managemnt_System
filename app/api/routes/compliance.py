@@ -29,7 +29,6 @@ from app.schemas.compliance import (
     ComplianceCheckListParams,
     ComplianceCheckRead,
     ComplianceOverrideRequest,
-    DispatchGateResult,
     EscortCreate,
     EscortListParams,
     EscortRead,
