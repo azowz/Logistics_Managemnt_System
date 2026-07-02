@@ -230,9 +230,7 @@ class EquipmentRepository:
     # Soft-delete / restore
     # ------------------------------------------------------------------
 
-    def soft_delete(
-        self, equipment: Equipment, *, deleted_by: Optional[uuid.UUID]
-    ) -> Equipment:
+    def soft_delete(self, equipment: Equipment, *, deleted_by: Optional[uuid.UUID]) -> Equipment:
         equipment.soft_delete()
         equipment.deleted_by = deleted_by
         return equipment

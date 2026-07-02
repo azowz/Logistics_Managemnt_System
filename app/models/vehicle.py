@@ -24,9 +24,7 @@ class Vehicle(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     __tablename__ = "vehicles"
     # Vehicle natural keys are unique PER TENANT (ADR-001 / docs/03 §3.2).
     __table_args__ = (
-        UniqueConstraint(
-            "tenant_id", "plate_number", name="uq_vehicles_tenant_id_plate_number"
-        ),
+        UniqueConstraint("tenant_id", "plate_number", name="uq_vehicles_tenant_id_plate_number"),
         UniqueConstraint("tenant_id", "vin", name="uq_vehicles_tenant_id_vin"),
     )
 

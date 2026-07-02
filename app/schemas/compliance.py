@@ -21,7 +21,9 @@ from app.models.enums import (
 )
 from app.schemas.common import IdModel, TimestampMixin
 
-_PERMIT_SORT = frozenset({"permit_number", "status", "permit_type", "valid_until", "created_at", "updated_at"})
+_PERMIT_SORT = frozenset(
+    {"permit_number", "status", "permit_type", "valid_until", "created_at", "updated_at"}
+)
 _CHECK_SORT = frozenset({"check_type", "status", "created_at", "updated_at"})
 _ESCORT_SORT = frozenset({"status", "scheduled_start", "created_at", "updated_at"})
 

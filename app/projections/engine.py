@@ -70,12 +70,18 @@ class ProjectionRebuilder:
                     applied += 1
         logger.info(
             "Projection rebuilt for tenant",
-            projection=projection.name, tenant_id=str(tenant_id), events_applied=applied,
+            projection=projection.name,
+            tenant_id=str(tenant_id),
+            events_applied=applied,
         )
         return applied
 
     def rebuild_by_aggregate(
-        self, projection: Projection, tenant_id: uuid.UUID, aggregate_type: str, aggregate_id: uuid.UUID
+        self,
+        projection: Projection,
+        tenant_id: uuid.UUID,
+        aggregate_type: str,
+        aggregate_id: uuid.UUID,
     ) -> int:
         """Re-fold a single aggregate's stream into ``projection`` (no global reset)."""
         applied = 0
@@ -92,8 +98,10 @@ class ProjectionRebuilder:
                     applied += 1
         logger.info(
             "Projection rebuilt for aggregate",
-            projection=projection.name, aggregate_type=aggregate_type,
-            aggregate_id=str(aggregate_id), events_applied=applied,
+            projection=projection.name,
+            aggregate_type=aggregate_type,
+            aggregate_id=str(aggregate_id),
+            events_applied=applied,
         )
         return applied
 

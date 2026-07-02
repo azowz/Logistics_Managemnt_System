@@ -43,11 +43,15 @@ def _tenants_with_due_deliveries() -> list:
     now = utcnow()
     with session_scope(PLATFORM_TENANT_ID) as session:
         rows = session.scalars(
-            select(WebhookDelivery.tenant_id).where(
-                WebhookDelivery.status.in_((WebhookDeliveryStatus.PENDING, WebhookDeliveryStatus.FAILED)),
+            select(WebhookDelivery.tenant_id)
+            .where(
+                WebhookDelivery.status.in_(
+                    (WebhookDeliveryStatus.PENDING, WebhookDeliveryStatus.FAILED)
+                ),
                 WebhookDelivery.next_attempt_at.isnot(None),
                 WebhookDelivery.next_attempt_at <= now,
-            ).distinct()
+            )
+            .distinct()
         ).all()
     return list(rows)
 
@@ -66,12 +70,16 @@ def run_webhook_delivery_sweep(*, batch_per_tenant: int = 100, provider=None) ->
         # over the network) each run in their own transaction so we never hold a DB
         # transaction open across a webhook HTTP call.
         with session_scope(tenant_id) as session:
-            due_ids = [d.id for d in WebhookDeliveryRepository(session).list_due(limit=batch_per_tenant)]
+            due_ids = [
+                d.id for d in WebhookDeliveryRepository(session).list_due(limit=batch_per_tenant)
+            ]
         for delivery_id in due_ids:
             result.attempted += 1
             try:
                 with session_scope(tenant_id) as session:
-                    delivery = IntegrationService(session).attempt_delivery(delivery_id, provider=provider)
+                    delivery = IntegrationService(session).attempt_delivery(
+                        delivery_id, provider=provider
+                    )
                 if delivery.status == WebhookDeliveryStatus.DELIVERED:
                     result.delivered += 1
                 else:
@@ -80,14 +88,19 @@ def run_webhook_delivery_sweep(*, batch_per_tenant: int = 100, provider=None) ->
                 result.errors += 1
                 logger.warning(
                     "Webhook delivery sweep: attempt failed",
-                    tenant_id=str(tenant_id), delivery_id=str(delivery_id), error=str(exc),
+                    tenant_id=str(tenant_id),
+                    delivery_id=str(delivery_id),
+                    error=str(exc),
                 )
 
     if result.tenants:
         logger.info(
             "Webhook delivery sweep complete",
-            tenants=result.tenants, attempted=result.attempted,
-            delivered=result.delivered, failed=result.failed, errors=result.errors,
+            tenants=result.tenants,
+            attempted=result.attempted,
+            delivered=result.delivered,
+            failed=result.failed,
+            errors=result.errors,
         )
     return result
 

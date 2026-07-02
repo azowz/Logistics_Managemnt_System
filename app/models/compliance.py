@@ -55,9 +55,7 @@ class Permit(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
 
     __tablename__ = "permits"
     __table_args__ = (
-        UniqueConstraint(
-            "tenant_id", "permit_number", name="uq_permits_tenant_id_permit_number"
-        ),
+        UniqueConstraint("tenant_id", "permit_number", name="uq_permits_tenant_id_permit_number"),
         CheckConstraint(
             "status IN ('draft', 'submitted', 'under_review', 'approved', "
             "'rejected', 'active', 'expired', 'cancelled')",
@@ -76,14 +74,23 @@ class Permit(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     permit_number: Mapped[str] = mapped_column(String(64), nullable=False)
     shipment_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("shipments.id", ondelete="SET NULL"), nullable=True, index=True
+        UUID(as_uuid=True),
+        ForeignKey("shipments.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     equipment_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("equipment.id", ondelete="SET NULL"), nullable=True, index=True
+        UUID(as_uuid=True),
+        ForeignKey("equipment.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     vehicle_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("vehicles.id", ondelete="SET NULL"), nullable=True
@@ -91,11 +98,15 @@ class Permit(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     route_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
 
     permit_type: Mapped[PermitType] = mapped_column(
-        SAEnum(PermitType, native_enum=False, length=32, values_callable=_enum_values), nullable=False
+        SAEnum(PermitType, native_enum=False, length=32, values_callable=_enum_values),
+        nullable=False,
     )
     status: Mapped[PermitStatus] = mapped_column(
         SAEnum(PermitStatus, native_enum=False, length=32, values_callable=_enum_values),
-        nullable=False, default=PermitStatus.DRAFT, server_default="draft", index=True,
+        nullable=False,
+        default=PermitStatus.DRAFT,
+        server_default="draft",
+        index=True,
     )
     issuing_authority: Mapped[Optional[str]] = mapped_column(String(255))
     region: Mapped[Optional[str]] = mapped_column(String(128))
@@ -107,8 +118,12 @@ class Permit(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     cancelled_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     expired_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
 
-    requires_escort: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
-    requires_police_escort: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
+    requires_escort: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
+    requires_police_escort: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
 
     max_allowed_weight: Mapped[Optional[Decimal]] = mapped_column(Numeric(12, 2))
     max_allowed_height: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 3))
@@ -119,7 +134,9 @@ class Permit(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     notes: Mapped[Optional[str]] = mapped_column(Text)
     rejection_reason: Mapped[Optional[str]] = mapped_column(String(512))
 
-    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True, default=None)
+    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), nullable=True, default=None
+    )
     version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
     __mapper_args__ = {"version_id_col": version}
 
@@ -141,16 +158,23 @@ class Escort(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     shipment_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("shipments.id", ondelete="SET NULL"), nullable=True, index=True
+        UUID(as_uuid=True),
+        ForeignKey("shipments.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     permit_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("permits.id", ondelete="SET NULL"), nullable=True, index=True
     )
     escort_type: Mapped[EscortType] = mapped_column(
-        SAEnum(EscortType, native_enum=False, length=32, values_callable=_enum_values), nullable=False
+        SAEnum(EscortType, native_enum=False, length=32, values_callable=_enum_values),
+        nullable=False,
     )
     provider_name: Mapped[Optional[str]] = mapped_column(String(255))
     contact_name: Mapped[Optional[str]] = mapped_column(String(255))
@@ -161,11 +185,16 @@ class Escort(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     scheduled_end: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     status: Mapped[EscortStatus] = mapped_column(
         SAEnum(EscortStatus, native_enum=False, length=32, values_callable=_enum_values),
-        nullable=False, default=EscortStatus.PLANNED, server_default="planned", index=True,
+        nullable=False,
+        default=EscortStatus.PLANNED,
+        server_default="planned",
+        index=True,
     )
     notes: Mapped[Optional[str]] = mapped_column(Text)
 
-    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True, default=None)
+    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), nullable=True, default=None
+    )
     version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
     __mapper_args__ = {"version_id_col": version}
 
@@ -184,13 +213,17 @@ class RouteRestriction(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     region: Mapped[Optional[str]] = mapped_column(String(128), index=True)
     road_name: Mapped[Optional[str]] = mapped_column(String(255))
     restriction_type: Mapped[RouteRestrictionType] = mapped_column(
         SAEnum(RouteRestrictionType, native_enum=False, length=32, values_callable=_enum_values),
-        nullable=False, index=True,
+        nullable=False,
+        index=True,
     )
     max_weight: Mapped[Optional[Decimal]] = mapped_column(Numeric(12, 2))
     max_height: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 3))
@@ -198,10 +231,14 @@ class RouteRestriction(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     max_length: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 3))
     start_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     end_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
-    active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true", index=True)
+    active: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="true", index=True
+    )
     notes: Mapped[Optional[str]] = mapped_column(Text)
 
-    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True, default=None)
+    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), nullable=True, default=None
+    )
     version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
     __mapper_args__ = {"version_id_col": version}
 
@@ -212,15 +249,23 @@ class AxleWeightProfile(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     __tablename__ = "axle_weight_profiles"
     __table_args__ = (
         CheckConstraint("axle_count IS NULL OR axle_count >= 0", name="axle_count_non_negative"),
-        CheckConstraint("total_weight IS NULL OR total_weight >= 0", name="total_weight_non_negative"),
+        CheckConstraint(
+            "total_weight IS NULL OR total_weight >= 0", name="total_weight_non_negative"
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     equipment_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("equipment.id", ondelete="SET NULL"), nullable=True, index=True
+        UUID(as_uuid=True),
+        ForeignKey("equipment.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     vehicle_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("vehicles.id", ondelete="SET NULL"), nullable=True
@@ -229,10 +274,14 @@ class AxleWeightProfile(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     total_weight: Mapped[Optional[Decimal]] = mapped_column(Numeric(12, 2))
     axle_weights: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True)
     max_axle_weight: Mapped[Optional[Decimal]] = mapped_column(Numeric(12, 2))
-    is_compliant: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")
+    is_compliant: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="true"
+    )
     notes: Mapped[Optional[str]] = mapped_column(Text)
 
-    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True, default=None)
+    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), nullable=True, default=None
+    )
     version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
     __mapper_args__ = {"version_id_col": version}
 
@@ -255,10 +304,16 @@ class ComplianceCheck(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     shipment_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("shipments.id", ondelete="SET NULL"), nullable=True, index=True
+        UUID(as_uuid=True),
+        ForeignKey("shipments.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     equipment_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("equipment.id", ondelete="SET NULL"), nullable=True
@@ -271,20 +326,28 @@ class ComplianceCheck(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     )
     check_type: Mapped[ComplianceCheckType] = mapped_column(
         SAEnum(ComplianceCheckType, native_enum=False, length=32, values_callable=_enum_values),
-        nullable=False, index=True,
+        nullable=False,
+        index=True,
     )
     status: Mapped[ComplianceCheckStatus] = mapped_column(
         SAEnum(ComplianceCheckStatus, native_enum=False, length=32, values_callable=_enum_values),
-        nullable=False, default=ComplianceCheckStatus.PENDING, server_default="pending", index=True,
+        nullable=False,
+        default=ComplianceCheckStatus.PENDING,
+        server_default="pending",
+        index=True,
     )
     result: Mapped[Optional[str]] = mapped_column(String(512))
-    blocking: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True, server_default="true")
+    blocking: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default="true"
+    )
     failure_reasons: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True)
     evaluated_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     evaluated_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text)
 
-    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True, default=None)
+    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), nullable=True, default=None
+    )
     version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
     __mapper_args__ = {"version_id_col": version}
 
@@ -294,9 +357,7 @@ class OperatorCertification(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
 
     __tablename__ = "operator_certifications"
     __table_args__ = (
-        CheckConstraint(
-            "status IN ('active', 'expired', 'suspended', 'revoked')", name="status"
-        ),
+        CheckConstraint("status IN ('active', 'expired', 'suspended', 'revoked')", name="status"),
         CheckConstraint(
             "valid_from IS NULL OR valid_until IS NULL OR valid_until >= valid_from",
             name="valid_window",
@@ -305,13 +366,18 @@ class OperatorCertification(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
     equipment_category_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("equipment_categories.id", ondelete="SET NULL"), nullable=True
+        UUID(as_uuid=True),
+        ForeignKey("equipment_categories.id", ondelete="SET NULL"),
+        nullable=True,
     )
     certification_type: Mapped[str] = mapped_column(String(128), nullable=False)
     certification_number: Mapped[Optional[str]] = mapped_column(String(128))
@@ -319,11 +385,18 @@ class OperatorCertification(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     valid_from: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     valid_until: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     status: Mapped[OperatorCertificationStatus] = mapped_column(
-        SAEnum(OperatorCertificationStatus, native_enum=False, length=32, values_callable=_enum_values),
-        nullable=False, default=OperatorCertificationStatus.ACTIVE, server_default="active", index=True,
+        SAEnum(
+            OperatorCertificationStatus, native_enum=False, length=32, values_callable=_enum_values
+        ),
+        nullable=False,
+        default=OperatorCertificationStatus.ACTIVE,
+        server_default="active",
+        index=True,
     )
     notes: Mapped[Optional[str]] = mapped_column(Text)
 
-    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True, default=None)
+    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), nullable=True, default=None
+    )
     version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
     __mapper_args__ = {"version_id_col": version}

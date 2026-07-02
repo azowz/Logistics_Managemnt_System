@@ -77,15 +77,22 @@ class NotificationEventHandler(BaseEventHandler):
         priority = TRIGGER_PRIORITIES.get(envelope.event_type, NotificationPriority.NORMAL)
         service = NotificationService(session, provider_registry=self._provider_registry)
         created = service.handle_domain_event(
-            event, envelope, channel=NotificationChannel.IN_APP, priority=priority,
+            event,
+            envelope,
+            channel=NotificationChannel.IN_APP,
+            priority=priority,
         )
         logger.debug(
             "Notification handler processed event",
-            event_type=envelope.event_type, event_id=str(envelope.event_id), created=len(created),
+            event_type=envelope.event_type,
+            event_id=str(envelope.event_id),
+            created=len(created),
         )
 
 
-def register_notification_handlers(bus: Optional[EventBus] = None, *, provider_registry=None) -> NotificationEventHandler:
+def register_notification_handlers(
+    bus: Optional[EventBus] = None, *, provider_registry=None
+) -> NotificationEventHandler:
     """Register the notification consumer on ``bus`` (defaults to the process bus).
 
     Idempotent: if a handler named ``notifications`` is already registered, the

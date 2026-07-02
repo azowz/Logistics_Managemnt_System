@@ -145,26 +145,33 @@ def run_outbox_relay(
                     result.dead_lettered += 1
                     logger.error(
                         "Outbox publish exhausted; dead-lettered",
-                        event_id=str(envelope.event_id), event_type=envelope.event_type,
-                        attempts=attempts, error=str(exc),
+                        event_id=str(envelope.event_id),
+                        event_type=envelope.event_type,
+                        attempts=attempts,
+                        error=str(exc),
                     )
                 else:
                     repo.record_publish_failure(
                         envelope.event_id,
                         error=str(exc),
-                        next_attempt_at=utcnow() + timedelta(seconds=_publish_backoff_seconds(attempts)),
+                        next_attempt_at=utcnow()
+                        + timedelta(seconds=_publish_backoff_seconds(attempts)),
                     )
                     logger.warning(
                         "Outbox publish failed; will retry",
-                        event_id=str(envelope.event_id), attempt=attempts, error=str(exc),
+                        event_id=str(envelope.event_id),
+                        attempt=attempts,
+                        error=str(exc),
                     )
             result.failed += 1
 
     if result.fetched:
         logger.info(
             "Outbox relay run complete",
-            fetched=result.fetched, published=result.published,
-            failed=result.failed, dead_lettered=result.dead_lettered,
+            fetched=result.fetched,
+            published=result.published,
+            failed=result.failed,
+            dead_lettered=result.dead_lettered,
         )
 
     # Persist heartbeat / cursor for lag monitoring (Gap 1 closure).

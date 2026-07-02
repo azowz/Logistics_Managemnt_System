@@ -85,8 +85,16 @@ class InsurancePolicyRepository(_BaseRepo):
         return self._session.scalars(stmt).first()
 
     def list_policies(
-        self, *, q=None, status=None, policy_type=None, include_deleted=False,
-        sort_by="created_at", sort_dir="desc", limit=50, offset=0,
+        self,
+        *,
+        q=None,
+        status=None,
+        policy_type=None,
+        include_deleted=False,
+        sort_by="created_at",
+        sort_dir="desc",
+        limit=50,
+        offset=0,
     ) -> Tuple[List[InsurancePolicy], int]:
         stmt = select(InsurancePolicy)
         if not include_deleted:
@@ -112,7 +120,9 @@ class InsurancePolicyRepository(_BaseRepo):
 class CoverageRuleRepository(_BaseRepo):
     model = CoverageRule
 
-    def get_rules_for_policy(self, policy_id: uuid.UUID, *, active_only: bool = False) -> List[CoverageRule]:
+    def get_rules_for_policy(
+        self, policy_id: uuid.UUID, *, active_only: bool = False
+    ) -> List[CoverageRule]:
         stmt = select(CoverageRule).where(
             CoverageRule.policy_id == policy_id, CoverageRule.deleted_at.is_(None)
         )
@@ -135,9 +145,7 @@ class ClaimRepository(_BaseRepo):
     model = Claim
 
     def get_by_number(self, claim_number: str) -> Optional[Claim]:
-        stmt = select(Claim).where(
-            Claim.claim_number == claim_number, Claim.deleted_at.is_(None)
-        )
+        stmt = select(Claim).where(Claim.claim_number == claim_number, Claim.deleted_at.is_(None))
         return self._session.scalars(stmt).first()
 
     def get_active_policy_for_claim(self, claim: Claim) -> Optional[InsurancePolicy]:
@@ -160,8 +168,19 @@ class ClaimRepository(_BaseRepo):
         return list(self._session.scalars(stmt).all())
 
     def list_claims(
-        self, *, q=None, status=None, claim_type=None, shipment_id=None, equipment_id=None,
-        policy_id=None, include_deleted=False, sort_by="created_at", sort_dir="desc", limit=50, offset=0,
+        self,
+        *,
+        q=None,
+        status=None,
+        claim_type=None,
+        shipment_id=None,
+        equipment_id=None,
+        policy_id=None,
+        include_deleted=False,
+        sort_by="created_at",
+        sort_dir="desc",
+        limit=50,
+        offset=0,
     ) -> Tuple[List[Claim], int]:
         stmt = select(Claim)
         if not include_deleted:
@@ -178,7 +197,9 @@ class ClaimRepository(_BaseRepo):
             stmt = stmt.where(Claim.policy_id == policy_id)
         if q:
             pattern = f"%{q}%"
-            stmt = stmt.where(or_(Claim.claim_number.ilike(pattern), Claim.description.ilike(pattern)))
+            stmt = stmt.where(
+                or_(Claim.claim_number.ilike(pattern), Claim.description.ilike(pattern))
+            )
         total = self._session.scalar(select(func.count()).select_from(stmt.subquery())) or 0
         col = getattr(Claim, sort_by, Claim.created_at)
         stmt = stmt.order_by((asc if sort_dir == "asc" else desc)(col)).limit(limit).offset(offset)
@@ -189,9 +210,11 @@ class DamageReportRepository(_BaseRepo):
     model = DamageReport
 
     def list_damage_reports_for_claim(self, claim_id: uuid.UUID) -> List[DamageReport]:
-        stmt = select(DamageReport).where(
-            DamageReport.claim_id == claim_id, DamageReport.deleted_at.is_(None)
-        ).order_by(DamageReport.created_at)
+        stmt = (
+            select(DamageReport)
+            .where(DamageReport.claim_id == claim_id, DamageReport.deleted_at.is_(None))
+            .order_by(DamageReport.created_at)
+        )
         return list(self._session.scalars(stmt).all())
 
 
@@ -199,9 +222,11 @@ class LiabilityRecordRepository(_BaseRepo):
     model = LiabilityRecord
 
     def list_liability_records_for_claim(self, claim_id: uuid.UUID) -> List[LiabilityRecord]:
-        stmt = select(LiabilityRecord).where(
-            LiabilityRecord.claim_id == claim_id, LiabilityRecord.deleted_at.is_(None)
-        ).order_by(LiabilityRecord.created_at)
+        stmt = (
+            select(LiabilityRecord)
+            .where(LiabilityRecord.claim_id == claim_id, LiabilityRecord.deleted_at.is_(None))
+            .order_by(LiabilityRecord.created_at)
+        )
         return list(self._session.scalars(stmt).all())
 
     def total_liability_percentage(self, claim_id: uuid.UUID) -> float:

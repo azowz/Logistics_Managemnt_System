@@ -34,7 +34,9 @@ class WebhookEventHandler(BaseEventHandler):
         created = IntegrationService(session).create_deliveries_from_event(envelope)
         logger.debug(
             "Webhook handler processed event",
-            event_type=envelope.event_type, event_id=str(envelope.event_id), deliveries=len(created),
+            event_type=envelope.event_type,
+            event_id=str(envelope.event_id),
+            deliveries=len(created),
         )
 
 

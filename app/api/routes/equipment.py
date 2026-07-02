@@ -254,9 +254,7 @@ def update_equipment(
     current_user=Depends(require_roles(*_WRITE_ROLES)),
 ) -> EquipmentRead:
     svc = EquipmentService(session)
-    equipment = svc.update_equipment(
-        equipment_id, **payload.model_dump(exclude_unset=True)
-    )
+    equipment = svc.update_equipment(equipment_id, **payload.model_dump(exclude_unset=True))
     return EquipmentRead.model_validate(equipment)
 
 
@@ -287,9 +285,7 @@ def restore_equipment(
     session: Session = Depends(get_session),
     current_user=Depends(require_roles(UserRole.ADMIN)),
 ) -> EquipmentRead:
-    return EquipmentRead.model_validate(
-        EquipmentService(session).restore_equipment(equipment_id)
-    )
+    return EquipmentRead.model_validate(EquipmentService(session).restore_equipment(equipment_id))
 
 
 # --- lifecycle ------------------------------------------------------------
@@ -306,9 +302,7 @@ def activate_equipment(
     session: Session = Depends(get_session),
     current_user=Depends(require_roles(*_WRITE_ROLES)),
 ) -> EquipmentRead:
-    return EquipmentRead.model_validate(
-        EquipmentService(session).activate_equipment(equipment_id)
-    )
+    return EquipmentRead.model_validate(EquipmentService(session).activate_equipment(equipment_id))
 
 
 @router.post(
@@ -340,9 +334,7 @@ def reserve_equipment(
     current_user=Depends(require_roles(*_WRITE_ROLES)),
 ) -> EquipmentRead:
     return EquipmentRead.model_validate(
-        EquipmentService(session).reserve_equipment(
-            equipment_id, reference=payload.reference
-        )
+        EquipmentService(session).reserve_equipment(equipment_id, reference=payload.reference)
     )
 
 
@@ -357,9 +349,7 @@ def release_equipment(
     session: Session = Depends(get_session),
     current_user=Depends(require_roles(*_WRITE_ROLES)),
 ) -> EquipmentRead:
-    return EquipmentRead.model_validate(
-        EquipmentService(session).release_equipment(equipment_id)
-    )
+    return EquipmentRead.model_validate(EquipmentService(session).release_equipment(equipment_id))
 
 
 @router.post(
@@ -408,7 +398,5 @@ def decommission_equipment(
     current_user=Depends(require_roles(*_WRITE_ROLES)),
 ) -> EquipmentRead:
     return EquipmentRead.model_validate(
-        EquipmentService(session).decommission_equipment(
-            equipment_id, reason=payload.reason
-        )
+        EquipmentService(session).decommission_equipment(equipment_id, reason=payload.reason)
     )

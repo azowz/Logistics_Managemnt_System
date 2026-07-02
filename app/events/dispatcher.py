@@ -95,8 +95,18 @@ class Dispatcher:
         try:
             event = self._registry.deserialize(envelope)
         except Exception as exc:  # noqa: BLE001 - normalize to a dead-letter
-            logger.error("Undeserializable event; dead-lettering", event_id=str(envelope.event_id), error=str(exc))
-            self._dead_letter(envelope, consumer, reason=f"deserialize: {exc}", retry_count=0, first_failed=utcnow())
+            logger.error(
+                "Undeserializable event; dead-lettering",
+                event_id=str(envelope.event_id),
+                error=str(exc),
+            )
+            self._dead_letter(
+                envelope,
+                consumer,
+                reason=f"deserialize: {exc}",
+                retry_count=0,
+                first_failed=utcnow(),
+            )
             return DEAD_LETTERED
 
         attempt = 0
@@ -117,19 +127,27 @@ class Dispatcher:
                 if attempt > self._max_retries:
                     logger.error(
                         "Handler exhausted retries; dead-lettering",
-                        consumer=consumer, event_id=str(envelope.event_id),
-                        event_type=etype, attempts=attempt, error=str(exc),
+                        consumer=consumer,
+                        event_id=str(envelope.event_id),
+                        event_type=etype,
+                        attempts=attempt,
+                        error=str(exc),
                     )
                     self._dead_letter(
-                        envelope, consumer, reason=str(exc),
-                        retry_count=attempt - 1, first_failed=first_failed,
+                        envelope,
+                        consumer,
+                        reason=str(exc),
+                        retry_count=attempt - 1,
+                        first_failed=first_failed,
                     )
                     return DEAD_LETTERED
                 metrics.EVENTS_RETRIED.labels(etype, consumer).inc()
                 logger.warning(
                     "Handler failed; retrying",
-                    consumer=consumer, event_id=str(envelope.event_id),
-                    attempt=attempt, error=str(exc),
+                    consumer=consumer,
+                    event_id=str(envelope.event_id),
+                    attempt=attempt,
+                    error=str(exc),
                 )
                 self._sleep(compute_backoff(attempt))
 
@@ -150,4 +168,11 @@ class Dispatcher:
         metrics.EVENTS_DEAD_LETTERED.labels(envelope.event_type, consumer).inc()
 
 
-__all__ = ["Dispatcher", "DispatchOutcome", "compute_backoff", "PROCESSED", "SKIPPED", "DEAD_LETTERED"]
+__all__ = [
+    "Dispatcher",
+    "DispatchOutcome",
+    "compute_backoff",
+    "PROCESSED",
+    "SKIPPED",
+    "DEAD_LETTERED",
+]

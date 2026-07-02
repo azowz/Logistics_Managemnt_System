@@ -23,9 +23,7 @@ class Warehouse(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
 
     __tablename__ = "warehouses"
     # Warehouse code is unique PER TENANT (ADR-001 / docs/03 §3.2).
-    __table_args__ = (
-        UniqueConstraint("tenant_id", "code", name="uq_warehouses_tenant_id_code"),
-    )
+    __table_args__ = (UniqueConstraint("tenant_id", "code", name="uq_warehouses_tenant_id_code"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

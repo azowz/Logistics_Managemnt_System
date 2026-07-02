@@ -52,9 +52,7 @@ class Shipment(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         CheckConstraint("weight_kg > 0", name="weight_positive"),
         CheckConstraint("volume_m3 > 0", name="volume_positive"),
         CheckConstraint("currency_code ~ '^[A-Z]{3}$'", name="currency_code"),
-        CheckConstraint(
-            "priority IN ('low', 'normal', 'high', 'urgent')", name="priority"
-        ),
+        CheckConstraint("priority IN ('low', 'normal', 'high', 'urgent')", name="priority"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(

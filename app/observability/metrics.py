@@ -115,9 +115,7 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
     format the response.
     """
 
-    async def dispatch(
-        self, request: Request, call_next: "RequestResponseEndpoint"
-    ) -> Response:
+    async def dispatch(self, request: Request, call_next: "RequestResponseEndpoint") -> Response:
         method = request.method
         start = time.perf_counter()
         status_code = 500  # Assume failure until a response is produced.
@@ -137,9 +135,9 @@ class PrometheusMiddleware(BaseHTTPMiddleware):
 
             # ``finally`` runs for both success and error paths, so metrics are
             # always recorded exactly once per request.
-            HTTP_REQUEST_DURATION_SECONDS.labels(
-                method=method, path=path_label
-            ).observe(elapsed_seconds)
+            HTTP_REQUEST_DURATION_SECONDS.labels(method=method, path=path_label).observe(
+                elapsed_seconds
+            )
             HTTP_REQUESTS_TOTAL.labels(
                 method=method, path=path_label, status=str(status_code)
             ).inc()

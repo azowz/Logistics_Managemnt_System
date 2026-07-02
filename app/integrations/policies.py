@@ -64,9 +64,14 @@ SCOPE_DELIVERIES_READ = "integrations:deliveries:read"
 SCOPE_WEBHOOKS_READ = "integrations:webhooks:read"
 SCOPE_WEBHOOKS_WRITE = "integrations:webhooks:write"
 
-ALL_SCOPES = frozenset({
-    SCOPE_INBOUND_WRITE, SCOPE_DELIVERIES_READ, SCOPE_WEBHOOKS_READ, SCOPE_WEBHOOKS_WRITE,
-})
+ALL_SCOPES = frozenset(
+    {
+        SCOPE_INBOUND_WRITE,
+        SCOPE_DELIVERIES_READ,
+        SCOPE_WEBHOOKS_READ,
+        SCOPE_WEBHOOKS_WRITE,
+    }
+)
 
 
 def validate_scopes(scopes) -> Optional[list]:
@@ -171,8 +176,14 @@ class RedisRateLimitBackend:
     injectable for tests; otherwise the process-wide :func:`app.core.redis.get_redis`.
     """
 
-    def __init__(self, *, client=None, window_seconds: int = 60, key_prefix: str = "ratelimit",
-                 fail_open: bool = True) -> None:
+    def __init__(
+        self,
+        *,
+        client=None,
+        window_seconds: int = 60,
+        key_prefix: str = "ratelimit",
+        fail_open: bool = True,
+    ) -> None:
         self._client = client
         self._window = window_seconds
         self._prefix = key_prefix
@@ -180,21 +191,26 @@ class RedisRateLimitBackend:
 
     def incr(self, key: str, window_start: int) -> int:
         from app.observability.logging import get_logger
+
         redis_key = f"{self._prefix}:{key}:{window_start}"
         try:
             client = self._client
             if client is None:
                 from app.core.redis import get_redis
+
                 client = get_redis()
             count = int(client.incr(redis_key))
             if count == 1:
                 client.expire(redis_key, self._window + 5)
             return count
         except Exception:  # noqa: BLE001 - Redis outage must not hard-fail the request
-            get_logger(__name__).warning("Rate-limit Redis backend error; failing %s",
-                                         "open" if self._fail_open else "closed", exc_info=False)
+            get_logger(__name__).warning(
+                "Rate-limit Redis backend error; failing %s",
+                "open" if self._fail_open else "closed",
+                exc_info=False,
+            )
             # fail-open → 0 (under limit); fail-closed → large value (over any limit)
-            return 0 if self._fail_open else 10 ** 9
+            return 0 if self._fail_open else 10**9
 
 
 class RateLimitPolicy:
@@ -204,8 +220,13 @@ class RateLimitPolicy:
     deterministic and never sleep.
     """
 
-    def __init__(self, *, limit: int = 100, window_seconds: int = 60,
-                 backend: Optional[InMemoryRateLimitBackend] = None) -> None:
+    def __init__(
+        self,
+        *,
+        limit: int = 100,
+        window_seconds: int = 60,
+        backend: Optional[InMemoryRateLimitBackend] = None,
+    ) -> None:
         if limit <= 0 or window_seconds <= 0:
             raise ValueError("limit and window_seconds must be positive.")
         self._limit = limit

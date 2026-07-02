@@ -116,9 +116,7 @@ class CustomerCreate(BaseModel):
     district: Optional[str] = Field(
         default=None, max_length=128, description="District or neighbourhood."
     )
-    address: Optional[str] = Field(
-        default=None, description="Free-form postal address."
-    )
+    address: Optional[str] = Field(default=None, description="Free-form postal address.")
     latitude: Optional[Decimal] = Field(
         default=None, ge=-90, le=90, description="GPS latitude (±90°)."
     )
@@ -310,9 +308,7 @@ class CustomerListParams(BaseModel):
     @classmethod
     def sort_field_allowed(cls, value: str) -> str:
         if value not in _SORTABLE_FIELDS:
-            raise ValueError(
-                f"sort_by must be one of: {', '.join(sorted(_SORTABLE_FIELDS))}."
-            )
+            raise ValueError(f"sort_by must be one of: {', '.join(sorted(_SORTABLE_FIELDS))}.")
         return value
 
     @property

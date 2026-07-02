@@ -52,14 +52,10 @@ class EquipmentCategory(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
 
     __tablename__ = "equipment_categories"
     __table_args__ = (
-        UniqueConstraint(
-            "tenant_id", "code", name="uq_equipment_categories_tenant_id_code"
-        ),
+        UniqueConstraint("tenant_id", "code", name="uq_equipment_categories_tenant_id_code"),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("tenants.id", ondelete="RESTRICT"),
@@ -89,14 +85,10 @@ class EquipmentModel(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
 
     __tablename__ = "equipment_models"
     __table_args__ = (
-        UniqueConstraint(
-            "tenant_id", "code", name="uq_equipment_models_tenant_id_code"
-        ),
+        UniqueConstraint("tenant_id", "code", name="uq_equipment_models_tenant_id_code"),
     )
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("tenants.id", ondelete="RESTRICT"),
@@ -130,9 +122,7 @@ class Equipment(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         UniqueConstraint(
             "tenant_id", "equipment_code", name="uq_equipment_tenant_id_equipment_code"
         ),
-        UniqueConstraint(
-            "tenant_id", "asset_tag", name="uq_equipment_tenant_id_asset_tag"
-        ),
+        UniqueConstraint("tenant_id", "asset_tag", name="uq_equipment_tenant_id_asset_tag"),
         # Serial uniqueness is optional (serial may be NULL); enforced per tenant
         # for non-null values at the DB level (partial index in the migration).
         CheckConstraint(
@@ -157,9 +147,7 @@ class Equipment(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     )
 
     # --- identity ---
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("tenants.id", ondelete="RESTRICT"),

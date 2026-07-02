@@ -246,9 +246,7 @@ def install_exception_handlers(app: FastAPI) -> None:
                 "Unhandled application error: {} ({})", exc.message, exc.status_code
             )
         else:
-            log.warning(
-                "Application error: {} ({} {})", exc.message, exc.status_code, exc.code
-            )
+            log.warning("Application error: {} ({} {})", exc.message, exc.status_code, exc.code)
         return _build_response(
             status_code=exc.status_code,
             code=exc.code,
@@ -288,9 +286,7 @@ def install_exception_handlers(app: FastAPI) -> None:
         # NotFoundError; both map to HTTP 404 at the API boundary.
         request_id = _get_request_id(request)
         message = str(exc) or "The requested resource was not found."
-        logger.bind(request_id=request_id, error_code="not_found").info(
-            "Not found: {}", message
-        )
+        logger.bind(request_id=request_id, error_code="not_found").info("Not found: {}", message)
         return _build_response(
             status_code=404,
             code="not_found",

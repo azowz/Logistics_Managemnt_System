@@ -60,7 +60,9 @@ from app.services.notification_policies import NotificationStateMachine, Templat
 
 
 class NotificationService:
-    def __init__(self, session: Session, *, provider_registry: Optional[ProviderRegistry] = None) -> None:
+    def __init__(
+        self, session: Session, *, provider_registry: Optional[ProviderRegistry] = None
+    ) -> None:
         self._session = session
         self._templates = NotificationTemplateRepository(session)
         self._notifications = NotificationRepository(session)
@@ -82,8 +84,14 @@ class NotificationService:
 
     def _emit(self, event, *, aggregate_id, aggregate_type, tenant_id):
         nv = self._event_repo.next_aggregate_version(aggregate_id)
-        env = EventEnvelope.create(event, tenant_id=tenant_id, aggregate_id=aggregate_id,
-                                   aggregate_version=nv, aggregate_type=aggregate_type, user_id=self._actor_id())
+        env = EventEnvelope.create(
+            event,
+            tenant_id=tenant_id,
+            aggregate_id=aggregate_id,
+            aggregate_version=nv,
+            aggregate_type=aggregate_type,
+            user_id=self._actor_id(),
+        )
         self._event_repo.append(env)
 
     @staticmethod
@@ -100,13 +108,23 @@ class NotificationService:
             raise ConflictError(f"Template code '{code}' already exists in this tenant.")
         data.pop("active", None)
         template = self._templates.create(
-            tenant_id=tenant_id, active=True, created_by=actor_id, updated_by=actor_id, **data,
+            tenant_id=tenant_id,
+            active=True,
+            created_by=actor_id,
+            updated_by=actor_id,
+            **data,
         )
         self._session.flush()
         self._emit(
-            NotificationTemplateCreated(template_id=template.id, tenant_id=tenant_id,
-                                        template_code=template.template_code, channel=self._ev(template.channel)),
-            aggregate_id=template.id, aggregate_type="NotificationTemplate", tenant_id=tenant_id,
+            NotificationTemplateCreated(
+                template_id=template.id,
+                tenant_id=tenant_id,
+                template_code=template.template_code,
+                channel=self._ev(template.channel),
+            ),
+            aggregate_id=template.id,
+            aggregate_type="NotificationTemplate",
+            tenant_id=tenant_id,
         )
         self._session.commit()
         self._session.refresh(template)
@@ -127,8 +145,12 @@ class NotificationService:
         data["updated_by"] = actor_id
         self._templates.update(t, **data)
         self._session.flush()
-        self._emit(NotificationTemplateUpdated(template_id=t.id, tenant_id=tenant_id),
-                   aggregate_id=t.id, aggregate_type="NotificationTemplate", tenant_id=tenant_id)
+        self._emit(
+            NotificationTemplateUpdated(template_id=t.id, tenant_id=tenant_id),
+            aggregate_id=t.id,
+            aggregate_type="NotificationTemplate",
+            tenant_id=tenant_id,
+        )
         self._session.commit()
         self._session.refresh(t)
         return t
@@ -144,8 +166,12 @@ class NotificationService:
         t.active = active
         t.updated_by = actor_id
         self._session.flush()
-        self._emit(event_cls(template_id=t.id, tenant_id=tenant_id),
-                   aggregate_id=t.id, aggregate_type="NotificationTemplate", tenant_id=tenant_id)
+        self._emit(
+            event_cls(template_id=t.id, tenant_id=tenant_id),
+            aggregate_id=t.id,
+            aggregate_type="NotificationTemplate",
+            tenant_id=tenant_id,
+        )
         self._session.commit()
         self._session.refresh(t)
         return t
@@ -179,11 +205,19 @@ class NotificationService:
 
     def list_templates(self, params) -> Page[NotificationTemplate]:
         items, total = self._templates.list_templates(
-            q=params.q, channel=params.channel, event_type=params.event_type, active=params.active,
-            include_deleted=params.include_deleted, sort_by=params.sort_by, sort_dir=params.sort_dir,
-            limit=params.size, offset=params.offset,
+            q=params.q,
+            channel=params.channel,
+            event_type=params.event_type,
+            active=params.active,
+            include_deleted=params.include_deleted,
+            sort_by=params.sort_by,
+            sort_dir=params.sort_dir,
+            limit=params.size,
+            offset=params.offset,
         )
-        return Page.create(items=items, total=total, params=PageParams(page=params.page, size=params.size))
+        return Page.create(
+            items=items, total=total, params=PageParams(page=params.page, size=params.size)
+        )
 
     search_templates = list_templates
 
@@ -210,9 +244,11 @@ class NotificationService:
         default_subject = subject or (event_type or "Notification")
         default_body = TemplateRenderer.render(
             "{event_type} for {aggregate_type} {aggregate_id}",
-            {"event_type": event_type or "event",
-             "aggregate_type": variables.get("aggregate_type", "") if variables else "",
-             "aggregate_id": variables.get("aggregate_id", "") if variables else ""},
+            {
+                "event_type": event_type or "event",
+                "aggregate_type": variables.get("aggregate_type", "") if variables else "",
+                "aggregate_id": variables.get("aggregate_id", "") if variables else "",
+            },
         )
         return default_subject, default_body, None
 
@@ -248,7 +284,9 @@ class NotificationService:
             user = self._users.get_by_id(data["recipient_user_id"])
             if user is None or getattr(user, "tenant_id", None) != tenant_id:
                 raise ValidationError("recipient_user_id does not exist in this tenant.")
-        if not any(data.get(k) for k in ("recipient_user_id", "recipient_email", "recipient_phone")):
+        if not any(
+            data.get(k) for k in ("recipient_user_id", "recipient_email", "recipient_phone")
+        ):
             raise ValidationError("A notification must have at least one recipient target.")
 
     def create_notification(self, **data) -> Notification:
@@ -258,18 +296,30 @@ class NotificationService:
         channel = data.get("channel")
         variables = data.pop("variables", None) or {}
         subject, body, template_id = self.render_template(
-            event_type=data.pop("event_type", None), channel=channel, variables=variables,
-            subject=data.pop("subject", None), body=data.pop("body", None),
+            event_type=data.pop("event_type", None),
+            channel=channel,
+            variables=variables,
+            subject=data.pop("subject", None),
+            body=data.pop("body", None),
         )
         if not body:
-            raise ValidationError("A notification must have a body (provide body or a renderable template).")
+            raise ValidationError(
+                "A notification must have a body (provide body or a renderable template)."
+            )
         key = data.pop("idempotency_key", None) or f"manual:{uuid.uuid4()}"
         if self.enforce_idempotency(key):
             raise ConflictError("A notification with this idempotency key already exists.")
         data.pop("status", None)
         notification = self._notifications.create(
-            tenant_id=tenant_id, idempotency_key=key, subject=subject, body=body, template_id=template_id,
-            status=NotificationStatus.PENDING, created_by=actor_id, updated_by=actor_id, **data,
+            tenant_id=tenant_id,
+            idempotency_key=key,
+            subject=subject,
+            body=body,
+            template_id=template_id,
+            status=NotificationStatus.PENDING,
+            created_by=actor_id,
+            updated_by=actor_id,
+            **data,
         )
         self._session.flush()
         self._emit_created(notification, tenant_id)
@@ -280,15 +330,22 @@ class NotificationService:
     def _emit_created(self, notification: Notification, tenant_id) -> None:
         self._emit(
             NotificationCreated(
-                notification_id=notification.id, tenant_id=tenant_id, channel=self._ev(notification.channel),
-                status=self._ev(notification.status), source_event_type=notification.event_type,
+                notification_id=notification.id,
+                tenant_id=tenant_id,
+                channel=self._ev(notification.channel),
+                status=self._ev(notification.status),
+                source_event_type=notification.event_type,
                 recipient_user_id=notification.recipient_user_id,
                 priority=self._ev(notification.priority),
             ),
-            aggregate_id=notification.id, aggregate_type="Notification", tenant_id=tenant_id,
+            aggregate_id=notification.id,
+            aggregate_type="Notification",
+            tenant_id=tenant_id,
         )
 
-    def get_notification(self, notification_id, *, include_deleted=False, viewer_user_id=None) -> Notification:
+    def get_notification(
+        self, notification_id, *, include_deleted=False, viewer_user_id=None
+    ) -> Notification:
         n = self._notifications.get_by_id(notification_id)
         if n is None or (n.is_deleted and not include_deleted):
             raise NotFoundError(f"Notification {notification_id} not found.")
@@ -307,8 +364,14 @@ class NotificationService:
         n.queued_at = utcnow()
         n.updated_by = self._actor_id()
         self._session.flush()
-        self._emit(NotificationQueued(notification_id=n.id, tenant_id=n.tenant_id, previous_status=previous.value),
-                   aggregate_id=n.id, aggregate_type="Notification", tenant_id=n.tenant_id)
+        self._emit(
+            NotificationQueued(
+                notification_id=n.id, tenant_id=n.tenant_id, previous_status=previous.value
+            ),
+            aggregate_id=n.id,
+            aggregate_type="Notification",
+            tenant_id=n.tenant_id,
+        )
         self._session.commit()
         self._session.refresh(n)
         return n
@@ -316,7 +379,9 @@ class NotificationService:
     def send_notification(self, notification_id) -> Notification:
         n = self._load_active(notification_id)
         if n.status in (NotificationStatus.SENT, NotificationStatus.READ):
-            raise ValidationError(f"Notification {notification_id} was already sent (use retry for a failed one).")
+            raise ValidationError(
+                f"Notification {notification_id} was already sent (use retry for a failed one)."
+            )
         if n.status == NotificationStatus.CANCELLED:
             raise ValidationError("Cannot send a cancelled notification.")
         if n.status == NotificationStatus.FAILED:
@@ -334,8 +399,14 @@ class NotificationService:
         n.status = NotificationStatus.QUEUED
         n.queued_at = utcnow()
         self._session.flush()
-        self._emit(NotificationRetried(notification_id=n.id, tenant_id=n.tenant_id, retry_count=n.retry_count),
-                   aggregate_id=n.id, aggregate_type="Notification", tenant_id=n.tenant_id)
+        self._emit(
+            NotificationRetried(
+                notification_id=n.id, tenant_id=n.tenant_id, retry_count=n.retry_count
+            ),
+            aggregate_id=n.id,
+            aggregate_type="Notification",
+            tenant_id=n.tenant_id,
+        )
         self._deliver(n, is_retry=True)
         self._session.commit()
         self._session.refresh(n)
@@ -349,9 +420,17 @@ class NotificationService:
         n.cancelled_at = utcnow()
         n.updated_by = self._actor_id()
         self._session.flush()
-        self._emit(NotificationCancelled(notification_id=n.id, tenant_id=n.tenant_id,
-                                         previous_status=previous.value, reason=reason),
-                   aggregate_id=n.id, aggregate_type="Notification", tenant_id=n.tenant_id)
+        self._emit(
+            NotificationCancelled(
+                notification_id=n.id,
+                tenant_id=n.tenant_id,
+                previous_status=previous.value,
+                reason=reason,
+            ),
+            aggregate_id=n.id,
+            aggregate_type="Notification",
+            tenant_id=n.tenant_id,
+        )
         self._session.commit()
         self._session.refresh(n)
         return n
@@ -367,10 +446,17 @@ class NotificationService:
         n.read_at = utcnow()
         n.updated_by = self._actor_id()
         self._session.flush()
-        self._emit(NotificationRead(notification_id=n.id, tenant_id=n.tenant_id,
-                                    recipient_user_id=n.recipient_user_id,
-                                    priority=self._ev(n.priority)),
-                   aggregate_id=n.id, aggregate_type="Notification", tenant_id=n.tenant_id)
+        self._emit(
+            NotificationRead(
+                notification_id=n.id,
+                tenant_id=n.tenant_id,
+                recipient_user_id=n.recipient_user_id,
+                priority=self._ev(n.priority),
+            ),
+            aggregate_id=n.id,
+            aggregate_type="Notification",
+            tenant_id=n.tenant_id,
+        )
         self._session.commit()
         self._session.refresh(n)
         return n
@@ -383,12 +469,21 @@ class NotificationService:
 
     def list_notifications(self, params) -> Page[Notification]:
         items, total = self._notifications.list_notifications(
-            q=params.q, status=params.status, channel=params.channel,
-            recipient_user_id=params.recipient_user_id, event_type=params.event_type,
-            unread_only=params.unread_only, include_deleted=params.include_deleted,
-            sort_by=params.sort_by, sort_dir=params.sort_dir, limit=params.size, offset=params.offset,
+            q=params.q,
+            status=params.status,
+            channel=params.channel,
+            recipient_user_id=params.recipient_user_id,
+            event_type=params.event_type,
+            unread_only=params.unread_only,
+            include_deleted=params.include_deleted,
+            sort_by=params.sort_by,
+            sort_dir=params.sort_dir,
+            limit=params.size,
+            offset=params.offset,
         )
-        return Page.create(items=items, total=total, params=PageParams(page=params.page, size=params.size))
+        return Page.create(
+            items=items, total=total, params=PageParams(page=params.page, size=params.size)
+        )
 
     search_notifications = list_notifications
 
@@ -404,7 +499,9 @@ class NotificationService:
 
     # ===================== Delivery (shared, no commit) =====================
 
-    def _deliver(self, notification: Notification, *, is_retry: bool = False) -> NotificationDeliveryAttempt:
+    def _deliver(
+        self, notification: Notification, *, is_retry: bool = False
+    ) -> NotificationDeliveryAttempt:
         """Attempt delivery via the channel provider. Flushes + emits; never commits."""
         tenant_id = notification.tenant_id
         provider = self._providers.get(notification.channel)
@@ -412,29 +509,51 @@ class NotificationService:
         requested = utcnow()
         if provider is None:
             result_status = DeliveryAttemptStatus.SKIPPED
-            provider_name, msg_id, err_code, err_msg, payload = None, None, "no_provider", \
-                f"No provider registered for channel '{notification.channel.value}'.", None
+            provider_name, msg_id, err_code, err_msg, payload = (
+                None,
+                None,
+                "no_provider",
+                f"No provider registered for channel '{notification.channel.value}'.",
+                None,
+            )
             succeeded = False
         else:
             result = provider.send(notification)
             result_status = result.status
             provider_name, msg_id = result.provider, result.provider_message_id
-            err_code, err_msg, payload = result.error_code, result.error_message, result.response_payload
+            err_code, err_msg, payload = (
+                result.error_code,
+                result.error_message,
+                result.response_payload,
+            )
             succeeded = result.succeeded
         attempt = self._attempts.create(
-            tenant_id=tenant_id, notification_id=notification.id, channel=notification.channel,
-            provider=provider_name, status=result_status, attempt_number=attempt_number,
-            requested_at=requested, completed_at=utcnow(), provider_message_id=msg_id,
-            error_code=err_code, error_message=err_msg, response_payload=payload,
+            tenant_id=tenant_id,
+            notification_id=notification.id,
+            channel=notification.channel,
+            provider=provider_name,
+            status=result_status,
+            attempt_number=attempt_number,
+            requested_at=requested,
+            completed_at=utcnow(),
+            provider_message_id=msg_id,
+            error_code=err_code,
+            error_message=err_msg,
+            response_payload=payload,
         )
         self._session.flush()
         self._emit(
             NotificationDeliveryAttemptCreated(
-                attempt_id=attempt.id, tenant_id=tenant_id, notification_id=notification.id,
-                channel=self._ev(notification.channel), status=self._ev(result_status),
+                attempt_id=attempt.id,
+                tenant_id=tenant_id,
+                notification_id=notification.id,
+                channel=self._ev(notification.channel),
+                status=self._ev(result_status),
                 attempt_number=attempt_number,
             ),
-            aggregate_id=notification.id, aggregate_type="Notification", tenant_id=tenant_id,
+            aggregate_id=notification.id,
+            aggregate_type="Notification",
+            tenant_id=tenant_id,
         )
         previous = notification.status
         if succeeded:
@@ -442,9 +561,15 @@ class NotificationService:
                 notification.status = NotificationStatus.SENT
                 notification.sent_at = utcnow()
             self._emit(
-                NotificationSent(notification_id=notification.id, tenant_id=tenant_id,
-                                 channel=self._ev(notification.channel), provider=provider_name),
-                aggregate_id=notification.id, aggregate_type="Notification", tenant_id=tenant_id,
+                NotificationSent(
+                    notification_id=notification.id,
+                    tenant_id=tenant_id,
+                    channel=self._ev(notification.channel),
+                    provider=provider_name,
+                ),
+                aggregate_id=notification.id,
+                aggregate_type="Notification",
+                tenant_id=tenant_id,
             )
         else:
             if NotificationStateMachine.can_transition(previous, NotificationStatus.FAILED):
@@ -453,9 +578,15 @@ class NotificationService:
             notification.retry_count = (notification.retry_count or 0) + 1
             notification.last_error = err_msg or "delivery failed"
             self._emit(
-                NotificationFailed(notification_id=notification.id, tenant_id=tenant_id,
-                                   channel=self._ev(notification.channel), reason=notification.last_error),
-                aggregate_id=notification.id, aggregate_type="Notification", tenant_id=tenant_id,
+                NotificationFailed(
+                    notification_id=notification.id,
+                    tenant_id=tenant_id,
+                    channel=self._ev(notification.channel),
+                    reason=notification.last_error,
+                ),
+                aggregate_id=notification.id,
+                aggregate_type="Notification",
+                tenant_id=tenant_id,
             )
         self._session.flush()
         return attempt
@@ -463,8 +594,13 @@ class NotificationService:
     # ===================== Event consumer (no commit) =====================
 
     def create_notifications_from_event(
-        self, event, envelope: EventEnvelope, *, channel: NotificationChannel,
-        priority: NotificationPriority = NotificationPriority.NORMAL, deliver: bool = True,
+        self,
+        event,
+        envelope: EventEnvelope,
+        *,
+        channel: NotificationChannel,
+        priority: NotificationPriority = NotificationPriority.NORMAL,
+        deliver: bool = True,
     ) -> List[Notification]:
         """Idempotently create (and optionally deliver) notifications for an event.
 
@@ -483,7 +619,9 @@ class NotificationService:
             if self.enforce_idempotency(key):
                 continue  # already created for this event/channel/recipient
             subject, body, template_id = self.render_template(
-                event_type=envelope.event_type, channel=channel, variables=variables,
+                event_type=envelope.event_type,
+                channel=channel,
+                variables=variables,
             )
             try:
                 # SAVEPOINT so a lost idempotency-key race rolls back only this
@@ -491,11 +629,21 @@ class NotificationService:
                 # poisoning the surrounding dispatcher transaction.
                 with self._session.begin_nested():
                     notification = self._notifications.create(
-                        tenant_id=tenant_id, idempotency_key=key, event_id=envelope.event_id,
-                        event_type=envelope.event_type, aggregate_type=envelope.aggregate_type,
-                        aggregate_id=envelope.aggregate_id, channel=channel, subject=subject, body=body,
-                        template_id=template_id, status=NotificationStatus.PENDING, priority=priority,
-                        created_by=envelope.user_id, updated_by=envelope.user_id, **recipient,
+                        tenant_id=tenant_id,
+                        idempotency_key=key,
+                        event_id=envelope.event_id,
+                        event_type=envelope.event_type,
+                        aggregate_type=envelope.aggregate_type,
+                        aggregate_id=envelope.aggregate_id,
+                        channel=channel,
+                        subject=subject,
+                        body=body,
+                        template_id=template_id,
+                        status=NotificationStatus.PENDING,
+                        priority=priority,
+                        created_by=envelope.user_id,
+                        updated_by=envelope.user_id,
+                        **recipient,
                     )
                     self._session.flush()
             except IntegrityError:
@@ -509,8 +657,14 @@ class NotificationService:
         return created
 
     def handle_domain_event(
-        self, event, envelope: EventEnvelope, *, channel: NotificationChannel = NotificationChannel.IN_APP,
+        self,
+        event,
+        envelope: EventEnvelope,
+        *,
+        channel: NotificationChannel = NotificationChannel.IN_APP,
         priority: NotificationPriority = NotificationPriority.NORMAL,
     ) -> List[Notification]:
         """Consumer entrypoint (no commit). Creates + delivers in-app notifications."""
-        return self.create_notifications_from_event(event, envelope, channel=channel, priority=priority)
+        return self.create_notifications_from_event(
+            event, envelope, channel=channel, priority=priority
+        )

@@ -103,10 +103,7 @@ class DomainEvent:
         """Return the JSON-safe business payload (dataclass fields only)."""
         if not dataclasses.is_dataclass(self):
             raise TypeError(f"{type(self).__name__} must be a @dataclass DomainEvent")
-        return {
-            f.name: to_jsonable(getattr(self, f.name))
-            for f in dataclasses.fields(self)
-        }
+        return {f.name: to_jsonable(getattr(self, f.name)) for f in dataclasses.fields(self)}
 
     @classmethod
     def from_payload(cls, payload: Mapping[str, Any]) -> "DomainEvent":
@@ -115,10 +112,7 @@ class DomainEvent:
             raise TypeError(f"{cls.__name__} must be a @dataclass DomainEvent")
         hints = get_type_hints(cls)
         field_names = {f.name for f in dataclasses.fields(cls)}
-        kwargs = {
-            name: _coerce(payload.get(name), hints.get(name))
-            for name in field_names
-        }
+        kwargs = {name: _coerce(payload.get(name), hints.get(name)) for name in field_names}
         return cls(**kwargs)  # type: ignore[call-arg]
 
 

@@ -204,9 +204,7 @@ class ShipmentRepository:
         if origin_warehouse_id is not None:
             stmt = stmt.where(Shipment.origin_warehouse_id == origin_warehouse_id)
         if destination_warehouse_id is not None:
-            stmt = stmt.where(
-                Shipment.destination_warehouse_id == destination_warehouse_id
-            )
+            stmt = stmt.where(Shipment.destination_warehouse_id == destination_warehouse_id)
 
         if q:
             pattern = f"%{q}%"
@@ -231,21 +229,14 @@ class ShipmentRepository:
 
     def list(self, offset: int = 0, limit: int = 100) -> List[Shipment]:
         """Legacy: list non-deleted shipments with simple offset pagination."""
-        stmt = (
-            select(Shipment)
-            .where(Shipment.deleted_at.is_(None))
-            .offset(offset)
-            .limit(limit)
-        )
+        stmt = select(Shipment).where(Shipment.deleted_at.is_(None)).offset(offset).limit(limit)
         return list(self._session.scalars(stmt).all())
 
     # ------------------------------------------------------------------
     # Soft-delete / restore
     # ------------------------------------------------------------------
 
-    def soft_delete(
-        self, shipment: Shipment, *, deleted_by: Optional[uuid.UUID]
-    ) -> Shipment:
+    def soft_delete(self, shipment: Shipment, *, deleted_by: Optional[uuid.UUID]) -> Shipment:
         """Mark a shipment as soft-deleted; caller must commit."""
         shipment.soft_delete()  # sets deleted_at via SoftDeleteMixin
         shipment.deleted_by = deleted_by

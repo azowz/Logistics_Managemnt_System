@@ -56,9 +56,7 @@ _CONTACT_FIELDS = frozenset(
 )
 
 # Fields treated as address details (trigger CustomerAddressUpdated).
-_ADDRESS_FIELDS = frozenset(
-    {"country", "city", "district", "address", "latitude", "longitude"}
-)
+_ADDRESS_FIELDS = frozenset({"country", "city", "district", "address", "latitude", "longitude"})
 
 # Status transitions that are explicitly allowed.
 _ALLOWED_TRANSITIONS: Dict[CustomerStatus, frozenset[CustomerStatus]] = {
@@ -153,9 +151,7 @@ class CustomerService:
         # --- business rule: unique VAT number per tenant ---
         vat = kwargs.get("vat_number")
         if vat and self._repo.get_by_vat_number(vat):
-            raise ConflictError(
-                f"VAT number '{vat}' is already registered in this tenant."
-            )
+            raise ConflictError(f"VAT number '{vat}' is already registered in this tenant.")
 
         customer = self._repo.create(
             tenant_id=tenant_id,
@@ -189,9 +185,7 @@ class CustomerService:
     # Read
     # ------------------------------------------------------------------
 
-    def get_customer(
-        self, customer_id: uuid.UUID, *, include_deleted: bool = False
-    ) -> Customer:
+    def get_customer(self, customer_id: uuid.UUID, *, include_deleted: bool = False) -> Customer:
         """Return a customer by ID, raising :exc:`NotFoundError` if absent.
 
         Args:
@@ -232,9 +226,7 @@ class CustomerService:
     # Update
     # ------------------------------------------------------------------
 
-    def update_customer(
-        self, customer_id: uuid.UUID, **data
-    ) -> Customer:
+    def update_customer(self, customer_id: uuid.UUID, **data) -> Customer:
         """Apply partial updates to a customer.
 
         Validates uniqueness constraints for any updated registration numbers.
@@ -259,9 +251,7 @@ class CustomerService:
         if new_cr and new_cr != customer.commercial_registration:
             existing = self._repo.get_by_commercial_registration(new_cr)
             if existing and existing.id != customer_id:
-                raise ConflictError(
-                    f"Commercial registration '{new_cr}' already in use."
-                )
+                raise ConflictError(f"Commercial registration '{new_cr}' already in use.")
 
         new_vat = data.get("vat_number")
         if new_vat and new_vat != customer.vat_number:
@@ -395,25 +385,17 @@ class CustomerService:
         self, customer_id: uuid.UUID, *, reason: Optional[str] = None
     ) -> Customer:
         """Set status → active."""
-        return self._transition_status(
-            customer_id, CustomerStatus.ACTIVE, reason=reason
-        )
+        return self._transition_status(customer_id, CustomerStatus.ACTIVE, reason=reason)
 
-    def suspend_customer(
-        self, customer_id: uuid.UUID, *, reason: Optional[str] = None
-    ) -> Customer:
+    def suspend_customer(self, customer_id: uuid.UUID, *, reason: Optional[str] = None) -> Customer:
         """Set status → suspended."""
-        return self._transition_status(
-            customer_id, CustomerStatus.SUSPENDED, reason=reason
-        )
+        return self._transition_status(customer_id, CustomerStatus.SUSPENDED, reason=reason)
 
     def deactivate_customer(
         self, customer_id: uuid.UUID, *, reason: Optional[str] = None
     ) -> Customer:
         """Set status → inactive."""
-        return self._transition_status(
-            customer_id, CustomerStatus.INACTIVE, reason=reason
-        )
+        return self._transition_status(customer_id, CustomerStatus.INACTIVE, reason=reason)
 
     # ------------------------------------------------------------------
     # Soft-delete / restore

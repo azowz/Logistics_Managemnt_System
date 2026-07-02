@@ -63,23 +63,33 @@ class IntegrationPartner(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     partner_type: Mapped[IntegrationPartnerType] = mapped_column(
         SAEnum(IntegrationPartnerType, native_enum=False, length=16, values_callable=_enum_values),
-        nullable=False, index=True,
+        nullable=False,
+        index=True,
     )
     status: Mapped[IntegrationPartnerStatus] = mapped_column(
-        SAEnum(IntegrationPartnerStatus, native_enum=False, length=16, values_callable=_enum_values),
-        nullable=False, server_default=IntegrationPartnerStatus.ACTIVE.value, index=True,
+        SAEnum(
+            IntegrationPartnerStatus, native_enum=False, length=16, values_callable=_enum_values
+        ),
+        nullable=False,
+        server_default=IntegrationPartnerStatus.ACTIVE.value,
+        index=True,
     )
     contact_email: Mapped[Optional[str]] = mapped_column(String(320))
     contact_phone: Mapped[Optional[str]] = mapped_column(String(32))
     notes: Mapped[Optional[str]] = mapped_column(Text)
     partner_metadata: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
 
-    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True, default=None)
+    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), nullable=True, default=None
+    )
     version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
     __mapper_args__ = {"version_id_col": version}
 
@@ -89,23 +99,33 @@ class PartnerApiKey(TimestampMixin, Base):
 
     __tablename__ = "partner_api_keys"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "key_prefix", name="uq_partner_api_keys_tenant_id_key_prefix"),
+        UniqueConstraint(
+            "tenant_id", "key_prefix", name="uq_partner_api_keys_tenant_id_key_prefix"
+        ),
         CheckConstraint("status IN ('active', 'revoked', 'expired')", name="status"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     partner_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("integration_partners.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("integration_partners.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     key_prefix: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
     key_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     status: Mapped[ApiKeyStatus] = mapped_column(
         SAEnum(ApiKeyStatus, native_enum=False, length=16, values_callable=_enum_values),
-        nullable=False, server_default=ApiKeyStatus.ACTIVE.value, index=True,
+        nullable=False,
+        server_default=ApiKeyStatus.ACTIVE.value,
+        index=True,
     )
     scopes: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True)
     allowed_ips: Mapped[Optional[list]] = mapped_column(JSONB, nullable=True)
@@ -113,13 +133,17 @@ class PartnerApiKey(TimestampMixin, Base):
     last_used_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     revoked_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
-    created_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True, default=None)
+    created_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), nullable=True, default=None
+    )
 
 
 class WebhookSubscription(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     __tablename__ = "webhook_subscriptions"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "partner_id", "name", name="uq_webhook_subscriptions_tenant_partner_name"),
+        UniqueConstraint(
+            "tenant_id", "partner_id", "name", name="uq_webhook_subscriptions_tenant_partner_name"
+        ),
         CheckConstraint("status IN ('active', 'inactive', 'suspended')", name="status"),
         CheckConstraint("max_retries >= 0", name="max_retries_non_negative"),
         CheckConstraint("timeout_seconds > 0", name="timeout_positive"),
@@ -127,18 +151,28 @@ class WebhookSubscription(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     partner_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("integration_partners.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("integration_partners.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     target_url: Mapped[str] = mapped_column(String(2048), nullable=False)
     # External event names this subscription receives (e.g. ["shipment.delivered"]).
     event_types: Mapped[list] = mapped_column(JSONB, nullable=False)
     status: Mapped[WebhookSubscriptionStatus] = mapped_column(
-        SAEnum(WebhookSubscriptionStatus, native_enum=False, length=16, values_callable=_enum_values),
-        nullable=False, server_default=WebhookSubscriptionStatus.ACTIVE.value, index=True,
+        SAEnum(
+            WebhookSubscriptionStatus, native_enum=False, length=16, values_callable=_enum_values
+        ),
+        nullable=False,
+        server_default=WebhookSubscriptionStatus.ACTIVE.value,
+        index=True,
     )
     # Encrypted signing secret (never returned by read APIs). Sprint 14: the encryption
     # provider + key id are recorded so a KMS migration / key rotation is auditable.
@@ -147,13 +181,16 @@ class WebhookSubscription(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     encryption_key_id: Mapped[Optional[str]] = mapped_column(String(64))
     signing_algorithm: Mapped[SigningAlgorithm] = mapped_column(
         SAEnum(SigningAlgorithm, native_enum=False, length=16, values_callable=_enum_values),
-        nullable=False, server_default=SigningAlgorithm.HMAC_SHA256.value,
+        nullable=False,
+        server_default=SigningAlgorithm.HMAC_SHA256.value,
     )
     max_retries: Mapped[int] = mapped_column(Integer, nullable=False, server_default="5")
     timeout_seconds: Mapped[int] = mapped_column(Integer, nullable=False, server_default="10")
     subscription_metadata: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
 
-    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True, default=None)
+    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), nullable=True, default=None
+    )
     version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
     __mapper_args__ = {"version_id_col": version}
 
@@ -168,7 +205,9 @@ class WebhookDelivery(TimestampMixin, Base):
     __tablename__ = "webhook_deliveries"
     __table_args__ = (
         UniqueConstraint(
-            "tenant_id", "subscription_id", "source_event_id",
+            "tenant_id",
+            "subscription_id",
+            "source_event_id",
             name="uq_webhook_deliveries_tenant_subscription_source_event",
         ),
         CheckConstraint(
@@ -180,22 +219,35 @@ class WebhookDelivery(TimestampMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     subscription_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("webhook_subscriptions.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("webhook_subscriptions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     partner_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("integration_partners.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("integration_partners.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
-    source_event_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False, index=True)
+    source_event_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), nullable=False, index=True
+    )
     source_event_type: Mapped[str] = mapped_column(String(128), nullable=False)
     external_event_type: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
     aggregate_type: Mapped[Optional[str]] = mapped_column(String(64))
     aggregate_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True))
     status: Mapped[WebhookDeliveryStatus] = mapped_column(
         SAEnum(WebhookDeliveryStatus, native_enum=False, length=16, values_callable=_enum_values),
-        nullable=False, server_default=WebhookDeliveryStatus.PENDING.value, index=True,
+        nullable=False,
+        server_default=WebhookDeliveryStatus.PENDING.value,
+        index=True,
     )
     payload: Mapped[dict] = mapped_column(JSONB, nullable=False)
     payload_hash: Mapped[str] = mapped_column(String(64), nullable=False)
@@ -213,16 +265,24 @@ class WebhookDeliveryAttempt(TimestampMixin, Base):
 
     __tablename__ = "webhook_delivery_attempts"
     __table_args__ = (
-        UniqueConstraint("delivery_id", "attempt_number", name="uq_webhook_delivery_attempts_delivery_attempt"),
+        UniqueConstraint(
+            "delivery_id", "attempt_number", name="uq_webhook_delivery_attempts_delivery_attempt"
+        ),
         CheckConstraint("status IN ('succeeded', 'failed', 'skipped')", name="status"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     delivery_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("webhook_deliveries.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("webhook_deliveries.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     attempt_number: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[WebhookAttemptStatus] = mapped_column(
@@ -244,7 +304,9 @@ class InboundIntegrationEvent(TimestampMixin, Base):
     __tablename__ = "inbound_integration_events"
     __table_args__ = (
         UniqueConstraint(
-            "tenant_id", "api_key_id", "idempotency_key",
+            "tenant_id",
+            "api_key_id",
+            "idempotency_key",
             name="uq_inbound_integration_events_tenant_apikey_idempotency",
         ),
         CheckConstraint(
@@ -254,13 +316,22 @@ class InboundIntegrationEvent(TimestampMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     partner_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("integration_partners.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("integration_partners.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     api_key_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("partner_api_keys.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("partner_api_keys.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     idempotency_key: Mapped[str] = mapped_column(String(255), nullable=False)
     event_type: Mapped[str] = mapped_column(String(128), nullable=False, index=True)
@@ -268,7 +339,9 @@ class InboundIntegrationEvent(TimestampMixin, Base):
     signature_valid: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     status: Mapped[InboundEventStatus] = mapped_column(
         SAEnum(InboundEventStatus, native_enum=False, length=16, values_callable=_enum_values),
-        nullable=False, server_default=InboundEventStatus.RECEIVED.value, index=True,
+        nullable=False,
+        server_default=InboundEventStatus.RECEIVED.value,
+        index=True,
     )
     received_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     processed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))

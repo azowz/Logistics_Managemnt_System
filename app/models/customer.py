@@ -61,20 +61,12 @@ class Customer(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
             "commercial_registration",
             name="uq_customers_tenant_id_commercial_registration",
         ),
-        UniqueConstraint(
-            "tenant_id", "vat_number", name="uq_customers_tenant_id_vat_number"
-        ),
+        UniqueConstraint("tenant_id", "vat_number", name="uq_customers_tenant_id_vat_number"),
         # VARCHAR + CHECK guards (ck naming convention expands "status" →
         # "ck_customers_status").
-        CheckConstraint(
-            "status IN ('active', 'suspended', 'inactive')", name="status"
-        ),
-        CheckConstraint(
-            "risk_level IN ('low', 'medium', 'high')", name="risk_level"
-        ),
-        CheckConstraint(
-            "credit_status IN ('good', 'watch', 'blocked')", name="credit_status"
-        ),
+        CheckConstraint("status IN ('active', 'suspended', 'inactive')", name="status"),
+        CheckConstraint("risk_level IN ('low', 'medium', 'high')", name="risk_level"),
+        CheckConstraint("credit_status IN ('good', 'watch', 'blocked')", name="credit_status"),
         CheckConstraint(
             "customer_type IN ('individual', 'corporate', 'government', 'sme')",
             name="customer_type",
@@ -197,7 +189,5 @@ class Customer(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     # Optimistic concurrency (ADR-004)
     # ------------------------------------------------------------------
 
-    version: Mapped[int] = mapped_column(
-        Integer, nullable=False, server_default="1"
-    )
+    version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
     __mapper_args__ = {"version_id_col": version}

@@ -221,9 +221,7 @@ def update_shipment(
 ) -> ShipmentRead:
     """Apply a partial update. Terminal shipments cannot be edited (**422**)."""
     svc = ShipmentService(session)
-    shipment = svc.update_shipment(
-        shipment_id, **payload.model_dump(exclude_unset=True)
-    )
+    shipment = svc.update_shipment(shipment_id, **payload.model_dump(exclude_unset=True))
     return ShipmentRead.model_validate(shipment)
 
 
@@ -258,9 +256,7 @@ def restore_shipment(
     current_user=Depends(require_roles(UserRole.ADMIN)),
 ) -> ShipmentRead:
     """Undo a soft-delete. **404** when missing, **422** when not deleted."""
-    return ShipmentRead.model_validate(
-        ShipmentService(session).restore_shipment(shipment_id)
-    )
+    return ShipmentRead.model_validate(ShipmentService(session).restore_shipment(shipment_id))
 
 
 # ---------------------------------------------------------------------------
@@ -318,9 +314,7 @@ def pickup_shipment(
     current_user=Depends(require_roles(*_FIELD_ROLES)),
 ) -> ShipmentRead:
     """assigned → picked_up."""
-    return ShipmentRead.model_validate(
-        ShipmentService(session).pickup_shipment(shipment_id)
-    )
+    return ShipmentRead.model_validate(ShipmentService(session).pickup_shipment(shipment_id))
 
 
 @router.post(
@@ -335,9 +329,7 @@ def transit_shipment(
     current_user=Depends(require_roles(*_FIELD_ROLES)),
 ) -> ShipmentRead:
     """picked_up/delayed → in_transit."""
-    return ShipmentRead.model_validate(
-        ShipmentService(session).start_transit(shipment_id)
-    )
+    return ShipmentRead.model_validate(ShipmentService(session).start_transit(shipment_id))
 
 
 @router.post(
@@ -370,9 +362,7 @@ def deliver_shipment(
     current_user=Depends(require_roles(*_FIELD_ROLES)),
 ) -> ShipmentRead:
     """in_transit/delayed → delivered."""
-    return ShipmentRead.model_validate(
-        ShipmentService(session).deliver_shipment(shipment_id)
-    )
+    return ShipmentRead.model_validate(ShipmentService(session).deliver_shipment(shipment_id))
 
 
 @router.post(

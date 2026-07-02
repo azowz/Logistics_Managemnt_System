@@ -101,9 +101,7 @@ class EquipmentService:
     def _tenant_id(self) -> uuid.UUID:
         tid = get_current_tenant()
         if tid is None:
-            raise ValidationError(
-                "No tenant context found; request is not authenticated."
-            )
+            raise ValidationError("No tenant context found; request is not authenticated.")
         return tid
 
     def _actor_id(self) -> Optional[uuid.UUID]:
@@ -131,9 +129,7 @@ class EquipmentService:
             or getattr(obj, "is_deleted", False)
             or getattr(obj, "tenant_id", None) != tenant_id
         ):
-            raise ValidationError(
-                f"{label} {identifier} does not exist in this tenant."
-            )
+            raise ValidationError(f"{label} {identifier} does not exist in this tenant.")
         return obj
 
     # ------------------------------------------------------------------
@@ -171,18 +167,12 @@ class EquipmentService:
 
         code = equipment_code or self._generate_equipment_code()
         if self._repo.get_by_code(code):
-            raise ConflictError(
-                f"Equipment code '{code}' already exists in this tenant."
-            )
+            raise ConflictError(f"Equipment code '{code}' already exists in this tenant.")
         if self._repo.get_by_asset_tag(data["asset_tag"]):
-            raise ConflictError(
-                f"Asset tag '{data['asset_tag']}' already exists in this tenant."
-            )
+            raise ConflictError(f"Asset tag '{data['asset_tag']}' already exists in this tenant.")
         serial = data.get("serial_number")
         if serial and self._repo.get_by_serial_number(serial):
-            raise ConflictError(
-                f"Serial number '{serial}' already exists in this tenant."
-            )
+            raise ConflictError(f"Serial number '{serial}' already exists in this tenant.")
 
         # Status/availability always start active/available on creation.
         data.pop("status", None)
@@ -222,9 +212,7 @@ class EquipmentService:
     # Read
     # ------------------------------------------------------------------
 
-    def get_equipment(
-        self, equipment_id: uuid.UUID, *, include_deleted: bool = False
-    ) -> Equipment:
+    def get_equipment(self, equipment_id: uuid.UUID, *, include_deleted: bool = False) -> Equipment:
         equipment = self._repo.get_by_id(equipment_id)
         if equipment is None:
             raise NotFoundError(f"Equipment {equipment_id} not found.")
@@ -295,22 +283,16 @@ class EquipmentService:
         if "equipment_code" in applied and applied["equipment_code"] != equipment.equipment_code:
             existing = self._repo.get_by_code(applied["equipment_code"])
             if existing is not None and existing.id != equipment.id:
-                raise ConflictError(
-                    f"Equipment code '{applied['equipment_code']}' already exists."
-                )
+                raise ConflictError(f"Equipment code '{applied['equipment_code']}' already exists.")
         if "asset_tag" in applied and applied["asset_tag"] != equipment.asset_tag:
             existing = self._repo.get_by_asset_tag(applied["asset_tag"])
             if existing is not None and existing.id != equipment.id:
-                raise ConflictError(
-                    f"Asset tag '{applied['asset_tag']}' already exists."
-                )
+                raise ConflictError(f"Asset tag '{applied['asset_tag']}' already exists.")
 
         location_changes = {k: v for k, v in applied.items() if k in _LOCATION_FIELDS}
         spec_changes = {k: v for k, v in applied.items() if k in _SPEC_FIELDS}
         other_changes = {
-            k: v
-            for k, v in applied.items()
-            if k not in _LOCATION_FIELDS and k not in _SPEC_FIELDS
+            k: v for k, v in applied.items() if k not in _LOCATION_FIELDS and k not in _SPEC_FIELDS
         }
 
         data["updated_by"] = actor_id
@@ -363,9 +345,7 @@ class EquipmentService:
         *,
         availability: Optional[EquipmentAvailability] = None,
         reason: Optional[str] = None,
-        extra_events: Optional[
-            List[Callable[[Equipment, EquipmentStatus], object]]
-        ] = None,
+        extra_events: Optional[List[Callable[[Equipment, EquipmentStatus], object]]] = None,
     ) -> Equipment:
         tenant_id = self._tenant_id()
         actor_id = self._actor_id()
@@ -454,9 +434,7 @@ class EquipmentService:
         if not equipment.is_deleted and (
             equipment.availability_status != EquipmentAvailability.AVAILABLE
         ):
-            raise ConflictError(
-                "Equipment is not available for reservation."
-            )
+            raise ConflictError("Equipment is not available for reservation.")
         return self._transition(
             equipment_id,
             EquipmentStatus.RESERVED,
@@ -483,9 +461,7 @@ class EquipmentService:
             ],
         )
 
-    def assign_to_shipment(
-        self, equipment_id: uuid.UUID, *, shipment_id: uuid.UUID
-    ) -> Equipment:
+    def assign_to_shipment(self, equipment_id: uuid.UUID, *, shipment_id: uuid.UUID) -> Equipment:
         """Bind an assignable equipment unit to a shipment (availability=assigned).
 
         Does not change lifecycle status; validates the shipment is tenant-owned
@@ -753,9 +729,7 @@ class EquipmentService:
         self._session.flush()
 
         self._emit(
-            EquipmentDeleted(
-                equipment_id=equipment.id, tenant_id=tenant_id, deleted_by=actor_id
-            ),
+            EquipmentDeleted(equipment_id=equipment.id, tenant_id=tenant_id, deleted_by=actor_id),
             aggregate_id=equipment.id,
             tenant_id=tenant_id,
         )
@@ -769,9 +743,7 @@ class EquipmentService:
         if equipment is None:
             raise NotFoundError(f"Equipment {equipment_id} not found.")
         if not equipment.is_deleted:
-            raise ValidationError(
-                f"Equipment {equipment_id} is not deleted; nothing to restore."
-            )
+            raise ValidationError(f"Equipment {equipment_id} is not deleted; nothing to restore.")
 
         self._repo.restore(equipment)
         equipment.updated_by = actor_id

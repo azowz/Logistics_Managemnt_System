@@ -30,7 +30,13 @@ from app.events.billing_events import (
 )
 from app.events.envelope import EventEnvelope
 from app.models.billing import Payout, Settlement
-from app.models.enums import ClaimStatus, InvoiceStatus, PayoutStatus, SettlementStatus, SettlementType
+from app.models.enums import (
+    ClaimStatus,
+    InvoiceStatus,
+    PayoutStatus,
+    SettlementStatus,
+    SettlementType,
+)
 from app.repositories.billing_repository import (
     InvoiceRepository,
     PayoutRepository,
@@ -83,12 +89,22 @@ class SettlementService:
 
     def _emit(self, event, *, aggregate_id, aggregate_type, tenant_id):
         nv = self._event_repo.next_aggregate_version(aggregate_id)
-        env = EventEnvelope.create(event, tenant_id=tenant_id, aggregate_id=aggregate_id,
-                                   aggregate_version=nv, aggregate_type=aggregate_type, user_id=self._actor_id())
+        env = EventEnvelope.create(
+            event,
+            tenant_id=tenant_id,
+            aggregate_id=aggregate_id,
+            aggregate_version=nv,
+            aggregate_type=aggregate_type,
+            user_id=self._actor_id(),
+        )
         self._event_repo.append(env)
 
     def _owned(self, obj, tenant_id, label, ident):
-        if obj is None or getattr(obj, "is_deleted", False) or getattr(obj, "tenant_id", None) != tenant_id:
+        if (
+            obj is None
+            or getattr(obj, "is_deleted", False)
+            or getattr(obj, "tenant_id", None) != tenant_id
+        ):
             raise ValidationError(f"{label} {ident} does not exist in this tenant.")
         return obj
 
@@ -98,7 +114,9 @@ class SettlementService:
 
     # --- validation ops ---
 
-    def validate_settlement_amount(self, *, claim_id, settlement_type, amount, tenant_id, allow_override=False):
+    def validate_settlement_amount(
+        self, *, claim_id, settlement_type, amount, tenant_id, allow_override=False
+    ):
         """A claim-backed settlement must reference an approved/settled claim and
         must not exceed its approved amount unless an authorized override is set."""
         if claim_id is None:
@@ -119,23 +137,48 @@ class SettlementService:
 
     def _validate_refs(self, tenant_id, data) -> None:
         if data.get("invoice_id") is not None:
-            self._owned(self._invoices.get_by_id(data["invoice_id"]), tenant_id, "Invoice", data["invoice_id"])
+            self._owned(
+                self._invoices.get_by_id(data["invoice_id"]),
+                tenant_id,
+                "Invoice",
+                data["invoice_id"],
+            )
         if data.get("customer_id") is not None:
-            self._owned(self._customers.get_by_id(data["customer_id"]), tenant_id, "Customer", data["customer_id"])
+            self._owned(
+                self._customers.get_by_id(data["customer_id"]),
+                tenant_id,
+                "Customer",
+                data["customer_id"],
+            )
         if data.get("equipment_id") is not None:
-            self._owned(self._equipment.get_by_id(data["equipment_id"]), tenant_id, "Equipment", data["equipment_id"])
+            self._owned(
+                self._equipment.get_by_id(data["equipment_id"]),
+                tenant_id,
+                "Equipment",
+                data["equipment_id"],
+            )
         if data.get("shipment_id") is not None:
-            self._owned(self._shipments.get_by_id(data["shipment_id"]), tenant_id, "Shipment", data["shipment_id"])
+            self._owned(
+                self._shipments.get_by_id(data["shipment_id"]),
+                tenant_id,
+                "Shipment",
+                data["shipment_id"],
+            )
 
     # ===================== Settlements =====================
 
-    def create_settlement(self, *, settlement_number: Optional[str] = None, allow_override=False, **data) -> Settlement:
+    def create_settlement(
+        self, *, settlement_number: Optional[str] = None, allow_override=False, **data
+    ) -> Settlement:
         tenant_id = self._tenant_id()
         actor_id = self._actor_id()
         self._validate_refs(tenant_id, data)
         self.validate_settlement_amount(
-            claim_id=data.get("claim_id"), settlement_type=data["settlement_type"],
-            amount=data.get("amount", 0), tenant_id=tenant_id, allow_override=allow_override,
+            claim_id=data.get("claim_id"),
+            settlement_type=data["settlement_type"],
+            amount=data.get("amount", 0),
+            tenant_id=tenant_id,
+            allow_override=allow_override,
         )
         number = settlement_number or self._gen()
         if self._settlements.get_by_number(number, include_deleted=True):
@@ -144,22 +187,42 @@ class SettlementService:
         if "amount" in data:
             data["amount"] = _money(data["amount"])
         settlement = self._settlements.create(
-            tenant_id=tenant_id, settlement_number=number, status=SettlementStatus.DRAFT,
-            created_by=actor_id, updated_by=actor_id, **data,
+            tenant_id=tenant_id,
+            settlement_number=number,
+            status=SettlementStatus.DRAFT,
+            created_by=actor_id,
+            updated_by=actor_id,
+            **data,
         )
         self._session.flush()
         self._emit(
-            SettlementCreated(settlement_id=settlement.id, tenant_id=tenant_id, settlement_number=number,
-                              settlement_type=settlement.settlement_type.value, status=settlement.status.value,
-                              amount=_str(settlement.amount), claim_id=settlement.claim_id),
-            aggregate_id=settlement.id, aggregate_type="Settlement", tenant_id=tenant_id,
+            SettlementCreated(
+                settlement_id=settlement.id,
+                tenant_id=tenant_id,
+                settlement_number=number,
+                settlement_type=settlement.settlement_type.value,
+                status=settlement.status.value,
+                amount=_str(settlement.amount),
+                claim_id=settlement.claim_id,
+            ),
+            aggregate_id=settlement.id,
+            aggregate_type="Settlement",
+            tenant_id=tenant_id,
         )
         self._session.commit()
         self._session.refresh(settlement)
         return settlement
 
-    def consume_claim_settlement(self, *, claim_id, amount, settlement_type=SettlementType.CLAIM_PAYOUT,
-                                 invoice_id=None, allow_override=False, notes=None) -> Settlement:
+    def consume_claim_settlement(
+        self,
+        *,
+        claim_id,
+        amount,
+        settlement_type=SettlementType.CLAIM_PAYOUT,
+        invoice_id=None,
+        allow_override=False,
+        notes=None,
+    ) -> Settlement:
         """Create a settlement that consumes an approved claim outcome.
 
         Validates the claim is approved/settled and the amount is bounded, then
@@ -169,20 +232,29 @@ class SettlementService:
         if claim_id is None:
             raise ValidationError("consume_claim_settlement requires a claim_id.")
         settlement = self.create_settlement(
-            claim_id=claim_id, amount=amount, settlement_type=settlement_type,
-            invoice_id=invoice_id, notes=notes, allow_override=allow_override,
+            claim_id=claim_id,
+            amount=amount,
+            settlement_type=settlement_type,
+            invoice_id=invoice_id,
+            notes=notes,
+            allow_override=allow_override,
         )
         adjustment = None
         if invoice_id is not None:
             adjustment = self._apply_invoice_claim_adjustment(invoice_id, settlement.amount)
         self._emit(
             ClaimSettlementConsumed(
-                settlement_id=settlement.id, tenant_id=settlement.tenant_id, claim_id=claim_id,
-                invoice_id=invoice_id, amount=_str(settlement.amount),
+                settlement_id=settlement.id,
+                tenant_id=settlement.tenant_id,
+                claim_id=claim_id,
+                invoice_id=invoice_id,
+                amount=_str(settlement.amount),
                 adjustment_amount=_str(adjustment) if adjustment is not None else None,
                 currency_code=settlement.currency_code,
             ),
-            aggregate_id=settlement.id, aggregate_type="Settlement", tenant_id=settlement.tenant_id,
+            aggregate_id=settlement.id,
+            aggregate_type="Settlement",
+            tenant_id=settlement.tenant_id,
         )
         self._session.commit()
         self._session.refresh(settlement)
@@ -196,22 +268,28 @@ class SettlementService:
         cancelled invoice is finalized.
         """
         tenant_id = self._tenant_id()
-        invoice = self._owned(self._invoices.get_by_id(invoice_id), tenant_id, "Invoice", invoice_id)
+        invoice = self._owned(
+            self._invoices.get_by_id(invoice_id), tenant_id, "Invoice", invoice_id
+        )
         if invoice.status in (InvoiceStatus.PAID, InvoiceStatus.VOIDED, InvoiceStatus.CANCELLED):
             raise ValidationError(
                 f"Cannot apply a claim adjustment to a '{invoice.status.value}' invoice."
             )
         invoice.claim_adjustment_amount = _money(invoice.claim_adjustment_amount) + _money(amount)
         total = (
-            _money(invoice.subtotal_amount) + _money(invoice.tax_amount)
-            + _money(invoice.penalty_amount) - _money(invoice.claim_adjustment_amount)
+            _money(invoice.subtotal_amount)
+            + _money(invoice.tax_amount)
+            + _money(invoice.penalty_amount)
+            - _money(invoice.claim_adjustment_amount)
         )
         invoice.total_amount = _money(total) if total > 0 else Decimal("0.00")
         invoice.updated_by = self._actor_id()
         self._session.flush()
         return _money(amount)
 
-    def _transition(self, settlement_id, new_status, *, mutate=None, extra_events=None) -> Settlement:
+    def _transition(
+        self, settlement_id, new_status, *, mutate=None, extra_events=None
+    ) -> Settlement:
         self._tenant_id()
         actor_id = self._actor_id()
         settlement = self._settlements.get_by_id_or_raise(settlement_id)
@@ -227,46 +305,78 @@ class SettlementService:
         settlement.updated_by = actor_id
         self._session.flush()
         for factory in extra_events or []:
-            self._emit(factory(settlement, previous), aggregate_id=settlement.id,
-                       aggregate_type="Settlement", tenant_id=settlement.tenant_id)
+            self._emit(
+                factory(settlement, previous),
+                aggregate_id=settlement.id,
+                aggregate_type="Settlement",
+                tenant_id=settlement.tenant_id,
+            )
         self._session.commit()
         self._session.refresh(settlement)
         return settlement
 
     def submit_settlement_for_approval(self, settlement_id):
         return self._transition(
-            settlement_id, SettlementStatus.PENDING_APPROVAL,
-            extra_events=[lambda s, prev: SettlementSubmittedForApproval(
-                settlement_id=s.id, tenant_id=s.tenant_id, previous_status=prev.value)],
+            settlement_id,
+            SettlementStatus.PENDING_APPROVAL,
+            extra_events=[
+                lambda s, prev: SettlementSubmittedForApproval(
+                    settlement_id=s.id, tenant_id=s.tenant_id, previous_status=prev.value
+                )
+            ],
         )
 
     def approve_settlement(self, settlement_id):
         def _m(s: Settlement):
             s.approved_at = utcnow()
+
         return self._transition(
-            settlement_id, SettlementStatus.APPROVED, mutate=_m,
-            extra_events=[lambda s, prev: SettlementApproved(
-                settlement_id=s.id, tenant_id=s.tenant_id, previous_status=prev.value)],
+            settlement_id,
+            SettlementStatus.APPROVED,
+            mutate=_m,
+            extra_events=[
+                lambda s, prev: SettlementApproved(
+                    settlement_id=s.id, tenant_id=s.tenant_id, previous_status=prev.value
+                )
+            ],
         )
 
     def settle_settlement(self, settlement_id):
         def _m(s: Settlement):
             s.settled_at = utcnow()
+
         settlement = self._transition(
-            settlement_id, SettlementStatus.SETTLED, mutate=_m,
-            extra_events=[lambda s, prev: SettlementSettled(
-                settlement_id=s.id, tenant_id=s.tenant_id, previous_status=prev.value, amount=_str(s.amount),
-                currency_code=s.currency_code)],
+            settlement_id,
+            SettlementStatus.SETTLED,
+            mutate=_m,
+            extra_events=[
+                lambda s, prev: SettlementSettled(
+                    settlement_id=s.id,
+                    tenant_id=s.tenant_id,
+                    previous_status=prev.value,
+                    amount=_str(s.amount),
+                    currency_code=s.currency_code,
+                )
+            ],
         )
         return settlement
 
     def cancel_settlement(self, settlement_id, *, reason=None):
         def _m(s: Settlement):
             s.cancelled_at = utcnow()
+
         return self._transition(
-            settlement_id, SettlementStatus.CANCELLED, mutate=_m,
-            extra_events=[lambda s, prev: SettlementCancelled(
-                settlement_id=s.id, tenant_id=s.tenant_id, previous_status=prev.value, reason=reason)],
+            settlement_id,
+            SettlementStatus.CANCELLED,
+            mutate=_m,
+            extra_events=[
+                lambda s, prev: SettlementCancelled(
+                    settlement_id=s.id,
+                    tenant_id=s.tenant_id,
+                    previous_status=prev.value,
+                    reason=reason,
+                )
+            ],
         )
 
     def get_settlement(self, settlement_id, *, include_deleted=False) -> Settlement:
@@ -293,37 +403,65 @@ class SettlementService:
 
     def list_settlements(self, params) -> Page[Settlement]:
         items, total = self._settlements.list_settlements(
-            q=params.q, status=params.status, settlement_type=params.settlement_type,
-            claim_id=params.claim_id, customer_id=params.customer_id, include_deleted=params.include_deleted,
-            sort_by=params.sort_by, sort_dir=params.sort_dir, limit=params.size, offset=params.offset,
+            q=params.q,
+            status=params.status,
+            settlement_type=params.settlement_type,
+            claim_id=params.claim_id,
+            customer_id=params.customer_id,
+            include_deleted=params.include_deleted,
+            sort_by=params.sort_by,
+            sort_dir=params.sort_dir,
+            limit=params.size,
+            offset=params.offset,
         )
-        return Page.create(items=items, total=total, params=PageParams(page=params.page, size=params.size))
+        return Page.create(
+            items=items, total=total, params=PageParams(page=params.page, size=params.size)
+        )
 
     search_settlements = list_settlements
 
     # ===================== Payouts =====================
 
-    def create_payout(self, settlement_id, *, amount, method, payout_reference=None, notes=None) -> Payout:
+    def create_payout(
+        self, settlement_id, *, amount, method, payout_reference=None, notes=None
+    ) -> Payout:
         tenant_id = self._tenant_id()
         actor_id = self._actor_id()
         settlement = self._settlements.get_by_id(settlement_id)
         if settlement is None or settlement.is_deleted or settlement.tenant_id != tenant_id:
             raise NotFoundError(f"Settlement {settlement_id} not found.")
         if settlement.status not in (SettlementStatus.APPROVED, SettlementStatus.SETTLED):
-            raise ValidationError("A payout can only be created for an approved or settled settlement.")
+            raise ValidationError(
+                "A payout can only be created for an approved or settled settlement."
+            )
         if _money(amount) < 0:
             raise ValidationError("Payout amount must be non-negative.")
         payout = self._payouts.create(
-            tenant_id=tenant_id, settlement_id=settlement.id, amount=_money(amount),
-            currency_code=settlement.currency_code, method=method, status=PayoutStatus.PENDING,
-            payout_reference=payout_reference, notes=notes, created_by=actor_id, updated_by=actor_id,
+            tenant_id=tenant_id,
+            settlement_id=settlement.id,
+            amount=_money(amount),
+            currency_code=settlement.currency_code,
+            method=method,
+            status=PayoutStatus.PENDING,
+            payout_reference=payout_reference,
+            notes=notes,
+            created_by=actor_id,
+            updated_by=actor_id,
         )
         self._session.flush()
         self._emit(
-            PayoutCreated(payout_id=payout.id, tenant_id=tenant_id, settlement_id=settlement.id,
-                          amount=_str(_money(amount)),
-                          method=payout.method.value if hasattr(payout.method, "value") else str(payout.method)),
-            aggregate_id=settlement.id, aggregate_type="Settlement", tenant_id=tenant_id,
+            PayoutCreated(
+                payout_id=payout.id,
+                tenant_id=tenant_id,
+                settlement_id=settlement.id,
+                amount=_str(_money(amount)),
+                method=(
+                    payout.method.value if hasattr(payout.method, "value") else str(payout.method)
+                ),
+            ),
+            aggregate_id=settlement.id,
+            aggregate_type="Settlement",
+            tenant_id=tenant_id,
         )
         self._session.commit()
         self._session.refresh(payout)
