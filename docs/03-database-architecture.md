@@ -488,6 +488,16 @@ Every tenant table has RLS enabled with a `USING`/`WITH CHECK` predicate equival
   policy branch) for cross-tenant analytics/support — used deliberately, never as the
   default app role.
 
+The predicate reads the GUC as
+`NULLIF(current_setting('app.current_tenant', true), '')::uuid` (migration
+`0018`). The `NULLIF` guard makes the policy **fail closed on an empty GUC**: an
+unset tenant already yields SQL `NULL` (→ no rows), and wrapping in `NULLIF(…, '')`
+collapses an *empty-string* setting to `NULL` the same way, instead of casting
+`''::uuid` and raising `invalid input syntax for type uuid: ""`. Net effect:
+missing **and** empty tenant context both deny all cross-tenant rows without
+crashing the query; a matching `tenant_id` and the platform nil-UUID scope are
+unaffected.
+
 ### 8.3 Schema changes the model forces
 - Add `tenant_id uuid NOT NULL` to every aggregate (+ FK to `tenants`).
 - **Convert all `uq_*` to per-tenant composites** and recreate indexes tenant-leading (§3.2, §5).

@@ -54,10 +54,12 @@ jobs:
       # POSTGRES_USER is always a superuser, and superusers bypass row-level
       # security even with FORCE — which would make every RLS assertion vacuous.
       DATABASE_URL: postgresql+psycopg2://mesaar_app:mesaar_app@localhost:5432/mesaar
-      # NOTE: TEST_DATABASE_URL (the tests/test_tenant_isolation_pg.py gate) is
-      # intentionally NOT set yet: two of its assertions surface a known
-      # empty-GUC `''::uuid` cast error in the shipped RLS policy that needs a
-      # policy migration (Sprint 15) before the gate can be enforced in CI.
+      # TEST_DATABASE_URL enables the tests/test_tenant_isolation_pg.py gate. It
+      # points at the same NON-superuser app role so the RLS assertions are
+      # meaningful. Enabled in Sprint 15A: migration 0018 makes the tenant
+      # policies fail closed on an empty GUC (NULLIF), fixing the empty-`''::uuid`
+      # cast error that previously blocked this gate.
+      TEST_DATABASE_URL: postgresql+psycopg2://mesaar_app:mesaar_app@localhost:5432/mesaar
       SECRET_KEY: ci-test-secret-not-for-production
       REDIS_URL: redis://localhost:6379/0
       CELERY_BROKER_URL: redis://localhost:6379/1
