@@ -64,7 +64,9 @@ class EquipmentCreate(BaseModel):
     model_config = ConfigDict(protected_namespaces=())
 
     equipment_code: Optional[str] = Field(
-        default=None, min_length=2, max_length=64,
+        default=None,
+        min_length=2,
+        max_length=64,
         description="Tenant-unique code; auto-generated when omitted.",
     )
     asset_tag: str = Field(min_length=1, max_length=64)
@@ -333,9 +335,7 @@ class EquipmentListParams(BaseModel):
     @classmethod
     def sort_field_allowed(cls, value: str) -> str:
         if value not in _SORTABLE_FIELDS:
-            raise ValueError(
-                f"sort_by must be one of: {', '.join(sorted(_SORTABLE_FIELDS))}."
-            )
+            raise ValueError(f"sort_by must be one of: {', '.join(sorted(_SORTABLE_FIELDS))}.")
         return value
 
     @property

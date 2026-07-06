@@ -108,6 +108,10 @@ class ClaimCreated(DomainEvent):
     status: str
     shipment_id: Optional[uuid.UUID]
     equipment_id: Optional[uuid.UUID]
+    # Sprint 12 enrichment (additive, v1-compatible): older payloads omit these.
+    claimed_amount: Optional[str] = None
+    currency_code: Optional[str] = None
+    customer_id: Optional[uuid.UUID] = None
 
 
 @register_event
@@ -129,6 +133,7 @@ class ClaimApproved(DomainEvent):
     tenant_id: uuid.UUID
     previous_status: str
     approved_amount: Optional[str]
+    currency_code: Optional[str] = None  # Sprint 12 enrichment (additive, v1-compatible)
 
 
 @register_event
@@ -151,6 +156,9 @@ class ClaimSettled(DomainEvent):
     tenant_id: uuid.UUID
     previous_status: str
     approved_amount: Optional[str]
+    # Sprint 12 enrichment (additive, v1-compatible).
+    currency_code: Optional[str] = None
+    cycle_days: Optional[int] = None
 
 
 @register_event

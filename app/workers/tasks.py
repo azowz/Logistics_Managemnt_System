@@ -105,4 +105,53 @@ def relay_outbox(batch_size: int = 100) -> dict[str, int]:
     }
 
 
-__all__ = ["ping", "relay_outbox"]
+@celery_app.task(name="mesaar.projection_health_check")
+def projection_health_check() -> dict[str, int]:
+    """Run one non-destructive projection-health sweep across all tenants.
+
+    Thin wrapper over :func:`app.analytics.health.run_projection_health_check` (the
+    worker layer holds no business logic). Re-classifies projection staleness only; it
+    never replays events or rebuilds projections, so it is safe to overlap-guard at the
+    scheduler and idempotent across runs.
+
+    Returns:
+        A summary dict ``{tenants, checked, healthy, stale, error}``.
+    """
+    # Lazy import keeps the analytics/SQLAlchemy stack out of worker module load.
+    from app.analytics.health import run_projection_health_check
+
+    result = run_projection_health_check()
+    return {
+        "tenants": result.tenants,
+        "checked": result.checked,
+        "healthy": result.healthy,
+        "stale": result.stale,
+        "error": result.error,
+    }
+
+
+@celery_app.task(name="mesaar.webhook_delivery_sweep")
+def webhook_delivery_sweep(batch_per_tenant: int = 100) -> dict[str, int]:
+    """Attempt one batch of due webhook deliveries across all tenants.
+
+    Thin wrapper over :func:`app.integrations.sweep.run_webhook_delivery_sweep` (the worker
+    layer holds no business logic). Non-destructive (never replays/rebuilds the event
+    store), idempotent, per-delivery isolated, and safe to overlap-guard at the scheduler.
+
+    Returns:
+        A summary dict ``{tenants, attempted, delivered, failed, errors}``.
+    """
+    # Lazy import keeps the integration/SQLAlchemy stack off worker module load.
+    from app.integrations.sweep import run_webhook_delivery_sweep
+
+    result = run_webhook_delivery_sweep(batch_per_tenant=batch_per_tenant)
+    return {
+        "tenants": result.tenants,
+        "attempted": result.attempted,
+        "delivered": result.delivered,
+        "failed": result.failed,
+        "errors": result.errors,
+    }
+
+
+__all__ = ["ping", "relay_outbox", "projection_health_check", "webhook_delivery_sweep"]

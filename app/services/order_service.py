@@ -134,16 +134,12 @@ class OrderService:
         # --- business rule: customer must exist (and not be soft-deleted) ---
         customer = self._customer_repo.get_by_id(customer_id)
         if customer is None or customer.is_deleted:
-            raise ValidationError(
-                f"Customer {customer_id} does not exist in this tenant."
-            )
+            raise ValidationError(f"Customer {customer_id} does not exist in this tenant.")
 
         # --- business rule: unique order number per tenant ---
         number = (order_number or self._generate_order_number()).upper()
         if self._repo.get_by_order_number(number):
-            raise ConflictError(
-                f"Order number '{number}' already exists in this tenant."
-            )
+            raise ConflictError(f"Order number '{number}' already exists in this tenant.")
 
         # Status is always DRAFT on creation regardless of input.
         kwargs.pop("status", None)
@@ -181,9 +177,7 @@ class OrderService:
     # Read
     # ------------------------------------------------------------------
 
-    def get_order(
-        self, order_id: uuid.UUID, *, include_deleted: bool = False
-    ) -> Order:
+    def get_order(self, order_id: uuid.UUID, *, include_deleted: bool = False) -> Order:
         """Return an order by ID, raising :exc:`NotFoundError` if absent/deleted."""
         order = self._repo.get_by_id(order_id)
         if order is None:
@@ -246,9 +240,7 @@ class OrderService:
         applied = {k: v for k, v in data.items() if v is not None}
         address_changes = {k: v for k, v in applied.items() if k in _ADDRESS_FIELDS}
         other_changes = {
-            k: v
-            for k, v in applied.items()
-            if k not in _ADDRESS_FIELDS and k != "priority"
+            k: v for k, v in applied.items() if k not in _ADDRESS_FIELDS and k != "priority"
         }
 
         data["updated_by"] = actor_id
@@ -337,9 +329,7 @@ class OrderService:
         self._session.flush()
 
         for factory in extra_events or []:
-            self._emit(
-                factory(order, previous), aggregate_id=order.id, tenant_id=tenant_id
-            )
+            self._emit(factory(order, previous), aggregate_id=order.id, tenant_id=tenant_id)
 
         self._emit(
             OrderStatusChanged(
@@ -359,6 +349,7 @@ class OrderService:
 
     def submit_order(self, order_id: uuid.UUID) -> Order:
         """draft → submitted."""
+
         def _mutate(o: Order) -> None:
             o.submitted_at = utcnow()
 
@@ -373,10 +364,9 @@ class OrderService:
             ],
         )
 
-    def approve_order(
-        self, order_id: uuid.UUID, *, reason: Optional[str] = None
-    ) -> Order:
+    def approve_order(self, order_id: uuid.UUID, *, reason: Optional[str] = None) -> Order:
         """submitted → approved."""
+
         def _mutate(o: Order) -> None:
             o.approved_at = utcnow()
 
@@ -397,6 +387,7 @@ class OrderService:
 
     def schedule_order(self, order_id: uuid.UUID) -> Order:
         """approved → scheduled."""
+
         def _mutate(o: Order) -> None:
             o.scheduled_at = utcnow()
 
@@ -460,6 +451,7 @@ class OrderService:
 
     def start_transit_order(self, order_id: uuid.UUID) -> Order:
         """assigned → in_transit (cargo picked up). Emits OrderPickedUp + OrderInTransit."""
+
         def _mutate(o: Order) -> None:
             o.picked_up_at = utcnow()
 
@@ -482,6 +474,7 @@ class OrderService:
 
     def deliver_order(self, order_id: uuid.UUID) -> Order:
         """in_transit → delivered (terminal)."""
+
         def _mutate(o: Order) -> None:
             o.delivered_at = utcnow()
 
@@ -499,10 +492,9 @@ class OrderService:
             ],
         )
 
-    def cancel_order(
-        self, order_id: uuid.UUID, *, reason: Optional[str] = None
-    ) -> Order:
+    def cancel_order(self, order_id: uuid.UUID, *, reason: Optional[str] = None) -> Order:
         """any non-terminal → cancelled (terminal). Flags compensation when needed."""
+
         def _mutate(o: Order) -> None:
             o.cancelled_at = utcnow()
             o.cancellation_reason = reason
@@ -525,10 +517,9 @@ class OrderService:
             extra_events=[_cancelled_event],
         )
 
-    def fail_order(
-        self, order_id: uuid.UUID, *, reason: Optional[str] = None
-    ) -> Order:
+    def fail_order(self, order_id: uuid.UUID, *, reason: Optional[str] = None) -> Order:
         """non-terminal → failed (terminal)."""
+
         def _mutate(o: Order) -> None:
             o.failed_at = utcnow()
             o.failure_reason = reason
@@ -570,9 +561,7 @@ class OrderService:
         self._session.flush()
 
         self._emit(
-            OrderDeleted(
-                order_id=order.id, tenant_id=tenant_id, deleted_by=actor_id
-            ),
+            OrderDeleted(order_id=order.id, tenant_id=tenant_id, deleted_by=actor_id),
             aggregate_id=order.id,
             tenant_id=tenant_id,
         )
@@ -592,9 +581,7 @@ class OrderService:
         if order is None:
             raise NotFoundError(f"Order {order_id} not found.")
         if not order.is_deleted:
-            raise ValidationError(
-                f"Order {order_id} is not deleted; nothing to restore."
-            )
+            raise ValidationError(f"Order {order_id} is not deleted; nothing to restore.")
 
         self._repo.restore(order)
         order.updated_by = actor_id

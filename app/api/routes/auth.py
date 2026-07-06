@@ -145,9 +145,7 @@ def refresh_token(
     """
     auth_service = AuthService(session)
     try:
-        user, access_token, new_refresh_token = auth_service.refresh_tokens(
-            payload.refresh_token
-        )
+        user, access_token, new_refresh_token = auth_service.refresh_tokens(payload.refresh_token)
     except ValidationError as exc:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

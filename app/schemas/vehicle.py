@@ -14,7 +14,9 @@ class VehicleBase(BaseModel):
     """Shared vehicle attributes."""
 
     plate_number: str = Field(min_length=2, max_length=32, description="Unique license plate.")
-    vin: Optional[str] = Field(default=None, max_length=64, description="Vehicle identification number.")
+    vin: Optional[str] = Field(
+        default=None, max_length=64, description="Vehicle identification number."
+    )
     capacity_weight_kg: float = Field(gt=0, description="Maximum payload weight.")
     capacity_volume_m3: float = Field(gt=0, description="Maximum payload volume.")
     home_warehouse_id: Optional[str] = Field(default=None, description="Home warehouse reference.")

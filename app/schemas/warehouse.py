@@ -24,7 +24,9 @@ class WarehouseBase(BaseModel):
     longitude: Optional[float] = Field(default=None, ge=-180, le=180)
     capacity_weight_kg: float = Field(gt=0, description="Total weight capacity.")
     capacity_volume_m3: float = Field(gt=0, description="Total volume capacity.")
-    max_daily_shipments: Optional[int] = Field(default=None, ge=1, description="Optional throughput guardrail.")
+    max_daily_shipments: Optional[int] = Field(
+        default=None, ge=1, description="Optional throughput guardrail."
+    )
 
     @field_validator("code")
     @classmethod
@@ -37,6 +39,7 @@ class WarehouseBase(BaseModel):
 
 class WarehouseCreate(WarehouseBase):
     """Payload to create a warehouse."""
+
     pass
 
 

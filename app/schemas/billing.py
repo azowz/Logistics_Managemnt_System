@@ -23,9 +23,15 @@ from app.models.enums import (
 )
 from app.schemas.common import IdModel, TimestampMixin
 
-_QUOTE_SORT = frozenset({"quote_number", "status", "total_amount", "valid_until", "created_at", "updated_at"})
-_INVOICE_SORT = frozenset({"invoice_number", "status", "total_amount", "due_date", "created_at", "updated_at"})
-_SETTLEMENT_SORT = frozenset({"settlement_number", "status", "settlement_type", "amount", "created_at", "updated_at"})
+_QUOTE_SORT = frozenset(
+    {"quote_number", "status", "total_amount", "valid_until", "created_at", "updated_at"}
+)
+_INVOICE_SORT = frozenset(
+    {"invoice_number", "status", "total_amount", "due_date", "created_at", "updated_at"}
+)
+_SETTLEMENT_SORT = frozenset(
+    {"settlement_number", "status", "settlement_type", "amount", "created_at", "updated_at"}
+)
 _PENALTY_SORT = frozenset({"penalty_type", "amount", "applied_at", "created_at", "updated_at"})
 
 

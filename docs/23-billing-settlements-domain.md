@@ -170,3 +170,9 @@ out); Billing owns no projection.
 | No automatic invoice creation on `ClaimSettled` (claim consumption against an invoice is explicit via `consume_claim_settlement(invoice_id=...)`). | LOW | Claim adjustment is now wired into invoice totals; an automatic `ClaimSettled`→invoice consumer remains a follow-up. |
 | Payout has no settle/fail lifecycle endpoint (created `pending`). | LOW | `PayoutStatus` supports paid/failed; a payout-confirmation flow is a follow-up. |
 | No external accounting/ERP export yet. | MEDIUM | Events are the integration seam; an accounting projection is a future sprint. |
+
+---
+
+## Sprint 12 — event enrichment (additive, v1-compatible)
+
+`currency_code` (`Optional[str] = None`, `event_version` unchanged at 1) was added to the money-bearing billing/settlement events — `QuoteCreated`, `QuoteApproved`, `InvoiceCreated`, `InvoiceIssued`, `InvoicePaid`, `InvoiceOverdue`, `PaymentRecorded`, `SettlementSettled`, `PenaltyApplied`, `ClaimSettlementConsumed` — populated from each aggregate's existing `currency_code`. This unlocks the multi-currency financial summary and the `currency_code` analytics filter (docs/26). Historical payloads without the key collapse to `SAR`, exactly the prior single-currency behaviour.

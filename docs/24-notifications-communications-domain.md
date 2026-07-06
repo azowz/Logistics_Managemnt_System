@@ -193,3 +193,15 @@ Notifications owns no projection.
 | ~~`register_notification_handlers` must be called at bootstrap.~~ **RESOLVED** — `run_outbox_relay` registers the consumer (idempotently) on the bus it publishes through every run. | ~~LOW~~ | Wired into the live relay path; covered by `test_relay_registers_notification_handler_on_its_bus`. |
 | Scheduled retry/overdue sweep not wired (manual retry only). | LOW | `list_failed_retryable` exists; a celery-beat sweep (ADR-003) is a follow-up. |
 | Template rendering is `str.format`-based (no logic/loops/i18n catalogs). | LOW | Sufficient for transactional messages; a richer engine can replace `TemplateRenderer`. |
+
+---
+
+## Sprint 12 — event enrichment (additive, v1-compatible)
+
+`NotificationCreated` and `NotificationRead` gained `priority` (`Optional[str] = None`, `event_version` unchanged at 1), populated from the notification's own priority. It drives the operations-dashboard `unread_urgent_notifications` badge (high/urgent created − read, clamped ≥ 0) — see docs/26. Older payloads deserialize `priority` as `None` and are unaffected.
+
+---
+
+## Sprint 13 — externally publishable events
+
+`NotificationFailed` is exposed to external partners as the webhook event `notification.failed` (sanitized, whitelist-only payload) via the Integrations & Webhooks context — see docs/27. Notification bodies are never included in outbound webhooks. The notifications consumer is unaffected; the webhook consumer is a separate consumer with its own idempotency key.

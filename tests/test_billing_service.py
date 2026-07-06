@@ -554,3 +554,30 @@ def test_soft_deleted_invoice_number_reuse_returns_conflict():
         s.close()
     with pytest.raises(ConflictError):
         svc.create_invoice(customer_id=_CUSTOMER, invoice_number="INV-DUPDEL", lines=[])
+
+
+# --- Sprint 12: emit-site enrichment assertions ---------------------------
+
+
+def test_invoice_issue_emits_currency_code():
+    """InvoiceIssued carries the invoice's own currency_code (no mixing / no default drift)."""
+    svc = _svc()
+    inv = svc.create_invoice(customer_id=_CUSTOMER, currency_code="USD", lines=[
+        {"line_type": "transport_fee", "quantity": Decimal("1"), "unit_price": Decimal("100"),
+         "tax_rate": Decimal("0"), "discount_amount": Decimal("0")}])
+    svc.issue_invoice(inv.id)
+    envs = [c.args[0] for c in svc._event_repo.append.call_args_list]
+    issued = [e for e in envs if e.event_type == "InvoiceIssued"]
+    assert issued, "InvoiceIssued was not emitted"
+    assert issued[-1].payload["currency_code"] == "USD"
+
+
+def test_payment_recorded_emits_currency_code():
+    """PaymentRecorded carries the invoice currency_code."""
+    svc = _svc()
+    inv = _make_issued_invoice(svc)  # default SAR
+    svc.record_payment(inv.id, amount=inv.total_amount, method=PaymentMethod.CASH)
+    envs = [c.args[0] for c in svc._event_repo.append.call_args_list]
+    paid = [e for e in envs if e.event_type == "PaymentRecorded"]
+    assert paid, "PaymentRecorded was not emitted"
+    assert paid[-1].payload["currency_code"] == "SAR"

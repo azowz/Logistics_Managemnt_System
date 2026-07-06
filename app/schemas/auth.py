@@ -70,7 +70,9 @@ class TokenResponse(BaseModel):
     """Bearer token envelope returned after successful authentication."""
 
     access_token: str = Field(description="Signed JWT access token.")
-    token_type: str = Field(default="bearer", description="Token type for the Authorization header.")
+    token_type: str = Field(
+        default="bearer", description="Token type for the Authorization header."
+    )
     expires_in: int = Field(description="Access token lifetime in seconds.")
     refresh_token: Optional[str] = Field(
         default=None,

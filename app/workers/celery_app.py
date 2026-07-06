@@ -72,6 +72,24 @@ celery_app.conf.update(
             "kwargs": {"batch_size": 100},
             "options": {"expires": 25},  # discard if previous is still running
         },
+        # Projection-health sweep: every 5 min, re-classify projection staleness.
+        # Non-destructive (never replays/rebuilds), idempotent, and overlap-guarded.
+        "projection-health-check-every-5m": {
+            "task": "mesaar.projection_health_check",
+            "schedule": 300.0,
+            "args": [],
+            "kwargs": {},
+            "options": {"expires": 280},  # discard if previous is still running
+        },
+        # Webhook delivery sweep: every 60 s, re-attempt due webhook deliveries.
+        # Non-destructive (never replays/rebuilds), per-delivery isolated, overlap-guarded.
+        "webhook-delivery-sweep-every-60s": {
+            "task": "mesaar.webhook_delivery_sweep",
+            "schedule": 60.0,
+            "args": [],
+            "kwargs": {"batch_per_tenant": 100},
+            "options": {"expires": 55},  # discard if previous is still running
+        },
     },
 )
 

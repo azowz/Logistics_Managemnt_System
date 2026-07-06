@@ -61,9 +61,7 @@ class Order(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     __tablename__ = "orders"
     __table_args__ = (
         # Order number is unique PER TENANT (ADR-001).
-        UniqueConstraint(
-            "tenant_id", "order_number", name="uq_orders_tenant_id_order_number"
-        ),
+        UniqueConstraint("tenant_id", "order_number", name="uq_orders_tenant_id_order_number"),
         # Short logical names — the ``ck`` naming convention expands these to
         # ``ck_orders_<name>`` (matching the migration-authored DB names).
         CheckConstraint(
@@ -79,9 +77,7 @@ class Order(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
             "order_source IN ('web', 'mobile', 'api', 'phone', 'email', 'walk_in')",
             name="order_source",
         ),
-        CheckConstraint(
-            "priority IN ('low', 'normal', 'high', 'urgent')", name="priority"
-        ),
+        CheckConstraint("priority IN ('low', 'normal', 'high', 'urgent')", name="priority"),
         CheckConstraint(
             "cargo_weight_kg IS NULL OR cargo_weight_kg >= 0",
             name="cargo_weight_non_negative",
@@ -90,9 +86,7 @@ class Order(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
             "cargo_volume_m3 IS NULL OR cargo_volume_m3 >= 0",
             name="cargo_volume_non_negative",
         ),
-        CheckConstraint(
-            "distance_km IS NULL OR distance_km >= 0", name="distance_non_negative"
-        ),
+        CheckConstraint("distance_km IS NULL OR distance_km >= 0", name="distance_non_negative"),
     )
 
     # ------------------------------------------------------------------
@@ -155,12 +149,8 @@ class Order(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     # Scheduling
     # ------------------------------------------------------------------
 
-    requested_pickup_date: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True)
-    )
-    requested_delivery_date: Mapped[Optional[datetime]] = mapped_column(
-        DateTime(timezone=True)
-    )
+    requested_pickup_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
+    requested_delivery_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
 
     # ------------------------------------------------------------------
     # Locations
@@ -239,7 +229,5 @@ class Order(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     # Optimistic concurrency (ADR-004)
     # ------------------------------------------------------------------
 
-    version: Mapped[int] = mapped_column(
-        Integer, nullable=False, server_default="1"
-    )
+    version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
     __mapper_args__ = {"version_id_col": version}

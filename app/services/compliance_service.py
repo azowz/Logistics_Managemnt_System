@@ -139,9 +139,7 @@ class ComplianceValidationService:
 
         now = utcnow()
         needs_permit = bool(
-            equipment.requires_permit
-            or equipment.hazardous
-            or self._is_oversize(equipment)
+            equipment.requires_permit or equipment.hazardous or self._is_oversize(equipment)
         )
         if needs_permit:
             required_permits.append("movement_permit")
@@ -249,11 +247,17 @@ class ComplianceService:
 
     def _validate_refs(self, tenant_id, *, shipment_id=None, equipment_id=None, vehicle_id=None):
         if shipment_id is not None:
-            self._require_tenant_owned(self._shipments.get_by_id(shipment_id), tenant_id, "Shipment", shipment_id)
+            self._require_tenant_owned(
+                self._shipments.get_by_id(shipment_id), tenant_id, "Shipment", shipment_id
+            )
         if equipment_id is not None:
-            self._require_tenant_owned(self._equipment.get_by_id(equipment_id), tenant_id, "Equipment", equipment_id)
+            self._require_tenant_owned(
+                self._equipment.get_by_id(equipment_id), tenant_id, "Equipment", equipment_id
+            )
         if vehicle_id is not None:
-            self._require_tenant_owned(self._vehicles.get_by_id(vehicle_id), tenant_id, "Vehicle", vehicle_id)
+            self._require_tenant_owned(
+                self._vehicles.get_by_id(vehicle_id), tenant_id, "Vehicle", vehicle_id
+            )
 
     # ==================================================================
     # Permits
@@ -283,11 +287,17 @@ class ComplianceService:
         self._session.flush()
         self._emit(
             PermitCreated(
-                permit_id=permit.id, tenant_id=tenant_id, permit_number=number,
-                permit_type=permit.permit_type.value, status=permit.status.value,
-                shipment_id=permit.shipment_id, equipment_id=permit.equipment_id,
+                permit_id=permit.id,
+                tenant_id=tenant_id,
+                permit_number=number,
+                permit_type=permit.permit_type.value,
+                status=permit.status.value,
+                shipment_id=permit.shipment_id,
+                equipment_id=permit.equipment_id,
             ),
-            aggregate_id=permit.id, aggregate_type="Permit", tenant_id=tenant_id,
+            aggregate_id=permit.id,
+            aggregate_type="Permit",
+            tenant_id=tenant_id,
         )
         self._session.commit()
         self._session.refresh(permit)
@@ -318,7 +328,9 @@ class ComplianceService:
         for factory in extra_events or []:
             self._emit(
                 factory(permit, previous),
-                aggregate_id=permit.id, aggregate_type="Permit", tenant_id=tenant_id,
+                aggregate_id=permit.id,
+                aggregate_type="Permit",
+                tenant_id=tenant_id,
             )
         self._session.commit()
         self._session.refresh(permit)
@@ -326,14 +338,24 @@ class ComplianceService:
 
     def submit_permit(self, permit_id):
         return self._permit_transition(
-            permit_id, PermitStatus.SUBMITTED,
-            extra_events=[lambda p, prev: PermitSubmitted(permit_id=p.id, tenant_id=p.tenant_id, previous_status=prev.value)],
+            permit_id,
+            PermitStatus.SUBMITTED,
+            extra_events=[
+                lambda p, prev: PermitSubmitted(
+                    permit_id=p.id, tenant_id=p.tenant_id, previous_status=prev.value
+                )
+            ],
         )
 
     def mark_under_review(self, permit_id):
         return self._permit_transition(
-            permit_id, PermitStatus.UNDER_REVIEW,
-            extra_events=[lambda p, prev: PermitUnderReview(permit_id=p.id, tenant_id=p.tenant_id, previous_status=prev.value)],
+            permit_id,
+            PermitStatus.UNDER_REVIEW,
+            extra_events=[
+                lambda p, prev: PermitUnderReview(
+                    permit_id=p.id, tenant_id=p.tenant_id, previous_status=prev.value
+                )
+            ],
         )
 
     def approve_permit(self, permit_id, *, valid_from=None, valid_until=None):
@@ -343,44 +365,77 @@ class ComplianceService:
                 p.valid_from = valid_from
             if valid_until is not None:
                 p.valid_until = valid_until
+
         return self._permit_transition(
-            permit_id, PermitStatus.APPROVED, mutate=_mutate,
-            extra_events=[lambda p, prev: PermitApproved(
-                permit_id=p.id, tenant_id=p.tenant_id, previous_status=prev.value,
-                valid_from=p.valid_from.isoformat() if p.valid_from else None,
-                valid_until=p.valid_until.isoformat() if p.valid_until else None,
-            )],
+            permit_id,
+            PermitStatus.APPROVED,
+            mutate=_mutate,
+            extra_events=[
+                lambda p, prev: PermitApproved(
+                    permit_id=p.id,
+                    tenant_id=p.tenant_id,
+                    previous_status=prev.value,
+                    valid_from=p.valid_from.isoformat() if p.valid_from else None,
+                    valid_until=p.valid_until.isoformat() if p.valid_until else None,
+                )
+            ],
         )
 
     def reject_permit(self, permit_id, *, reason=None):
         def _mutate(p: Permit) -> None:
             p.rejected_at = utcnow()
             p.rejection_reason = reason
+
         return self._permit_transition(
-            permit_id, PermitStatus.REJECTED, mutate=_mutate,
-            extra_events=[lambda p, prev: PermitRejected(permit_id=p.id, tenant_id=p.tenant_id, previous_status=prev.value, reason=reason)],
+            permit_id,
+            PermitStatus.REJECTED,
+            mutate=_mutate,
+            extra_events=[
+                lambda p, prev: PermitRejected(
+                    permit_id=p.id, tenant_id=p.tenant_id, previous_status=prev.value, reason=reason
+                )
+            ],
         )
 
     def activate_permit(self, permit_id):
         return self._permit_transition(
-            permit_id, PermitStatus.ACTIVE,
-            extra_events=[lambda p, prev: PermitActivated(permit_id=p.id, tenant_id=p.tenant_id, previous_status=prev.value)],
+            permit_id,
+            PermitStatus.ACTIVE,
+            extra_events=[
+                lambda p, prev: PermitActivated(
+                    permit_id=p.id, tenant_id=p.tenant_id, previous_status=prev.value
+                )
+            ],
         )
 
     def expire_permit(self, permit_id):
         def _mutate(p: Permit) -> None:
             p.expired_at = utcnow()
+
         return self._permit_transition(
-            permit_id, PermitStatus.EXPIRED, mutate=_mutate,
-            extra_events=[lambda p, prev: PermitExpired(permit_id=p.id, tenant_id=p.tenant_id, previous_status=prev.value)],
+            permit_id,
+            PermitStatus.EXPIRED,
+            mutate=_mutate,
+            extra_events=[
+                lambda p, prev: PermitExpired(
+                    permit_id=p.id, tenant_id=p.tenant_id, previous_status=prev.value
+                )
+            ],
         )
 
     def cancel_permit(self, permit_id, *, reason=None):
         def _mutate(p: Permit) -> None:
             p.cancelled_at = utcnow()
+
         return self._permit_transition(
-            permit_id, PermitStatus.CANCELLED, mutate=_mutate,
-            extra_events=[lambda p, prev: PermitCancelled(permit_id=p.id, tenant_id=p.tenant_id, previous_status=prev.value, reason=reason)],
+            permit_id,
+            PermitStatus.CANCELLED,
+            mutate=_mutate,
+            extra_events=[
+                lambda p, prev: PermitCancelled(
+                    permit_id=p.id, tenant_id=p.tenant_id, previous_status=prev.value, reason=reason
+                )
+            ],
         )
 
     def get_permit(self, permit_id, *, include_deleted=False) -> Permit:
@@ -391,12 +446,20 @@ class ComplianceService:
 
     def list_permits(self, params) -> Page[Permit]:
         items, total = self._permits.list_permits(
-            q=params.q, status=params.status, permit_type=params.permit_type,
-            shipment_id=params.shipment_id, equipment_id=params.equipment_id,
-            include_deleted=params.include_deleted, sort_by=params.sort_by,
-            sort_dir=params.sort_dir, limit=params.size, offset=params.offset,
+            q=params.q,
+            status=params.status,
+            permit_type=params.permit_type,
+            shipment_id=params.shipment_id,
+            equipment_id=params.equipment_id,
+            include_deleted=params.include_deleted,
+            sort_by=params.sort_by,
+            sort_dir=params.sort_dir,
+            limit=params.size,
+            offset=params.offset,
         )
-        return Page.create(items=items, total=total, params=PageParams(page=params.page, size=params.size))
+        return Page.create(
+            items=items, total=total, params=PageParams(page=params.page, size=params.size)
+        )
 
     def update_permit(self, permit_id, **data) -> Permit:
         self._tenant_id()
@@ -422,7 +485,9 @@ class ComplianceService:
         self._session.flush()
         self._emit(
             PermitDeleted(permit_id=permit.id, tenant_id=tenant_id, deleted_by=actor_id),
-            aggregate_id=permit.id, aggregate_type="Permit", tenant_id=tenant_id,
+            aggregate_id=permit.id,
+            aggregate_type="Permit",
+            tenant_id=tenant_id,
         )
         self._session.commit()
 
@@ -437,7 +502,9 @@ class ComplianceService:
         self._session.flush()
         self._emit(
             PermitRestored(permit_id=permit.id, tenant_id=tenant_id),
-            aggregate_id=permit.id, aggregate_type="Permit", tenant_id=tenant_id,
+            aggregate_id=permit.id,
+            aggregate_type="Permit",
+            tenant_id=tenant_id,
         )
         self._session.commit()
         self._session.refresh(permit)
@@ -452,18 +519,28 @@ class ComplianceService:
         actor_id = self._actor_id()
         self._validate_refs(tenant_id, shipment_id=data.get("shipment_id"))
         if data.get("permit_id") is not None:
-            self._require_tenant_owned(self._permits.get_by_id(data["permit_id"]), tenant_id, "Permit", data["permit_id"])
+            self._require_tenant_owned(
+                self._permits.get_by_id(data["permit_id"]), tenant_id, "Permit", data["permit_id"]
+            )
         escort = self._escorts.create(
-            tenant_id=tenant_id, status=EscortStatus.PLANNED,
-            created_by=actor_id, updated_by=actor_id, **data,
+            tenant_id=tenant_id,
+            status=EscortStatus.PLANNED,
+            created_by=actor_id,
+            updated_by=actor_id,
+            **data,
         )
         self._session.flush()
         self._emit(
             EscortCreated(
-                escort_id=escort.id, tenant_id=tenant_id, escort_type=escort.escort_type.value,
-                shipment_id=escort.shipment_id, permit_id=escort.permit_id,
+                escort_id=escort.id,
+                tenant_id=tenant_id,
+                escort_type=escort.escort_type.value,
+                shipment_id=escort.shipment_id,
+                permit_id=escort.permit_id,
             ),
-            aggregate_id=escort.id, aggregate_type="Escort", tenant_id=tenant_id,
+            aggregate_id=escort.id,
+            aggregate_type="Escort",
+            tenant_id=tenant_id,
         )
         self._session.commit()
         self._session.refresh(escort)
@@ -487,11 +564,17 @@ class ComplianceService:
         self._session.flush()
         self._emit(
             EscortScheduled(
-                escort_id=escort.id, tenant_id=tenant_id, previous_status=previous.value,
-                scheduled_start=escort.scheduled_start.isoformat() if escort.scheduled_start else None,
+                escort_id=escort.id,
+                tenant_id=tenant_id,
+                previous_status=previous.value,
+                scheduled_start=(
+                    escort.scheduled_start.isoformat() if escort.scheduled_start else None
+                ),
                 scheduled_end=escort.scheduled_end.isoformat() if escort.scheduled_end else None,
             ),
-            aggregate_id=escort.id, aggregate_type="Escort", tenant_id=tenant_id,
+            aggregate_id=escort.id,
+            aggregate_type="Escort",
+            tenant_id=tenant_id,
         )
         self._session.commit()
         self._session.refresh(escort)
@@ -508,8 +591,12 @@ class ComplianceService:
         escort.updated_by = actor_id
         self._session.flush()
         self._emit(
-            EscortCancelled(escort_id=escort.id, tenant_id=tenant_id, previous_status=previous.value),
-            aggregate_id=escort.id, aggregate_type="Escort", tenant_id=tenant_id,
+            EscortCancelled(
+                escort_id=escort.id, tenant_id=tenant_id, previous_status=previous.value
+            ),
+            aggregate_id=escort.id,
+            aggregate_type="Escort",
+            tenant_id=tenant_id,
         )
         self._session.commit()
         self._session.refresh(escort)
@@ -517,11 +604,17 @@ class ComplianceService:
 
     def list_escorts(self, params) -> Page[Escort]:
         items, total = self._escorts.list_escorts(
-            shipment_id=params.shipment_id, status=params.status,
-            include_deleted=params.include_deleted, sort_by=params.sort_by,
-            sort_dir=params.sort_dir, limit=params.size, offset=params.offset,
+            shipment_id=params.shipment_id,
+            status=params.status,
+            include_deleted=params.include_deleted,
+            sort_by=params.sort_by,
+            sort_dir=params.sort_dir,
+            limit=params.size,
+            offset=params.offset,
         )
-        return Page.create(items=items, total=total, params=PageParams(page=params.page, size=params.size))
+        return Page.create(
+            items=items, total=total, params=PageParams(page=params.page, size=params.size)
+        )
 
     # ==================================================================
     # Route restrictions
@@ -536,10 +629,14 @@ class ComplianceService:
         self._session.flush()
         self._emit(
             RouteRestrictionCreated(
-                restriction_id=restriction.id, tenant_id=tenant_id,
-                restriction_type=restriction.restriction_type.value, region=restriction.region,
+                restriction_id=restriction.id,
+                tenant_id=tenant_id,
+                restriction_type=restriction.restriction_type.value,
+                region=restriction.region,
             ),
-            aggregate_id=restriction.id, aggregate_type="RouteRestriction", tenant_id=tenant_id,
+            aggregate_id=restriction.id,
+            aggregate_type="RouteRestriction",
+            tenant_id=tenant_id,
         )
         self._session.commit()
         self._session.refresh(restriction)
@@ -557,9 +654,13 @@ class ComplianceService:
         self._session.flush()
         self._emit(
             RouteRestrictionUpdated(
-                restriction_id=restriction.id, tenant_id=tenant_id, changed_fields=_jsonable(applied)
+                restriction_id=restriction.id,
+                tenant_id=tenant_id,
+                changed_fields=_jsonable(applied),
             ),
-            aggregate_id=restriction.id, aggregate_type="RouteRestriction", tenant_id=tenant_id,
+            aggregate_id=restriction.id,
+            aggregate_type="RouteRestriction",
+            tenant_id=tenant_id,
         )
         self._session.commit()
         self._session.refresh(restriction)
@@ -575,17 +676,24 @@ class ComplianceService:
     def create_axle_weight_profile(self, **data):
         tenant_id = self._tenant_id()
         actor_id = self._actor_id()
-        self._validate_refs(tenant_id, equipment_id=data.get("equipment_id"), vehicle_id=data.get("vehicle_id"))
+        self._validate_refs(
+            tenant_id, equipment_id=data.get("equipment_id"), vehicle_id=data.get("vehicle_id")
+        )
         profile = self._axles.create(
             tenant_id=tenant_id, created_by=actor_id, updated_by=actor_id, **data
         )
         self._session.flush()
         self._emit(
             AxleWeightProfileCreated(
-                profile_id=profile.id, tenant_id=tenant_id, equipment_id=profile.equipment_id,
-                vehicle_id=profile.vehicle_id, is_compliant=profile.is_compliant,
+                profile_id=profile.id,
+                tenant_id=tenant_id,
+                equipment_id=profile.equipment_id,
+                vehicle_id=profile.vehicle_id,
+                is_compliant=profile.is_compliant,
             ),
-            aggregate_id=profile.id, aggregate_type="AxleWeightProfile", tenant_id=tenant_id,
+            aggregate_id=profile.id,
+            aggregate_type="AxleWeightProfile",
+            tenant_id=tenant_id,
         )
         self._session.commit()
         self._session.refresh(profile)
@@ -595,34 +703,70 @@ class ComplianceService:
     # Compliance checks + dispatch
     # ==================================================================
 
-    def _persist_check(self, *, tenant_id, shipment_id, equipment_id, check_type, status, blocking, result=None, failure_reasons=None):
+    def _persist_check(
+        self,
+        *,
+        tenant_id,
+        shipment_id,
+        equipment_id,
+        check_type,
+        status,
+        blocking,
+        result=None,
+        failure_reasons=None,
+    ):
         actor_id = self._actor_id()
         check = self._checks.create(
-            tenant_id=tenant_id, shipment_id=shipment_id, equipment_id=equipment_id,
-            check_type=check_type, status=status, blocking=blocking, result=result,
-            failure_reasons=failure_reasons, evaluated_at=utcnow(), evaluated_by=actor_id,
-            created_by=actor_id, updated_by=actor_id,
+            tenant_id=tenant_id,
+            shipment_id=shipment_id,
+            equipment_id=equipment_id,
+            check_type=check_type,
+            status=status,
+            blocking=blocking,
+            result=result,
+            failure_reasons=failure_reasons,
+            evaluated_at=utcnow(),
+            evaluated_by=actor_id,
+            created_by=actor_id,
+            updated_by=actor_id,
         )
         self._session.flush()
         self._emit(
             ComplianceCheckCreated(
-                check_id=check.id, tenant_id=tenant_id, shipment_id=shipment_id,
-                check_type=check_type.value, status=status.value,
+                check_id=check.id,
+                tenant_id=tenant_id,
+                shipment_id=shipment_id,
+                check_type=check_type.value,
+                status=status.value,
             ),
-            aggregate_id=check.id, aggregate_type="ComplianceCheck", tenant_id=tenant_id,
+            aggregate_id=check.id,
+            aggregate_type="ComplianceCheck",
+            tenant_id=tenant_id,
         )
         if status == ComplianceCheckStatus.PASSED:
             self._emit(
-                ComplianceCheckPassed(check_id=check.id, tenant_id=tenant_id, shipment_id=shipment_id, check_type=check_type.value),
-                aggregate_id=check.id, aggregate_type="ComplianceCheck", tenant_id=tenant_id,
+                ComplianceCheckPassed(
+                    check_id=check.id,
+                    tenant_id=tenant_id,
+                    shipment_id=shipment_id,
+                    check_type=check_type.value,
+                ),
+                aggregate_id=check.id,
+                aggregate_type="ComplianceCheck",
+                tenant_id=tenant_id,
             )
         elif status == ComplianceCheckStatus.FAILED:
             self._emit(
                 ComplianceCheckFailed(
-                    check_id=check.id, tenant_id=tenant_id, shipment_id=shipment_id,
-                    check_type=check_type.value, failure_reasons=failure_reasons or [],
+                    check_id=check.id,
+                    tenant_id=tenant_id,
+                    shipment_id=shipment_id,
+                    check_type=check_type.value,
+                    failure_reasons=failure_reasons or [],
                 ),
-                aggregate_id=check.id, aggregate_type="ComplianceCheck", tenant_id=tenant_id,
+                aggregate_id=check.id,
+                aggregate_type="ComplianceCheck",
+                tenant_id=tenant_id,
             )
         return check
 
@@ -645,44 +789,73 @@ class ComplianceService:
 
         if equipment.requires_permit or equipment.hazardous or oversize:
             ok = active_permit is not None
-            checks.append(self._persist_check(
-                tenant_id=tenant_id, shipment_id=shipment_id, equipment_id=equipment_id,
-                check_type=ComplianceCheckType.PERMIT_REQUIRED,
-                status=ComplianceCheckStatus.PASSED if ok else ComplianceCheckStatus.FAILED,
-                blocking=True, result="permit present" if ok else "no active permit",
-                failure_reasons=None if ok else ["No active movement permit for shipment."],
-            ))
+            checks.append(
+                self._persist_check(
+                    tenant_id=tenant_id,
+                    shipment_id=shipment_id,
+                    equipment_id=equipment_id,
+                    check_type=ComplianceCheckType.PERMIT_REQUIRED,
+                    status=ComplianceCheckStatus.PASSED if ok else ComplianceCheckStatus.FAILED,
+                    blocking=True,
+                    result="permit present" if ok else "no active permit",
+                    failure_reasons=None if ok else ["No active movement permit for shipment."],
+                )
+            )
         if oversize:
-            checks.append(self._persist_check(
-                tenant_id=tenant_id, shipment_id=shipment_id, equipment_id=equipment_id,
-                check_type=ComplianceCheckType.OVERSIZE,
-                status=ComplianceCheckStatus.PASSED if active_permit else ComplianceCheckStatus.FAILED,
-                blocking=True, result="oversize within permit" if active_permit else "oversize without permit",
-                failure_reasons=None if active_permit else ["Oversize load requires a permit."],
-            ))
+            checks.append(
+                self._persist_check(
+                    tenant_id=tenant_id,
+                    shipment_id=shipment_id,
+                    equipment_id=equipment_id,
+                    check_type=ComplianceCheckType.OVERSIZE,
+                    status=(
+                        ComplianceCheckStatus.PASSED
+                        if active_permit
+                        else ComplianceCheckStatus.FAILED
+                    ),
+                    blocking=True,
+                    result="oversize within permit" if active_permit else "oversize without permit",
+                    failure_reasons=None if active_permit else ["Oversize load requires a permit."],
+                )
+            )
         if equipment.requires_escort:
             ok = bool(active_escorts)
-            checks.append(self._persist_check(
-                tenant_id=tenant_id, shipment_id=shipment_id, equipment_id=equipment_id,
-                check_type=ComplianceCheckType.ESCORT_REQUIRED,
-                status=ComplianceCheckStatus.PASSED if ok else ComplianceCheckStatus.FAILED,
-                blocking=True, result="escort scheduled" if ok else "no escort",
-                failure_reasons=None if ok else ["Escort required but none scheduled."],
-            ))
+            checks.append(
+                self._persist_check(
+                    tenant_id=tenant_id,
+                    shipment_id=shipment_id,
+                    equipment_id=equipment_id,
+                    check_type=ComplianceCheckType.ESCORT_REQUIRED,
+                    status=ComplianceCheckStatus.PASSED if ok else ComplianceCheckStatus.FAILED,
+                    blocking=True,
+                    result="escort scheduled" if ok else "no escort",
+                    failure_reasons=None if ok else ["Escort required but none scheduled."],
+                )
+            )
         if equipment.hazardous:
-            checks.append(self._persist_check(
-                tenant_id=tenant_id, shipment_id=shipment_id, equipment_id=equipment_id,
-                check_type=ComplianceCheckType.HAZARDOUS_MATERIAL,
-                status=ComplianceCheckStatus.WARNING, blocking=False,
-                result="hazardous handling advisory",
-            ))
+            checks.append(
+                self._persist_check(
+                    tenant_id=tenant_id,
+                    shipment_id=shipment_id,
+                    equipment_id=equipment_id,
+                    check_type=ComplianceCheckType.HAZARDOUS_MATERIAL,
+                    status=ComplianceCheckStatus.WARNING,
+                    blocking=False,
+                    result="hazardous handling advisory",
+                )
+            )
         if equipment.insurance_required:
-            checks.append(self._persist_check(
-                tenant_id=tenant_id, shipment_id=shipment_id, equipment_id=equipment_id,
-                check_type=ComplianceCheckType.INSURANCE_REQUIRED,
-                status=ComplianceCheckStatus.WARNING, blocking=False,
-                result="insurance advisory",
-            ))
+            checks.append(
+                self._persist_check(
+                    tenant_id=tenant_id,
+                    shipment_id=shipment_id,
+                    equipment_id=equipment_id,
+                    check_type=ComplianceCheckType.INSURANCE_REQUIRED,
+                    status=ComplianceCheckStatus.WARNING,
+                    blocking=False,
+                    result="insurance advisory",
+                )
+            )
         self._session.commit()
         return checks
 
@@ -698,8 +871,12 @@ class ComplianceService:
         check.updated_by = actor_id
         self._session.flush()
         self._emit(
-            ComplianceOverrideApplied(check_id=check.id, tenant_id=tenant_id, overridden_by=actor_id, reason=reason),
-            aggregate_id=check.id, aggregate_type="ComplianceCheck", tenant_id=tenant_id,
+            ComplianceOverrideApplied(
+                check_id=check.id, tenant_id=tenant_id, overridden_by=actor_id, reason=reason
+            ),
+            aggregate_id=check.id,
+            aggregate_type="ComplianceCheck",
+            tenant_id=tenant_id,
         )
         self._session.commit()
         self._session.refresh(check)
@@ -713,11 +890,17 @@ class ComplianceService:
 
     def list_checks(self, params) -> Page[ComplianceCheck]:
         items, total = self._checks.list_checks(
-            shipment_id=params.shipment_id, status=params.status,
-            include_deleted=params.include_deleted, sort_by=params.sort_by,
-            sort_dir=params.sort_dir, limit=params.size, offset=params.offset,
+            shipment_id=params.shipment_id,
+            status=params.status,
+            include_deleted=params.include_deleted,
+            sort_by=params.sort_by,
+            sort_dir=params.sort_dir,
+            limit=params.size,
+            offset=params.offset,
         )
-        return Page.create(items=items, total=total, params=PageParams(page=params.page, size=params.size))
+        return Page.create(
+            items=items, total=total, params=PageParams(page=params.page, size=params.size)
+        )
 
     def validate_dispatch_clearance(self, shipment_id, *, stage="assign") -> DispatchGateResult:
         """Load the shipment and run the read-only dispatch gate."""
@@ -734,18 +917,28 @@ class ComplianceService:
     def create_operator_certification(self, **data) -> OperatorCertification:
         tenant_id = self._tenant_id()
         actor_id = self._actor_id()
-        self._require_tenant_owned(self._users.get_by_id(data["user_id"]), tenant_id, "User", data["user_id"])
+        self._require_tenant_owned(
+            self._users.get_by_id(data["user_id"]), tenant_id, "User", data["user_id"]
+        )
         cert = self._certs.create(
-            tenant_id=tenant_id, status=OperatorCertificationStatus.ACTIVE,
-            created_by=actor_id, updated_by=actor_id, **data,
+            tenant_id=tenant_id,
+            status=OperatorCertificationStatus.ACTIVE,
+            created_by=actor_id,
+            updated_by=actor_id,
+            **data,
         )
         self._session.flush()
         self._emit(
             OperatorCertificationCreated(
-                certification_id=cert.id, tenant_id=tenant_id, user_id=cert.user_id,
-                certification_type=cert.certification_type, status=cert.status.value,
+                certification_id=cert.id,
+                tenant_id=tenant_id,
+                user_id=cert.user_id,
+                certification_type=cert.certification_type,
+                status=cert.status.value,
             ),
-            aggregate_id=cert.id, aggregate_type="OperatorCertification", tenant_id=tenant_id,
+            aggregate_id=cert.id,
+            aggregate_type="OperatorCertification",
+            tenant_id=tenant_id,
         )
         self._session.commit()
         self._session.refresh(cert)
@@ -764,15 +957,21 @@ class ComplianceService:
         cert.updated_by = actor_id
         self._session.flush()
         self._emit(
-            OperatorCertificationExpired(certification_id=cert.id, tenant_id=tenant_id, previous_status=previous.value),
-            aggregate_id=cert.id, aggregate_type="OperatorCertification", tenant_id=tenant_id,
+            OperatorCertificationExpired(
+                certification_id=cert.id, tenant_id=tenant_id, previous_status=previous.value
+            ),
+            aggregate_id=cert.id,
+            aggregate_type="OperatorCertification",
+            tenant_id=tenant_id,
         )
         self._session.commit()
         self._session.refresh(cert)
         return cert
 
     def list_certifications(self, *, user_id=None, status=None, limit=50, offset=0):
-        return self._certs.list_certifications(user_id=user_id, status=status, limit=limit, offset=offset)
+        return self._certs.list_certifications(
+            user_id=user_id, status=status, limit=limit, offset=offset
+        )
 
 
 def _aware(dt: Optional[datetime]) -> Optional[datetime]:

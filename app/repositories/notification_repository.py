@@ -76,25 +76,42 @@ class _BaseRepo:
 class NotificationTemplateRepository(_BaseRepo):
     model = NotificationTemplate
 
-    def get_by_code(self, template_code: str, *, include_deleted: bool = False) -> Optional[NotificationTemplate]:
-        stmt = select(NotificationTemplate).where(NotificationTemplate.template_code == template_code)
+    def get_by_code(
+        self, template_code: str, *, include_deleted: bool = False
+    ) -> Optional[NotificationTemplate]:
+        stmt = select(NotificationTemplate).where(
+            NotificationTemplate.template_code == template_code
+        )
         if not include_deleted:
             stmt = stmt.where(NotificationTemplate.deleted_at.is_(None))
         return self._session.scalars(stmt).first()
 
     def get_active_for_event(self, event_type: str, channel) -> Optional[NotificationTemplate]:
         """Return the active template for an (event_type, channel), if any."""
-        stmt = select(NotificationTemplate).where(
-            NotificationTemplate.event_type == event_type,
-            NotificationTemplate.channel == channel,
-            NotificationTemplate.active.is_(True),
-            NotificationTemplate.deleted_at.is_(None),
-        ).order_by(NotificationTemplate.created_at)
+        stmt = (
+            select(NotificationTemplate)
+            .where(
+                NotificationTemplate.event_type == event_type,
+                NotificationTemplate.channel == channel,
+                NotificationTemplate.active.is_(True),
+                NotificationTemplate.deleted_at.is_(None),
+            )
+            .order_by(NotificationTemplate.created_at)
+        )
         return self._session.scalars(stmt).first()
 
     def list_templates(
-        self, *, q=None, channel=None, event_type=None, active=None, include_deleted=False,
-        sort_by="created_at", sort_dir="desc", limit=50, offset=0,
+        self,
+        *,
+        q=None,
+        channel=None,
+        event_type=None,
+        active=None,
+        include_deleted=False,
+        sort_by="created_at",
+        sort_dir="desc",
+        limit=50,
+        offset=0,
     ) -> Tuple[List[NotificationTemplate], int]:
         stmt = select(NotificationTemplate)
         if not include_deleted:
@@ -107,10 +124,12 @@ class NotificationTemplateRepository(_BaseRepo):
             stmt = stmt.where(NotificationTemplate.active.is_(active))
         if q:
             pattern = f"%{q}%"
-            stmt = stmt.where(or_(
-                NotificationTemplate.template_code.ilike(pattern),
-                NotificationTemplate.name.ilike(pattern),
-            ))
+            stmt = stmt.where(
+                or_(
+                    NotificationTemplate.template_code.ilike(pattern),
+                    NotificationTemplate.name.ilike(pattern),
+                )
+            )
         total = self._session.scalar(select(func.count()).select_from(stmt.subquery())) or 0
         col = getattr(NotificationTemplate, sort_by, NotificationTemplate.created_at)
         stmt = stmt.order_by((asc if sort_dir == "asc" else desc)(col)).limit(limit).offset(offset)
@@ -125,7 +144,9 @@ class NotificationRepository(_BaseRepo):
         stmt = select(Notification).where(Notification.idempotency_key == idempotency_key)
         return self._session.scalars(stmt).first()
 
-    def list_unread_for_user(self, user_id: uuid.UUID, *, limit=50, offset=0) -> Tuple[List[Notification], int]:
+    def list_unread_for_user(
+        self, user_id: uuid.UUID, *, limit=50, offset=0
+    ) -> Tuple[List[Notification], int]:
         stmt = select(Notification).where(
             Notification.recipient_user_id == user_id,
             Notification.read_at.is_(None),
@@ -137,23 +158,46 @@ class NotificationRepository(_BaseRepo):
         return list(self._session.scalars(stmt).all()), total
 
     def list_pending(self, *, limit=100) -> List[Notification]:
-        stmt = select(Notification).where(
-            Notification.status.in_(_PENDING_STATES),
-            Notification.deleted_at.is_(None),
-        ).order_by(Notification.created_at).limit(limit)
+        stmt = (
+            select(Notification)
+            .where(
+                Notification.status.in_(_PENDING_STATES),
+                Notification.deleted_at.is_(None),
+            )
+            .order_by(Notification.created_at)
+            .limit(limit)
+        )
         return list(self._session.scalars(stmt).all())
 
-    def list_failed_retryable(self, *, max_retries: int = 5, limit: int = 100) -> List[Notification]:
-        stmt = select(Notification).where(
-            Notification.status == NotificationStatus.FAILED,
-            Notification.retry_count < max_retries,
-            Notification.deleted_at.is_(None),
-        ).order_by(Notification.failed_at).limit(limit)
+    def list_failed_retryable(
+        self, *, max_retries: int = 5, limit: int = 100
+    ) -> List[Notification]:
+        stmt = (
+            select(Notification)
+            .where(
+                Notification.status == NotificationStatus.FAILED,
+                Notification.retry_count < max_retries,
+                Notification.deleted_at.is_(None),
+            )
+            .order_by(Notification.failed_at)
+            .limit(limit)
+        )
         return list(self._session.scalars(stmt).all())
 
     def list_notifications(
-        self, *, q=None, status=None, channel=None, recipient_user_id=None, event_type=None,
-        unread_only=False, include_deleted=False, sort_by="created_at", sort_dir="desc", limit=50, offset=0,
+        self,
+        *,
+        q=None,
+        status=None,
+        channel=None,
+        recipient_user_id=None,
+        event_type=None,
+        unread_only=False,
+        include_deleted=False,
+        sort_by="created_at",
+        sort_dir="desc",
+        limit=50,
+        offset=0,
     ) -> Tuple[List[Notification], int]:
         stmt = select(Notification)
         if not include_deleted:
@@ -170,7 +214,9 @@ class NotificationRepository(_BaseRepo):
             stmt = stmt.where(Notification.read_at.is_(None))
         if q:
             pattern = f"%{q}%"
-            stmt = stmt.where(or_(Notification.subject.ilike(pattern), Notification.body.ilike(pattern)))
+            stmt = stmt.where(
+                or_(Notification.subject.ilike(pattern), Notification.body.ilike(pattern))
+            )
         total = self._session.scalar(select(func.count()).select_from(stmt.subquery())) or 0
         col = getattr(Notification, sort_by, Notification.created_at)
         stmt = stmt.order_by((asc if sort_dir == "asc" else desc)(col)).limit(limit).offset(offset)
@@ -180,10 +226,14 @@ class NotificationRepository(_BaseRepo):
 class NotificationDeliveryAttemptRepository(_BaseRepo):
     model = NotificationDeliveryAttempt
 
-    def list_attempts_for_notification(self, notification_id: uuid.UUID) -> List[NotificationDeliveryAttempt]:
-        stmt = select(NotificationDeliveryAttempt).where(
-            NotificationDeliveryAttempt.notification_id == notification_id
-        ).order_by(NotificationDeliveryAttempt.attempt_number)
+    def list_attempts_for_notification(
+        self, notification_id: uuid.UUID
+    ) -> List[NotificationDeliveryAttempt]:
+        stmt = (
+            select(NotificationDeliveryAttempt)
+            .where(NotificationDeliveryAttempt.notification_id == notification_id)
+            .order_by(NotificationDeliveryAttempt.attempt_number)
+        )
         return list(self._session.scalars(stmt).all())
 
     def next_attempt_number(self, notification_id: uuid.UUID) -> int:

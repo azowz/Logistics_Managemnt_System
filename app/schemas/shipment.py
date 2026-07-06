@@ -296,9 +296,7 @@ class ShipmentListParams(BaseModel):
     @classmethod
     def sort_field_allowed(cls, value: str) -> str:
         if value not in _SORTABLE_FIELDS:
-            raise ValueError(
-                f"sort_by must be one of: {', '.join(sorted(_SORTABLE_FIELDS))}."
-            )
+            raise ValueError(f"sort_by must be one of: {', '.join(sorted(_SORTABLE_FIELDS))}.")
         return value
 
     @property

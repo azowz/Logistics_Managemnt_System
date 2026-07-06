@@ -34,7 +34,9 @@ class AnalyticsProjectionHandler(BaseEventHandler):
         applied = ProjectionService(session).handle_domain_event(envelope)
         logger.debug(
             "Analytics projection applied event",
-            event_type=envelope.event_type, event_id=str(envelope.event_id), applied=applied,
+            event_type=envelope.event_type,
+            event_id=str(envelope.event_id),
+            applied=applied,
         )
 
 

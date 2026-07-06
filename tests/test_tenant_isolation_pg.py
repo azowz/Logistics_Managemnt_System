@@ -31,9 +31,7 @@ _POLICY_TABLE = "users"
 def _set_tenant(conn, tenant_id: str) -> None:
     from sqlalchemy import text
 
-    conn.execute(
-        text("SELECT set_config('app.current_tenant', :v, true)"), {"v": tenant_id}
-    )
+    conn.execute(text("SELECT set_config('app.current_tenant', :v, true)"), {"v": tenant_id})
 
 
 @pytest.fixture()
@@ -58,17 +56,19 @@ def pg_engine():
     with engine.begin() as conn:
         conn.execute(text(f"ALTER TABLE {_POLICY_TABLE} ENABLE ROW LEVEL SECURITY"))
         conn.execute(text(f"ALTER TABLE {_POLICY_TABLE} FORCE ROW LEVEL SECURITY"))
+        # Apply the fail-closed policy shipped by migration 0018: the empty GUC
+        # is NULLIF'd to NULL so it denies (and never crashes) exactly like unset.
         conn.execute(
             text(
                 f"""
                 CREATE POLICY tenant_isolation ON {_POLICY_TABLE}
                   USING (
-                    tenant_id = current_setting('app.current_tenant', true)::uuid
-                    OR current_setting('app.current_tenant', true)::uuid = '{NIL}'::uuid
+                    tenant_id = NULLIF(current_setting('app.current_tenant', true), '')::uuid
+                    OR NULLIF(current_setting('app.current_tenant', true), '')::uuid = '{NIL}'::uuid
                   )
                   WITH CHECK (
-                    tenant_id = current_setting('app.current_tenant', true)::uuid
-                    OR current_setting('app.current_tenant', true)::uuid = '{NIL}'::uuid
+                    tenant_id = NULLIF(current_setting('app.current_tenant', true), '')::uuid
+                    OR NULLIF(current_setting('app.current_tenant', true), '')::uuid = '{NIL}'::uuid
                   )
                 """
             )
@@ -142,6 +142,51 @@ def test_platform_scope_sees_all(pg_engine) -> None:
             _set_tenant(conn, NIL)
             rows = conn.execute(text("SELECT count(*) FROM users")).scalar_one()
         assert rows == 2
+
+
+def test_tenant_a_cannot_read_tenant_b_rows(pg_engine) -> None:
+    """Under tenant A's scope, tenant B's rows are invisible (not just filtered
+    to A's own): B's email never appears and the row count excludes it."""
+    from sqlalchemy import text
+
+    tenant_a, _tenant_b = _seed(pg_engine)
+    with pg_engine.connect() as conn:
+        with conn.begin():
+            _set_tenant(conn, str(tenant_a))
+            emails = {r[0] for r in conn.execute(text("SELECT email FROM users"))}
+            count = conn.execute(text("SELECT count(*) FROM users")).scalar_one()
+    assert "b@x.com" not in emails
+    assert emails == {"a@x.com"}
+    assert count == 1
+
+
+def test_empty_tenant_sees_nothing_fail_closed(pg_engine) -> None:
+    """An *empty-string* GUC (not merely unset) must fail closed: NULLIF collapses
+    '' to NULL, so no cross-tenant rows are visible."""
+    from sqlalchemy import text
+
+    _seed(pg_engine)
+    with pg_engine.connect() as conn:
+        with conn.begin():
+            _set_tenant(conn, "")  # set_config(..., '', true) -> empty GUC
+            rows = conn.execute(text("SELECT count(*) FROM users")).scalar_one()
+    assert rows == 0
+
+
+def test_empty_tenant_query_does_not_crash(pg_engine) -> None:
+    """The empty GUC must not raise ``invalid input syntax for type uuid: ""``.
+
+    This is the regression the pre-0018 bare ``''::uuid`` cast caused; the NULLIF
+    guard makes the query return cleanly (zero rows) instead of erroring."""
+    from sqlalchemy import text
+
+    _seed(pg_engine)
+    with pg_engine.connect() as conn:
+        with conn.begin():
+            _set_tenant(conn, "")
+            # Would raise on the bare-cast policy; must succeed under NULLIF.
+            result = conn.execute(text("SELECT email FROM users")).fetchall()
+    assert result == []
 
 
 def test_set_local_does_not_leak_across_transactions(pg_engine) -> None:

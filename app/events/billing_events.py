@@ -28,6 +28,7 @@ class QuoteCreated(DomainEvent):
     quote_number: str
     status: str
     total_amount: Optional[str]
+    currency_code: Optional[str] = None  # Sprint 12 enrichment (additive, v1-compatible)
 
 
 @register_event
@@ -48,6 +49,7 @@ class QuoteApproved(DomainEvent):
     quote_id: uuid.UUID
     tenant_id: uuid.UUID
     previous_status: str
+    currency_code: Optional[str] = None  # Sprint 12 enrichment (additive, v1-compatible)
 
 
 @register_event
@@ -95,6 +97,7 @@ class InvoiceCreated(DomainEvent):
     invoice_number: str
     status: str
     total_amount: Optional[str]
+    currency_code: Optional[str] = None  # Sprint 12 enrichment (additive, v1-compatible)
 
 
 @register_event
@@ -106,6 +109,7 @@ class InvoiceIssued(DomainEvent):
     tenant_id: uuid.UUID
     previous_status: str
     total_amount: Optional[str]
+    currency_code: Optional[str] = None  # Sprint 12 enrichment (additive, v1-compatible)
 
 
 @register_event
@@ -127,6 +131,7 @@ class InvoicePaid(DomainEvent):
     invoice_id: uuid.UUID
     tenant_id: uuid.UUID
     previous_status: str
+    currency_code: Optional[str] = None  # Sprint 12 enrichment (additive, v1-compatible)
 
 
 @register_event
@@ -137,6 +142,7 @@ class InvoiceOverdue(DomainEvent):
     invoice_id: uuid.UUID
     tenant_id: uuid.UUID
     previous_status: str
+    currency_code: Optional[str] = None  # Sprint 12 enrichment (additive, v1-compatible)
 
 
 @register_event
@@ -174,6 +180,7 @@ class PaymentRecorded(DomainEvent):
     invoice_id: uuid.UUID
     amount: str
     method: str
+    currency_code: Optional[str] = None  # Sprint 12 enrichment (additive, v1-compatible)
 
 
 @register_event
@@ -233,6 +240,7 @@ class SettlementSettled(DomainEvent):
     tenant_id: uuid.UUID
     previous_status: str
     amount: Optional[str]
+    currency_code: Optional[str] = None  # Sprint 12 enrichment (additive, v1-compatible)
 
 
 @register_event
@@ -273,6 +281,7 @@ class PenaltyApplied(DomainEvent):
     order_id: Optional[uuid.UUID]
     shipment_id: Optional[uuid.UUID]
     invoice_id: Optional[uuid.UUID]
+    currency_code: Optional[str] = None  # Sprint 12 enrichment (additive, v1-compatible)
 
 
 @register_event
@@ -298,6 +307,7 @@ class ClaimSettlementConsumed(DomainEvent):
     amount: Optional[str]
     invoice_id: Optional[uuid.UUID]
     adjustment_amount: Optional[str]
+    currency_code: Optional[str] = None  # Sprint 12 enrichment (additive, v1-compatible)
 
 
 __all__ = [
