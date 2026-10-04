@@ -25,21 +25,13 @@ class PermitStateMachine:
     """Validates and describes Permit status transitions."""
 
     ALLOWED_TRANSITIONS: Dict[PermitStatus, FrozenSet[PermitStatus]] = {
-        PermitStatus.DRAFT: frozenset(
-            {PermitStatus.SUBMITTED, PermitStatus.CANCELLED}
-        ),
-        PermitStatus.SUBMITTED: frozenset(
-            {PermitStatus.UNDER_REVIEW, PermitStatus.CANCELLED}
-        ),
+        PermitStatus.DRAFT: frozenset({PermitStatus.SUBMITTED, PermitStatus.CANCELLED}),
+        PermitStatus.SUBMITTED: frozenset({PermitStatus.UNDER_REVIEW, PermitStatus.CANCELLED}),
         PermitStatus.UNDER_REVIEW: frozenset(
             {PermitStatus.APPROVED, PermitStatus.REJECTED, PermitStatus.CANCELLED}
         ),
-        PermitStatus.APPROVED: frozenset(
-            {PermitStatus.ACTIVE, PermitStatus.CANCELLED}
-        ),
-        PermitStatus.ACTIVE: frozenset(
-            {PermitStatus.EXPIRED, PermitStatus.CANCELLED}
-        ),
+        PermitStatus.APPROVED: frozenset({PermitStatus.ACTIVE, PermitStatus.CANCELLED}),
+        PermitStatus.ACTIVE: frozenset({PermitStatus.EXPIRED, PermitStatus.CANCELLED}),
         PermitStatus.REJECTED: frozenset(),
         PermitStatus.EXPIRED: frozenset(),
         PermitStatus.CANCELLED: frozenset(),

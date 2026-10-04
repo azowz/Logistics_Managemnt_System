@@ -12,7 +12,12 @@ from app.models.vehicle import Vehicle  # noqa: F401
 from app.models.warehouse import Warehouse  # noqa: F401
 from app.models.shipment import Shipment  # noqa: F401
 from app.models.shipment_tracking_event import ShipmentTrackingEvent  # noqa: F401
-from app.models.event_store import EventStore, ProcessedEvent, DeadLetterEvent, OutboxRelayState  # noqa: F401
+from app.models.event_store import (
+    EventStore,
+    ProcessedEvent,
+    DeadLetterEvent,
+    OutboxRelayState,
+)  # noqa: F401
 from app.models.audit_log import AuditLog  # noqa: F401
 from app.models.customer import Customer  # noqa: F401
 from app.models.order import Order  # noqa: F401
@@ -59,6 +64,14 @@ from app.models.projection import (  # noqa: F401
     OperationsDashboardProjection,
     ProjectionHealth,
     ShipmentPerformanceProjection,
+)
+from app.models.integration import (  # noqa: F401
+    InboundIntegrationEvent,
+    IntegrationPartner,
+    PartnerApiKey,
+    WebhookDelivery,
+    WebhookDeliveryAttempt,
+    WebhookSubscription,
 )
 
 __all__ = [

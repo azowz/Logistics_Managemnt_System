@@ -80,9 +80,7 @@ class CustomerRepository:
         )
         return self._session.scalars(stmt).first()
 
-    def get_by_commercial_registration(
-        self, commercial_registration: str
-    ) -> Optional[Customer]:
+    def get_by_commercial_registration(self, commercial_registration: str) -> Optional[Customer]:
         """Return a customer matching the commercial registration, or ``None``."""
         stmt = select(Customer).where(
             Customer.commercial_registration == commercial_registration,
@@ -175,9 +173,7 @@ class CustomerRepository:
     # Soft-delete / restore
     # ------------------------------------------------------------------
 
-    def soft_delete(
-        self, customer: Customer, *, deleted_by: Optional[uuid.UUID]
-    ) -> Customer:
+    def soft_delete(self, customer: Customer, *, deleted_by: Optional[uuid.UUID]) -> Customer:
         """Mark a customer as soft-deleted; caller must commit."""
         customer.soft_delete()  # sets deleted_at via SoftDeleteMixin
         customer.deleted_by = deleted_by

@@ -145,9 +145,7 @@ class OrderRepository:
     # Soft-delete / restore
     # ------------------------------------------------------------------
 
-    def soft_delete(
-        self, order: Order, *, deleted_by: Optional[uuid.UUID]
-    ) -> Order:
+    def soft_delete(self, order: Order, *, deleted_by: Optional[uuid.UUID]) -> Order:
         """Mark an order as soft-deleted; caller must commit."""
         order.soft_delete()  # sets deleted_at via SoftDeleteMixin
         order.deleted_by = deleted_by

@@ -36,7 +36,9 @@ router = APIRouter(tags=["driver-self"])
     response_model=DriverSessionResponse,
     summary="Driver phone login (OTP stubbed); returns token + profile.",
 )
-def driver_login(payload: PhoneLoginRequest, session: Session = Depends(get_session)) -> DriverSessionResponse:
+def driver_login(
+    payload: PhoneLoginRequest, session: Session = Depends(get_session)
+) -> DriverSessionResponse:
     service = DriverService(session)
     result = service.login_by_phone(payload.phone, payload.otp)
     if result is None:
@@ -78,7 +80,11 @@ def read_stats(
     return DriverService(session).daily_stats(driver)
 
 
-@router.get("/shipments/nearby", response_model=List[ShipmentOfferRead], summary="Ready offers near the driver.")
+@router.get(
+    "/shipments/nearby",
+    response_model=List[ShipmentOfferRead],
+    summary="Ready offers near the driver.",
+)
 def nearby(
     driver: Driver = Depends(get_current_driver),
     session: Session = Depends(get_session),
@@ -86,7 +92,11 @@ def nearby(
     return DriverService(session).list_nearby_offers(driver)
 
 
-@router.post("/shipments/{shipment_id}/accept", response_model=ShipmentRead, summary="Driver self-accepts an offer.")
+@router.post(
+    "/shipments/{shipment_id}/accept",
+    response_model=ShipmentRead,
+    summary="Driver self-accepts an offer.",
+)
 def accept(
     shipment_id: str,
     driver: Driver = Depends(get_current_driver),

@@ -22,8 +22,20 @@ from app.models.enums import (
 )
 from app.schemas.common import IdModel, TimestampMixin
 
-_POLICY_SORT = frozenset({"policy_number", "status", "policy_type", "coverage_end_date", "created_at", "updated_at"})
-_CLAIM_SORT = frozenset({"claim_number", "status", "claim_type", "severity", "incident_date", "created_at", "updated_at"})
+_POLICY_SORT = frozenset(
+    {"policy_number", "status", "policy_type", "coverage_end_date", "created_at", "updated_at"}
+)
+_CLAIM_SORT = frozenset(
+    {
+        "claim_number",
+        "status",
+        "claim_type",
+        "severity",
+        "incident_date",
+        "created_at",
+        "updated_at",
+    }
+)
 
 
 def _currency(v: Optional[str]) -> Optional[str]:
@@ -72,7 +84,11 @@ class InsurancePolicyCreate(BaseModel):
 
     @model_validator(mode="after")
     def window(self) -> "InsurancePolicyCreate":
-        if self.coverage_start_date and self.coverage_end_date and self.coverage_end_date < self.coverage_start_date:
+        if (
+            self.coverage_start_date
+            and self.coverage_end_date
+            and self.coverage_end_date < self.coverage_start_date
+        ):
             raise ValueError("coverage_end_date must not be earlier than coverage_start_date.")
         return self
 

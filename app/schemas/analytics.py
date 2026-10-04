@@ -10,10 +10,17 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-_PROJECTION_TYPES = frozenset({
-    "shipment_performance", "financial_summary", "ar_aging", "claims_metrics",
-    "compliance_metrics", "notification_deliverability", "operations_dashboard",
-})
+_PROJECTION_TYPES = frozenset(
+    {
+        "shipment_performance",
+        "financial_summary",
+        "ar_aging",
+        "claims_metrics",
+        "compliance_metrics",
+        "notification_deliverability",
+        "operations_dashboard",
+    }
+)
 _MAX_RANGE_DAYS = 366 * 3  # guard against unbounded scans
 
 
@@ -83,7 +90,8 @@ class FinancialSummaryRead(BaseModel):
     collected_revenue: Decimal
     net_receivable_change: Decimal = Field(
         description="Per-period net receivable change (gross issued − collected this period). "
-                    "NOT authoritative outstanding AR — use /analytics/financial/ar-aging for that.")
+        "NOT authoritative outstanding AR — use /analytics/financial/ar-aging for that."
+    )
     claim_adjustments: Decimal
     penalties_amount: Decimal
     settlement_amount: Decimal
@@ -165,7 +173,8 @@ class DashboardSummaryRead(BaseModel):
     open_claims: int
     outstanding_invoices: int
     cumulative_collected_revenue: Decimal = Field(
-        description="Lifetime running total of confirmed payments (cumulative, not a single period).")
+        description="Lifetime running total of confirmed payments (cumulative, not a single period)."
+    )
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
@@ -182,16 +191,19 @@ class ProjectionHealthRead(BaseModel):
     status: str = Field(
         default="healthy",
         description="Operational status. Currently only 'healthy' or 'stale' are written; "
-                    "'error' is RESERVED for a future out-of-band failure-capture path and is "
-                    "not emitted today (see docs/26 §4a).")
+        "'error' is RESERVED for a future out-of-band failure-capture path and is "
+        "not emitted today (see docs/26 §4a).",
+    )
     last_success_at: Optional[datetime] = None
     last_failure_at: Optional[datetime] = Field(
         default=None,
         description="RESERVED / not yet populated — projection-write failures roll back with the "
-                    "dispatcher transaction, so this is always null today (see docs/26 §4a).")
+        "dispatcher transaction, so this is always null today (see docs/26 §4a).",
+    )
     last_error: Optional[str] = Field(
         default=None,
-        description="RESERVED / not yet populated — always null today (see docs/26 §4a).")
+        description="RESERVED / not yet populated — always null today (see docs/26 §4a).",
+    )
     last_event_occurred_at: Optional[datetime] = None
     rebuild_count: int = 0
     updated_at: datetime

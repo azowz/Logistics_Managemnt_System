@@ -1,3 +1,21 @@
+<<<<<<< HEAD
+"""Service layer for the Shipment aggregate (Sprint 5 refactor).
+
+Production-grade domain service following the Customer/Order pattern:
+
+  * Service owns the Unit of Work — every state-changing op ends in a single
+    ``session.commit()``; the repository never commits.
+  * Every state change emits domain events into the transactional outbox in the
+    same transaction (flush → append → commit).
+  * Tenant context comes from :mod:`app.db.tenant` (never from the client).
+  * Cross-tenant assignment is rejected (driver/vehicle/warehouse/order/client).
+  * Lifecycle transitions are validated by
+    :class:`~app.services.shipment_policies.ShipmentStateMachine`.
+
+Legacy entry points used elsewhere are preserved with compatible signatures:
+``create_shipment``, ``assign_driver_and_vehicle``, ``assign_driver_only``
+(driver self-accept), ``transition_status``, and ``create_tracking_event``.
+=======
 """Shipment service — application layer for the Shipment aggregate (Sprint 5).
 
 Responsibilities:
@@ -19,6 +37,7 @@ Legacy methods (``assign_driver_only``, ``assign_driver_and_vehicle``,
 driver flow and the tracking-event ingestion route; they now route status
 changes through :class:`~app.services.shipment_policies.ShipmentStateMachine`
 and emit events like the new lifecycle methods.
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
 """
 
 from __future__ import annotations
@@ -34,10 +53,13 @@ from app.common.datetime import utcnow
 from app.common.pagination import Page, PageParams
 from app.db.tenant import get_current_tenant, get_current_user_id
 from app.events.envelope import EventEnvelope
+<<<<<<< HEAD
+=======
 from app.events.compliance_events import (
     DispatchBlockedByCompliance,
     DispatchClearedByCompliance,
 )
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
 from app.events.shipment_events import (
     ShipmentAddressChanged,
     ShipmentAssigned,
@@ -47,7 +69,6 @@ from app.events.shipment_events import (
     ShipmentDelayed,
     ShipmentDeleted,
     ShipmentDelivered,
-    ShipmentDriverChanged,
     ShipmentFailed,
     ShipmentInTransit,
     ShipmentMarkedReady,
@@ -56,8 +77,15 @@ from app.events.shipment_events import (
     ShipmentReturned,
     ShipmentStatusChanged,
     ShipmentUpdated,
-    ShipmentVehicleChanged,
 )
+<<<<<<< HEAD
+from app.models.driver import Driver
+from app.models.enums import ShipmentStatus, TrackingEventType, UserRole, VehicleStatus
+from app.models.shipment import Shipment
+from app.models.shipment_tracking_event import ShipmentTrackingEvent
+from app.models.vehicle import Vehicle
+from app.repositories.driver_repository import DriverRepository
+=======
 from app.models.enums import (
     ShipmentStatus,
     TrackingEventType,
@@ -69,6 +97,7 @@ from app.models.shipment_tracking_event import ShipmentTrackingEvent
 from app.models.enums import EquipmentStatus
 from app.repositories.driver_repository import DriverRepository
 from app.repositories.equipment_repository import EquipmentRepository
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
 from app.repositories.event_store_repository import EventStoreRepository
 from app.repositories.order_repository import OrderRepository
 from app.repositories.shipment_repository import ShipmentRepository
@@ -82,17 +111,23 @@ from app.services.exceptions import (
     CapacityError,
     ConflictError,
     NotFoundError,
-    StatusTransitionError,
     TrackingEventError,
     ValidationError,
 )
+<<<<<<< HEAD
+=======
 from app.services.compliance_service import ComplianceValidationService
 from app.services.equipment_policies import EquipmentStateMachine
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
 from app.services.shipment_policies import ShipmentStateMachine
 
 _AGGREGATE_TYPE = "Shipment"
 
+<<<<<<< HEAD
+# Statuses that reserve warehouse / driver / vehicle capacity.
+=======
 # Statuses that reserve warehouse capacity / count as in-flight.
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
 ACTIVE_STATUSES = {
     ShipmentStatus.CREATED,
     ShipmentStatus.READY,
@@ -102,11 +137,21 @@ ACTIVE_STATUSES = {
     ShipmentStatus.DELAYED,
 }
 
-# Field → fine-grained event partitioning for update_shipment.
+<<<<<<< HEAD
+# Fields whose change emits a fine-grained event.
 _ADDRESS_FIELDS = frozenset({"origin_warehouse_id", "destination_warehouse_id"})
 _CARGO_FIELDS = frozenset(
+    {"cargo_type", "cargo_description", "weight_kg", "volume_m3", "required_vehicle_type"}
+=======
+# Field → fine-grained event partitioning for update_shipment.
+_ADDRESS_FIELDS = frozenset({"origin_warehouse_id", "destination_warehouse_id"})
+<<<<<<< HEAD
+_CARGO_FIELDS = frozenset(
     {"cargo_type", "cargo_description", "weight_kg", "volume_m3"}
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
 )
+=======
+_CARGO_FIELDS = frozenset({"cargo_type", "cargo_description", "weight_kg", "volume_m3"})
 
 
 def _delivery_delay_minutes(due, delivered):
@@ -120,10 +165,15 @@ def _delivery_delay_minutes(due, delivered):
     delivered = delivered if delivered.tzinfo else delivered.replace(tzinfo=timezone.utc)
     minutes = int((delivered - due).total_seconds() // 60)
     return minutes if minutes > 0 else 0
+>>>>>>> 094bfe3a07b13f741debd96d9de37502a7fba6af
 
 
 class ShipmentService:
+<<<<<<< HEAD
+    """Orchestrates shipment lifecycle, assignment, capacity, and events."""
+=======
     """Orchestrates Shipment persistence, validation, and event emission."""
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
 
     def __init__(self, session: Session) -> None:
         self._session = session
@@ -135,6 +185,49 @@ class ShipmentService:
         self._warehouses = WarehouseRepository(session)
         self._equipment = EquipmentRepository(session)
         self._tracking_events = TrackingEventRepository(session)
+<<<<<<< HEAD
+        self._orders = OrderRepository(session)
+        self._users = UserRepository(session)
+        self._event_repo = EventStoreRepository(session)
+
+    # ------------------------------------------------------------------
+    # Context + event helpers
+    # ------------------------------------------------------------------
+
+    def _tenant_id(self) -> uuid.UUID:
+        tid = get_current_tenant()
+        if tid is None:
+            raise ValidationError("No tenant context found; request is not authenticated.")
+        return tid
+
+    def _actor_id(self) -> Optional[uuid.UUID]:
+        return get_current_user_id()
+
+    def _emit(self, event, *, aggregate_id: uuid.UUID, tenant_id: uuid.UUID) -> None:
+        next_version = self._event_repo.next_aggregate_version(aggregate_id)
+        envelope = EventEnvelope.create(
+            event,
+            tenant_id=tenant_id,
+            aggregate_id=aggregate_id,
+            aggregate_version=next_version,
+            aggregate_type=_AGGREGATE_TYPE,
+            user_id=self._actor_id(),
+        )
+        self._event_repo.append(envelope)
+
+    # ------------------------------------------------------------------
+    # Create
+    # ------------------------------------------------------------------
+
+    def create_shipment(self, **data) -> Shipment:
+        """Create a shipment after validating tenant ownership and capacity.
+
+        Raises:
+            :exc:`ValidationError`: missing tenant / client / order not in tenant.
+            :exc:`ConflictError`: duplicate reference code in the tenant.
+            :exc:`NotFoundError`: warehouse missing.
+            :exc:`CapacityError`: warehouse capacity would be exceeded.
+=======
         self._event_repo = EventStoreRepository(session)
         self._compliance_gate = ComplianceValidationService(session)
 
@@ -145,9 +238,7 @@ class ShipmentService:
     def _tenant_id(self) -> uuid.UUID:
         tid = get_current_tenant()
         if tid is None:
-            raise ValidationError(
-                "No tenant context found; request is not authenticated."
-            )
+            raise ValidationError("No tenant context found; request is not authenticated.")
         return tid
 
     def _actor_id(self) -> Optional[uuid.UUID]:
@@ -175,18 +266,14 @@ class ShipmentService:
     # Tenant-ownership validation of related aggregates
     # ------------------------------------------------------------------
 
-    def _require_tenant_owned(
-        self, obj, tenant_id: uuid.UUID, label: str, identifier
-    ):
+    def _require_tenant_owned(self, obj, tenant_id: uuid.UUID, label: str, identifier):
         """Validate ``obj`` exists, is not soft-deleted, and belongs to tenant."""
         if (
             obj is None
             or getattr(obj, "is_deleted", False)
             or getattr(obj, "tenant_id", None) != tenant_id
         ):
-            raise ValidationError(
-                f"{label} {identifier} does not exist in this tenant."
-            )
+            raise ValidationError(f"{label} {identifier} does not exist in this tenant.")
         return obj
 
     def _validate_related(
@@ -200,9 +287,7 @@ class ShipmentService:
         equipment_id: Optional[uuid.UUID],
     ) -> None:
         """Validate all create-time FK references belong to the current tenant."""
-        self._require_tenant_owned(
-            self._users.get_by_id(client_id), tenant_id, "Client", client_id
-        )
+        self._require_tenant_owned(self._users.get_by_id(client_id), tenant_id, "Client", client_id)
         self._require_tenant_owned(
             self._warehouses.get_by_id(origin_warehouse_id),
             tenant_id,
@@ -288,10 +373,37 @@ class ShipmentService:
                 belongs to another tenant.
             :exc:`ConflictError`: When ``reference_code`` already exists.
             :exc:`CapacityError`: When warehouse capacity would be exceeded.
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
         """
         tenant_id = self._tenant_id()
         actor_id = self._actor_id()
 
+<<<<<<< HEAD
+        reference_code = data.get("reference_code")
+        if reference_code and self._shipments.get_by_reference_code(reference_code):
+            raise ConflictError(
+                f"Shipment reference '{reference_code}' already exists in this tenant."
+            )
+
+        # --- cross-tenant ownership validation ---
+        self._assert_user_in_tenant(data.get("client_id"), tenant_id, label="Client")
+        if data.get("order_id"):
+            self._assert_order_in_tenant(data["order_id"], tenant_id)
+        self._assert_warehouses_exist(
+            data["origin_warehouse_id"], data["destination_warehouse_id"]
+        )
+
+        self._assert_capacity(
+            data["origin_warehouse_id"], float(data["weight_kg"]), float(data["volume_m3"])
+        )
+        self._assert_capacity(
+            data["destination_warehouse_id"], float(data["weight_kg"]), float(data["volume_m3"])
+        )
+
+        data.pop("status", None)  # always starts CREATED
+        shipment = self._shipments.create(
+            tenant_id=tenant_id,
+=======
         client_id = data["client_id"]
         origin_warehouse_id = data["origin_warehouse_id"]
         destination_warehouse_id = data["destination_warehouse_id"]
@@ -316,9 +428,7 @@ class ShipmentService:
 
         reference = reference_code or self._generate_reference_code()
         if self._repo.get_by_reference_code(reference):
-            raise ConflictError(
-                f"Shipment reference '{reference}' already exists in this tenant."
-            )
+            raise ConflictError(f"Shipment reference '{reference}' already exists in this tenant.")
 
         # Warehouse capacity guard (preserved from the legacy service).
         self._assert_capacity(
@@ -338,12 +448,17 @@ class ShipmentService:
         shipment = self._repo.create(
             tenant_id=tenant_id,
             reference_code=reference,
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
             status=ShipmentStatus.CREATED,
             created_by=actor_id,
             updated_by=actor_id,
             **data,
         )
+<<<<<<< HEAD
+        self._session.flush()
+=======
         self._session.flush()  # assigns shipment.id
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
 
         self._emit(
             ShipmentCreated(
@@ -351,9 +466,15 @@ class ShipmentService:
                 tenant_id=tenant_id,
                 reference_code=shipment.reference_code,
                 client_id=shipment.client_id,
+<<<<<<< HEAD
+                order_id=shipment.order_id,
+                origin_warehouse_id=shipment.origin_warehouse_id,
+                destination_warehouse_id=shipment.destination_warehouse_id,
+=======
                 origin_warehouse_id=shipment.origin_warehouse_id,
                 destination_warehouse_id=shipment.destination_warehouse_id,
                 order_id=shipment.order_id,
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
                 status=shipment.status.value,
                 priority=shipment.priority.value,
             ),
@@ -367,10 +488,28 @@ class ShipmentService:
     # ------------------------------------------------------------------
     # Read
     # ------------------------------------------------------------------
+<<<<<<< HEAD
 
-    def get_shipment(
-        self, shipment_id: uuid.UUID, *, include_deleted: bool = False
-    ) -> Shipment:
+    def get_shipment(self, shipment_id, *, include_deleted: bool = False) -> Shipment:
+        shipment = self._shipments.get_by_id(shipment_id)
+        if shipment is None:
+            raise NotFoundError(f"Shipment {shipment_id} not found.")
+        if shipment.is_deleted and not include_deleted:
+            raise NotFoundError(f"Shipment {shipment_id} not found.")
+        return shipment
+
+    def list_shipments(self, params: ShipmentListParams) -> Page[Shipment]:
+        items, total = self._shipments.list_shipments(
+            q=params.q,
+            status=params.status,
+            priority=params.priority,
+            client_id=params.client_id,
+            driver_id=params.driver_id,
+            vehicle_id=params.vehicle_id,
+            order_id=params.order_id,
+=======
+
+    def get_shipment(self, shipment_id: uuid.UUID, *, include_deleted: bool = False) -> Shipment:
         """Return a shipment by ID, raising :exc:`NotFoundError` if absent/deleted."""
         shipment = self._repo.get_by_id(shipment_id)
         if shipment is None:
@@ -389,6 +528,7 @@ class ShipmentService:
             vehicle_id=params.vehicle_id,
             order_id=params.order_id,
             client_id=params.client_id,
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
             origin_warehouse_id=params.origin_warehouse_id,
             destination_warehouse_id=params.destination_warehouse_id,
             include_deleted=params.include_deleted,
@@ -400,13 +540,25 @@ class ShipmentService:
         pp = PageParams(page=params.page, size=params.size)
         return Page.create(items=items, total=total, params=pp)
 
+<<<<<<< HEAD
+    # search is a thin alias so the API surface matches Customer/Order.
+=======
     # search_shipments is an alias for list_shipments (q-driven free-text search).
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
     search_shipments = list_shipments
 
     # ------------------------------------------------------------------
     # Update
     # ------------------------------------------------------------------
 
+<<<<<<< HEAD
+    def update_shipment(self, shipment_id, **data) -> Shipment:
+        """Apply partial, non-lifecycle updates with fine-grained events."""
+        tenant_id = self._tenant_id()
+        actor_id = self._actor_id()
+
+        shipment = self._shipments.get_by_id_or_raise(shipment_id)
+=======
     def update_shipment(self, shipment_id: uuid.UUID, **data) -> Shipment:
         """Apply partial updates to a shipment (PATCH semantics).
 
@@ -418,10 +570,29 @@ class ShipmentService:
         actor_id = self._actor_id()
 
         shipment = self._repo.get_by_id_or_raise(shipment_id)
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
         if shipment.is_deleted:
             raise NotFoundError(f"Shipment {shipment_id} not found (deleted).")
         if ShipmentStateMachine.is_terminal(shipment.status):
             raise ValidationError(
+<<<<<<< HEAD
+                f"Shipment {shipment_id} is terminal ('{shipment.status.value}') and cannot be edited."
+            )
+
+        # Reference uniqueness on change.
+        new_ref = data.get("reference_code")
+        if new_ref and new_ref != shipment.reference_code:
+            existing = self._shipments.get_by_reference_code(new_ref)
+            if existing and existing.id != shipment.id:
+                raise ConflictError(f"Shipment reference '{new_ref}' already in use.")
+
+        # Validate warehouse changes stay in-tenant.
+        for wh_field in ("origin_warehouse_id", "destination_warehouse_id"):
+            if data.get(wh_field):
+                self._assert_warehouse_in_tenant(data[wh_field], tenant_id)
+
+        applied = {k: v for k, v in data.items() if v is not None}
+=======
                 f"Shipment {shipment_id} is in terminal state "
                 f"'{shipment.status.value}' and cannot be edited."
             )
@@ -467,47 +638,71 @@ class ShipmentService:
                     f"Shipment reference '{applied['reference_code']}' already exists."
                 )
 
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
         address_changes = {k: v for k, v in applied.items() if k in _ADDRESS_FIELDS}
         cargo_changes = {k: v for k, v in applied.items() if k in _CARGO_FIELDS}
         other_changes = {
-            k: v
-            for k, v in applied.items()
-            if k not in _ADDRESS_FIELDS and k not in _CARGO_FIELDS
+            k: v for k, v in applied.items() if k not in _ADDRESS_FIELDS and k not in _CARGO_FIELDS
         }
 
         data["updated_by"] = actor_id
+<<<<<<< HEAD
+        self._shipments.update(shipment, **data)
+=======
         self._repo.update(shipment, **data)
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
         self._session.flush()
 
         if address_changes:
             self._emit(
                 ShipmentAddressChanged(
+<<<<<<< HEAD
+                    shipment_id=shipment.id, tenant_id=tenant_id,
+                    changed_fields=_jsonable(address_changes),
+                ),
+                aggregate_id=shipment.id, tenant_id=tenant_id,
+=======
                     shipment_id=shipment.id,
                     tenant_id=tenant_id,
                     changed_fields=_jsonable(address_changes),
                 ),
                 aggregate_id=shipment.id,
                 tenant_id=tenant_id,
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
             )
         if cargo_changes:
             self._emit(
                 ShipmentCargoChanged(
+<<<<<<< HEAD
+                    shipment_id=shipment.id, tenant_id=tenant_id,
+                    changed_fields=_jsonable(cargo_changes),
+                ),
+                aggregate_id=shipment.id, tenant_id=tenant_id,
+=======
                     shipment_id=shipment.id,
                     tenant_id=tenant_id,
                     changed_fields=_jsonable(cargo_changes),
                 ),
                 aggregate_id=shipment.id,
                 tenant_id=tenant_id,
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
             )
         if other_changes:
             self._emit(
                 ShipmentUpdated(
+<<<<<<< HEAD
+                    shipment_id=shipment.id, tenant_id=tenant_id,
+                    changed_fields=_jsonable(other_changes),
+                ),
+                aggregate_id=shipment.id, tenant_id=tenant_id,
+=======
                     shipment_id=shipment.id,
                     tenant_id=tenant_id,
                     changed_fields=_jsonable(other_changes),
                 ),
                 aggregate_id=shipment.id,
                 tenant_id=tenant_id,
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
             )
 
         self._session.commit()
@@ -515,6 +710,14 @@ class ShipmentService:
         return shipment
 
     # ------------------------------------------------------------------
+<<<<<<< HEAD
+    # Soft-delete / restore
+    # ------------------------------------------------------------------
+
+    def delete_shipment(self, shipment_id) -> None:
+        tenant_id = self._tenant_id()
+        actor_id = self._actor_id()
+=======
     # Compliance dispatch gate (Sprint 7)
     # ------------------------------------------------------------------
 
@@ -547,9 +750,7 @@ class ShipmentService:
                 "Dispatch blocked by compliance: " + "; ".join(result.blocking_reasons)
             )
         self._emit(
-            DispatchClearedByCompliance(
-                shipment_id=shipment.id, tenant_id=tenant_id, stage=stage
-            ),
+            DispatchClearedByCompliance(shipment_id=shipment.id, tenant_id=tenant_id, stage=stage),
             aggregate_id=shipment.id,
             tenant_id=tenant_id,
         )
@@ -566,9 +767,7 @@ class ShipmentService:
         *,
         reason: Optional[str] = None,
         mutate: Optional[Callable[[Shipment], None]] = None,
-        extra_events: Optional[
-            List[Callable[[Shipment, ShipmentStatus], object]]
-        ] = None,
+        extra_events: Optional[List[Callable[[Shipment, ShipmentStatus], object]]] = None,
     ) -> Shipment:
         """Validated status transition + event emission in one transaction."""
         tenant_id = self._tenant_id()
@@ -653,16 +852,133 @@ class ShipmentService:
         vehicle = self._require_tenant_owned(
             self._vehicles.get_by_id(vehicle_id), tenant_id, "Vehicle", vehicle_id
         )
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
 
+        shipment = self._shipments.get_by_id_or_raise(shipment_id)
+        if shipment.is_deleted:
+            raise NotFoundError(f"Shipment {shipment_id} is already deleted.")
+
+        self._shipments.soft_delete(shipment, deleted_by=actor_id)
+        shipment.updated_by = actor_id
+        self._session.flush()
+        self._emit(
+            ShipmentDeleted(shipment_id=shipment.id, tenant_id=tenant_id, deleted_by=actor_id),
+            aggregate_id=shipment.id, tenant_id=tenant_id,
+        )
+        self._session.commit()
+
+    def restore_shipment(self, shipment_id) -> Shipment:
+        tenant_id = self._tenant_id()
+        actor_id = self._actor_id()
+
+        shipment = self._shipments.get_by_id(shipment_id)
+        if shipment is None:
+            raise NotFoundError(f"Shipment {shipment_id} not found.")
+        if not shipment.is_deleted:
+            raise ValidationError(f"Shipment {shipment_id} is not deleted; nothing to restore.")
+
+        self._shipments.restore(shipment)
+        shipment.updated_by = actor_id
+        self._session.flush()
+        self._emit(
+            ShipmentRestored(shipment_id=shipment.id, tenant_id=tenant_id),
+            aggregate_id=shipment.id, tenant_id=tenant_id,
+        )
+        self._session.commit()
+        self._session.refresh(shipment)
+        return shipment
+
+    # ------------------------------------------------------------------
+    # Transition core
+    # ------------------------------------------------------------------
+
+    def _transition(
+        self,
+        shipment_id,
+        new_status: ShipmentStatus,
+        *,
+        reason: Optional[str] = None,
+        mutate: Optional[Callable[[Shipment], None]] = None,
+        extra_events: Optional[List[Callable[[Shipment, ShipmentStatus], object]]] = None,
+    ) -> Shipment:
+        tenant_id = self._tenant_id()
+        actor_id = self._actor_id()
+
+        shipment = self._shipments.get_by_id_or_raise(shipment_id)
+        if shipment.is_deleted:
+            raise NotFoundError(f"Shipment {shipment_id} not found (deleted).")
+
+        previous = shipment.status
+        if new_status == previous:
+            return shipment  # idempotent
+
+        ShipmentStateMachine.validate_transition(previous, new_status)
+
+        if mutate is not None:
+            mutate(shipment)
+        shipment.status = new_status
+        shipment.updated_by = actor_id
+        self._session.flush()
+
+        for factory in extra_events or []:
+            self._emit(factory(shipment, previous), aggregate_id=shipment.id, tenant_id=tenant_id)
+        self._emit(
+            ShipmentStatusChanged(
+                shipment_id=shipment.id, tenant_id=tenant_id,
+                previous_status=previous.value, new_status=new_status.value, reason=reason,
+            ),
+            aggregate_id=shipment.id, tenant_id=tenant_id,
+        )
+        self._session.commit()
+        self._session.refresh(shipment)
+        return shipment
+
+    # ------------------------------------------------------------------
+    # Lifecycle operations
+    # ------------------------------------------------------------------
+
+    def mark_ready(self, shipment_id) -> Shipment:
+        """created → ready."""
+        return self._transition(
+            shipment_id, ShipmentStatus.READY,
+            extra_events=[
+                lambda s, prev: ShipmentMarkedReady(
+                    shipment_id=s.id, tenant_id=s.tenant_id, previous_status=prev.value
+                )
+            ],
+        )
+
+    def assign_shipment(
+        self, shipment_id, *, driver_id, vehicle_id, reason: Optional[str] = None
+    ) -> Shipment:
+        """Assign driver AND vehicle (formal dispatch): ready → assigned."""
+        tenant_id = self._tenant_id()
+        shipment = self._shipments.get_by_id_or_raise(shipment_id)
+        if shipment.is_deleted:
+            raise NotFoundError(f"Shipment {shipment_id} not found (deleted).")
+        if shipment.status not in {ShipmentStatus.CREATED, ShipmentStatus.READY}:
+            raise StatusTransitionError(
+                f"Cannot assign a shipment in status '{shipment.status.value}'."
+            )
+
+        driver = self._require_driver(driver_id, tenant_id)
+        vehicle = self._require_vehicle(vehicle_id, tenant_id)
         self._validate_driver(driver)
         self._validate_vehicle(vehicle)
+<<<<<<< HEAD
+<<<<<<< HEAD
+        self._assert_driver_not_busy(driver.id, exclude=shipment.id)
+        self._assert_vehicle_not_busy(vehicle.id, exclude=shipment.id)
+        self._assert_vehicle_capacity(vehicle, shipment)
+=======
         if self._repo.has_active_driver_assignment(
             driver.id, exclude_shipment_id=shipment.id
         ):
+=======
+        if self._repo.has_active_driver_assignment(driver.id, exclude_shipment_id=shipment.id):
+>>>>>>> 094bfe3a07b13f741debd96d9de37502a7fba6af
             raise AssignmentError("Driver already assigned to an active shipment.")
-        if self._repo.has_active_vehicle_assignment(
-            vehicle.id, exclude_shipment_id=shipment.id
-        ):
+        if self._repo.has_active_vehicle_assignment(vehicle.id, exclude_shipment_id=shipment.id):
             raise AssignmentError("Vehicle already assigned to an active shipment.")
         self._assert_vehicle_capacity(vehicle, shipment)
 
@@ -725,9 +1041,7 @@ class ShipmentService:
             ],
         )
 
-    def mark_delayed(
-        self, shipment_id: uuid.UUID, *, reason: Optional[str] = None
-    ) -> Shipment:
+    def mark_delayed(self, shipment_id: uuid.UUID, *, reason: Optional[str] = None) -> Shipment:
         """in_transit → delayed (overlay; resumeable via start_transit)."""
         return self._transition(
             shipment_id,
@@ -745,30 +1059,34 @@ class ShipmentService:
 
     def deliver_shipment(self, shipment_id: uuid.UUID) -> Shipment:
         """in_transit/delayed → delivered (terminal)."""
+
         def _mutate(s: Shipment) -> None:
             s.delivered_at = utcnow()
 
         return self._transition(
             shipment_id,
             ShipmentStatus.DELIVERED,
-            extra_events=[lambda s, prev: ShipmentDelivered(
-                shipment_id=s.id,
-                tenant_id=s.tenant_id,
-                delivered_at=s.delivered_at.isoformat() if s.delivered_at else None,
-                previous_status=prev.value,
-                # Sprint 12 enrichment: timing for on-time/late + duration analytics.
-                planned_delivery_at=s.delivery_due_at.isoformat() if s.delivery_due_at else None,
-                picked_up_at=s.picked_up_at.isoformat() if s.picked_up_at else None,
-                delay_minutes=_delivery_delay_minutes(s.delivery_due_at, s.delivered_at),
-                order_id=s.order_id,
-                customer_id=s.client_id,
-            )],
+            extra_events=[
+                lambda s, prev: ShipmentDelivered(
+                    shipment_id=s.id,
+                    tenant_id=s.tenant_id,
+                    delivered_at=s.delivered_at.isoformat() if s.delivered_at else None,
+                    previous_status=prev.value,
+                    # Sprint 12 enrichment: timing for on-time/late + duration analytics.
+                    planned_delivery_at=(
+                        s.delivery_due_at.isoformat() if s.delivery_due_at else None
+                    ),
+                    picked_up_at=s.picked_up_at.isoformat() if s.picked_up_at else None,
+                    delay_minutes=_delivery_delay_minutes(s.delivery_due_at, s.delivered_at),
+                    order_id=s.order_id,
+                    customer_id=s.client_id,
+                )
+            ],
         )
 
-    def fail_shipment(
-        self, shipment_id: uuid.UUID, *, reason: Optional[str] = None
-    ) -> Shipment:
+    def fail_shipment(self, shipment_id: uuid.UUID, *, reason: Optional[str] = None) -> Shipment:
         """in-progress → failed."""
+
         def _mutate(s: Shipment) -> None:
             s.failed_at = utcnow()
             s.failure_reason = reason
@@ -788,10 +1106,9 @@ class ShipmentService:
             ],
         )
 
-    def return_shipment(
-        self, shipment_id: uuid.UUID, *, reason: Optional[str] = None
-    ) -> Shipment:
+    def return_shipment(self, shipment_id: uuid.UUID, *, reason: Optional[str] = None) -> Shipment:
         """in_transit/delayed/failed → returned (terminal)."""
+
         def _mutate(s: Shipment) -> None:
             s.return_reason = reason
 
@@ -810,10 +1127,9 @@ class ShipmentService:
             ],
         )
 
-    def cancel_shipment(
-        self, shipment_id: uuid.UUID, *, reason: Optional[str] = None
-    ) -> Shipment:
+    def cancel_shipment(self, shipment_id: uuid.UUID, *, reason: Optional[str] = None) -> Shipment:
         """any pre-delivery → cancelled (terminal). Flags compensation when needed."""
+
         def _mutate(s: Shipment) -> None:
             s.cancelled_at = utcnow()
 
@@ -852,9 +1168,7 @@ class ShipmentService:
         self._session.flush()
 
         self._emit(
-            ShipmentDeleted(
-                shipment_id=shipment.id, tenant_id=tenant_id, deleted_by=actor_id
-            ),
+            ShipmentDeleted(shipment_id=shipment.id, tenant_id=tenant_id, deleted_by=actor_id),
             aggregate_id=shipment.id,
             tenant_id=tenant_id,
         )
@@ -869,9 +1183,7 @@ class ShipmentService:
         if shipment is None:
             raise NotFoundError(f"Shipment {shipment_id} not found.")
         if not shipment.is_deleted:
-            raise ValidationError(
-                f"Shipment {shipment_id} is not deleted; nothing to restore."
-            )
+            raise ValidationError(f"Shipment {shipment_id} is not deleted; nothing to restore.")
 
         self._repo.restore(shipment)
         shipment.updated_by = actor_id
@@ -918,14 +1230,207 @@ class ShipmentService:
         if driver is None:
             raise NotFoundError("Driver not found.")
         self._validate_driver(driver)
-        if self._repo.has_active_driver_assignment(
-            driver.id, exclude_shipment_id=shipment.id
-        ):
+        if self._repo.has_active_driver_assignment(driver.id, exclude_shipment_id=shipment.id):
             raise AssignmentError("Driver already assigned to an active shipment.")
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
 
+        prev_driver = shipment.driver_id
+        prev_vehicle = shipment.vehicle_id
+
+        def _mutate(s: Shipment) -> None:
+            s.driver_id = driver.id
+            s.vehicle_id = vehicle.id
+            s.assigned_at = utcnow()
+
+        return self._transition(
+            shipment_id, ShipmentStatus.ASSIGNED, reason=reason, mutate=_mutate,
+            extra_events=[
+                lambda s, prev: ShipmentAssigned(
+                    shipment_id=s.id, tenant_id=s.tenant_id,
+                    driver_id=s.driver_id, vehicle_id=s.vehicle_id, previous_status=prev.value,
+                ),
+                lambda s, prev: ShipmentDriverChanged(
+                    shipment_id=s.id, tenant_id=s.tenant_id,
+                    previous_driver_id=prev_driver, new_driver_id=s.driver_id,
+                ),
+                lambda s, prev: ShipmentVehicleChanged(
+                    shipment_id=s.id, tenant_id=s.tenant_id,
+                    previous_vehicle_id=prev_vehicle, new_vehicle_id=s.vehicle_id,
+                ),
+            ],
+        )
+
+    def pickup_shipment(self, shipment_id) -> Shipment:
+        """assigned → picked_up (requires a bound driver)."""
+        shipment = self._shipments.get_by_id_or_raise(shipment_id)
+        if not shipment.is_deleted and shipment.driver_id is None:
+            raise AssignmentError("Cannot pick up a shipment with no assigned driver.")
+
+        def _mutate(s: Shipment) -> None:
+            s.picked_up_at = utcnow()
+
+        return self._transition(
+            shipment_id, ShipmentStatus.PICKED_UP, mutate=_mutate,
+            extra_events=[
+                lambda s, prev: ShipmentPickedUp(
+                    shipment_id=s.id, tenant_id=s.tenant_id,
+                    picked_up_at=s.picked_up_at.isoformat() if s.picked_up_at else None,
+                    previous_status=prev.value,
+                )
+            ],
+        )
+
+    def start_transit(self, shipment_id) -> Shipment:
+        """picked_up/delayed → in_transit."""
+        return self._transition(
+            shipment_id, ShipmentStatus.IN_TRANSIT,
+            extra_events=[
+                lambda s, prev: ShipmentInTransit(
+                    shipment_id=s.id, tenant_id=s.tenant_id, previous_status=prev.value
+                )
+            ],
+        )
+
+    def mark_delayed(self, shipment_id, *, reason: Optional[str] = None) -> Shipment:
+        """picked_up/in_transit → delayed (overlay)."""
+        return self._transition(
+            shipment_id, ShipmentStatus.DELAYED, reason=reason,
+            extra_events=[
+                lambda s, prev: ShipmentDelayed(
+                    shipment_id=s.id, tenant_id=s.tenant_id,
+                    previous_status=prev.value, reason=reason,
+                )
+            ],
+        )
+
+    def deliver_shipment(self, shipment_id) -> Shipment:
+        """in_transit/delayed → delivered (terminal)."""
+        def _mutate(s: Shipment) -> None:
+            s.delivered_at = utcnow()
+
+        return self._transition(
+            shipment_id, ShipmentStatus.DELIVERED, mutate=_mutate,
+            extra_events=[
+                lambda s, prev: ShipmentDelivered(
+                    shipment_id=s.id, tenant_id=s.tenant_id,
+                    delivered_at=s.delivered_at.isoformat() if s.delivered_at else None,
+                    previous_status=prev.value,
+                )
+            ],
+        )
+
+    def fail_shipment(self, shipment_id, *, reason: Optional[str] = None) -> Shipment:
+        """in_transit/delayed → failed."""
+        def _mutate(s: Shipment) -> None:
+            s.failed_at = utcnow()
+            s.failure_reason = reason
+
+        return self._transition(
+            shipment_id, ShipmentStatus.FAILED, reason=reason, mutate=_mutate,
+            extra_events=[
+                lambda s, prev: ShipmentFailed(
+                    shipment_id=s.id, tenant_id=s.tenant_id,
+                    previous_status=prev.value, reason=reason,
+                )
+            ],
+        )
+
+    def return_shipment(self, shipment_id, *, reason: Optional[str] = None) -> Shipment:
+        """in_transit/delayed/failed → returned (terminal)."""
+        def _mutate(s: Shipment) -> None:
+            s.return_reason = reason
+
+        return self._transition(
+            shipment_id, ShipmentStatus.RETURNED, reason=reason, mutate=_mutate,
+            extra_events=[
+                lambda s, prev: ShipmentReturned(
+                    shipment_id=s.id, tenant_id=s.tenant_id,
+                    previous_status=prev.value, reason=reason,
+                )
+            ],
+        )
+
+    def cancel_shipment(self, shipment_id, *, reason: Optional[str] = None) -> Shipment:
+        """any pre-delivered state → cancelled (terminal); flags compensation."""
+        def _mutate(s: Shipment) -> None:
+            s.cancelled_at = utcnow()
+
+        def _cancelled(s: Shipment, prev: ShipmentStatus) -> object:
+            return ShipmentCancelled(
+                shipment_id=s.id, tenant_id=s.tenant_id, previous_status=prev.value,
+                reason=reason, compensation_required=ShipmentStateMachine.requires_compensation(prev),
+            )
+
+        return self._transition(
+            shipment_id, ShipmentStatus.CANCELLED, reason=reason, mutate=_mutate,
+            extra_events=[_cancelled],
+        )
+
+    # ------------------------------------------------------------------
+    # Legacy entry points (backward compatibility)
+    # ------------------------------------------------------------------
+
+    def assign_driver_and_vehicle(self, shipment_id: str, driver_id: str, vehicle_id: str) -> Shipment:
+        """Legacy alias for :meth:`assign_shipment` (driver + vehicle)."""
+        return self.assign_shipment(shipment_id, driver_id=driver_id, vehicle_id=vehicle_id)
+
+    def assign_driver_only(self, shipment_id: str, driver_id: str) -> Shipment:
+        """Driver self-accept (mobile): ready/created → assigned, driver only."""
+        tenant_id = self._tenant_id()
+        shipment = self._shipments.get_by_id_or_raise(shipment_id)
+        if shipment.is_deleted:
+            raise NotFoundError(f"Shipment {shipment_id} not found (deleted).")
         if shipment.status not in {ShipmentStatus.READY, ShipmentStatus.CREATED}:
             raise AssignmentError("Shipment is not open for acceptance.")
 
+<<<<<<< HEAD
+        driver = self._require_driver(driver_id, tenant_id)
+        self._validate_driver(driver)
+        self._assert_driver_not_busy(driver.id, exclude=shipment.id)
+
+        prev_driver = shipment.driver_id
+
+        def _mutate(s: Shipment) -> None:
+            s.driver_id = driver.id
+            s.assigned_at = utcnow()
+
+        # Allow CREATED→ASSIGNED for the self-accept path (offer claim).
+        if shipment.status == ShipmentStatus.CREATED:
+            shipment.status = ShipmentStatus.READY  # normalize to a valid pre-assign state
+
+        return self._transition(
+            shipment_id, ShipmentStatus.ASSIGNED, mutate=_mutate,
+            extra_events=[
+                lambda s, prev: ShipmentAssigned(
+                    shipment_id=s.id, tenant_id=s.tenant_id,
+                    driver_id=s.driver_id, vehicle_id=s.vehicle_id, previous_status=prev.value,
+                ),
+                lambda s, prev: ShipmentDriverChanged(
+                    shipment_id=s.id, tenant_id=s.tenant_id,
+                    previous_driver_id=prev_driver, new_driver_id=s.driver_id,
+                ),
+            ],
+        )
+
+    # Map of the legacy generic status transition to the specific operations.
+    _LEGACY_TRANSITIONS: Dict[ShipmentStatus, str] = {
+        ShipmentStatus.READY: "mark_ready",
+        ShipmentStatus.PICKED_UP: "pickup_shipment",
+        ShipmentStatus.IN_TRANSIT: "start_transit",
+        ShipmentStatus.DELAYED: "mark_delayed",
+        ShipmentStatus.DELIVERED: "deliver_shipment",
+        ShipmentStatus.FAILED: "fail_shipment",
+        ShipmentStatus.RETURNED: "return_shipment",
+        ShipmentStatus.CANCELLED: "cancel_shipment",
+    }
+
+    def transition_status(self, shipment_id: str, new_status: ShipmentStatus) -> Shipment:
+        """Legacy generic transition — routes to the specific lifecycle op."""
+        op_name = self._LEGACY_TRANSITIONS.get(new_status)
+        if op_name is None:
+            raise StatusTransitionError(f"Unsupported target status '{new_status.value}'.")
+        return getattr(self, op_name)(shipment_id)
+=======
         previous = shipment.status
         shipment.driver_id = driver.id
         shipment.assigned_at = utcnow()
@@ -959,10 +1464,9 @@ class ShipmentService:
         self._session.refresh(shipment)
         return shipment
 
-    def transition_status(
-        self, shipment_id: str, new_status: ShipmentStatus
-    ) -> Shipment:
+    def transition_status(self, shipment_id: str, new_status: ShipmentStatus) -> Shipment:
         """Legacy generic status transition routed through the state machine."""
+
         def _mutate(s: Shipment) -> None:
             now = utcnow()
             if new_status == ShipmentStatus.CANCELLED:
@@ -976,9 +1480,14 @@ class ShipmentService:
             elif new_status == ShipmentStatus.FAILED:
                 s.failed_at = now
 
+<<<<<<< HEAD
         return self._transition(
             uuid.UUID(str(shipment_id)), new_status, mutate=_mutate
         )
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
+=======
+        return self._transition(uuid.UUID(str(shipment_id)), new_status, mutate=_mutate)
+>>>>>>> 094bfe3a07b13f741debd96d9de37502a7fba6af
 
     def create_tracking_event(
         self,
@@ -993,6 +1502,13 @@ class ShipmentService:
         recorded_by_user_id: Optional[str],
         evidence_url: Optional[str],
     ) -> ShipmentTrackingEvent:
+<<<<<<< HEAD
+        """Append a tracking event and optionally advance status (emits events)."""
+        tenant_id = self._tenant_id()
+        shipment = self._shipments.get_by_id_or_raise(shipment_id)
+        if shipment.is_deleted:
+            raise NotFoundError(f"Shipment {shipment_id} not found (deleted).")
+=======
         """Append a tracking event and optionally advance shipment status.
 
         The append-only tracking history is independent of the event store; when
@@ -1001,6 +1517,7 @@ class ShipmentService:
         """
         tenant_id = self._tenant_id()
         shipment = self._repo.get_by_id_or_raise(shipment_id)
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
 
         last_event_time = self._get_latest_event_time(shipment.id)
         if last_event_time and event_time < last_event_time:
@@ -1033,6 +1550,17 @@ class ShipmentService:
                 shipment.cancelled_at = event_time
             elif status == ShipmentStatus.PICKED_UP:
                 shipment.picked_up_at = event_time
+<<<<<<< HEAD
+            elif status == ShipmentStatus.FAILED:
+                shipment.failed_at = event_time
+            self._session.flush()
+            self._emit(
+                ShipmentStatusChanged(
+                    shipment_id=shipment.id, tenant_id=tenant_id,
+                    previous_status=previous.value, new_status=status.value, reason=notes,
+                ),
+                aggregate_id=shipment.id, tenant_id=tenant_id,
+=======
             self._session.flush()
             self._emit(
                 ShipmentStatusChanged(
@@ -1044,6 +1572,7 @@ class ShipmentService:
                 ),
                 aggregate_id=shipment.id,
                 tenant_id=tenant_id,
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
             )
 
         self._session.commit()
@@ -1051,15 +1580,55 @@ class ShipmentService:
         return event
 
     # ------------------------------------------------------------------
+<<<<<<< HEAD
+    # Validation helpers
+    # ------------------------------------------------------------------
+
+    def _assert_user_in_tenant(self, user_id, tenant_id, *, label: str) -> None:
+        user = self._users.get_by_id(user_id) if user_id else None
+        if user is None or getattr(user, "tenant_id", None) != tenant_id:
+            raise ValidationError(f"{label} {user_id} does not exist in this tenant.")
+
+    def _assert_order_in_tenant(self, order_id, tenant_id) -> None:
+        order = self._orders.get_by_id(order_id)
+        if order is None or order.is_deleted or order.tenant_id != tenant_id:
+            raise ValidationError(f"Order {order_id} does not exist in this tenant.")
+
+    def _assert_warehouse_in_tenant(self, warehouse_id, tenant_id) -> None:
+        wh = self._warehouses.get_by_id(warehouse_id)
+        if wh is None or getattr(wh, "tenant_id", None) != tenant_id:
+            raise ValidationError(f"Warehouse {warehouse_id} does not exist in this tenant.")
+
+    def _require_driver(self, driver_id, tenant_id) -> Driver:
+        driver = self._drivers.get_by_id(driver_id)
+        if driver is None:
+            raise NotFoundError("Driver not found.")
+        if getattr(driver, "tenant_id", None) != tenant_id:
+            raise ValidationError("Driver does not belong to this tenant.")
+        return driver
+
+    def _require_vehicle(self, vehicle_id, tenant_id) -> Vehicle:
+        vehicle = self._vehicles.get_by_id(vehicle_id)
+        if vehicle is None:
+            raise NotFoundError("Vehicle not found.")
+        if getattr(vehicle, "tenant_id", None) != tenant_id:
+            raise ValidationError("Vehicle does not belong to this tenant.")
+        return vehicle
+
+    def _assert_warehouses_exist(self, origin_id, destination_id) -> None:
+        tenant_id = self._tenant_id()
+        self._assert_warehouse_in_tenant(origin_id, tenant_id)
+        self._assert_warehouse_in_tenant(destination_id, tenant_id)
+
+    def _assert_capacity(self, warehouse_id, added_weight: float, added_volume: float) -> None:
+=======
     # Internal eligibility / capacity helpers
     # ------------------------------------------------------------------
 
     def _validate_driver(self, driver) -> None:
         """Ensure a driver is eligible for assignment."""
         if driver.user is None or driver.user.role != UserRole.DRIVER:
-            raise AssignmentError(
-                "Driver profile is not linked to a driver-role user."
-            )
+            raise AssignmentError("Driver profile is not linked to a driver-role user.")
         if not driver.is_available:
             raise AssignmentError("Driver is marked unavailable for assignments.")
 
@@ -1075,14 +1644,12 @@ class ShipmentService:
         if float(shipment.volume_m3) > float(vehicle.capacity_volume_m3):
             raise AssignmentError("Shipment exceeds vehicle volume capacity.")
 
-    def _assert_capacity(
-        self, warehouse_id, added_weight: float, added_volume: float
-    ) -> None:
+    def _assert_capacity(self, warehouse_id, added_weight: float, added_volume: float) -> None:
         """Ensure adding a shipment will not exceed warehouse capacity."""
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
         warehouse = self._warehouses.get_by_id(warehouse_id)
         if warehouse is None:
             raise NotFoundError("Warehouse not found.")
-
         current_weight, current_volume = self._current_load_for_warehouse(warehouse_id)
         if current_weight + added_weight > float(warehouse.capacity_weight_kg):
             raise CapacityError("Warehouse weight capacity would be exceeded.")
@@ -1090,29 +1657,70 @@ class ShipmentService:
             raise CapacityError("Warehouse volume capacity would be exceeded.")
 
     def _current_load_for_warehouse(self, warehouse_id) -> tuple[float, float]:
+<<<<<<< HEAD
+        active = tuple(ACTIVE_STATUSES)
+        stmt = select(
+            func.coalesce(func.sum(Shipment.weight_kg), 0),
+            func.coalesce(func.sum(Shipment.volume_m3), 0),
+        ).where(
+=======
         """Active weight and volume reserved against a warehouse."""
         weight_sum = func.coalesce(func.sum(Shipment.weight_kg), 0)
         volume_sum = func.coalesce(func.sum(Shipment.volume_m3), 0)
         statement = select(weight_sum, volume_sum).where(
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
             or_(
                 Shipment.origin_warehouse_id == warehouse_id,
                 Shipment.destination_warehouse_id == warehouse_id,
             ),
+<<<<<<< HEAD
+            Shipment.status.in_(active),
+=======
             Shipment.status.in_(tuple(ACTIVE_STATUSES)),
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
             Shipment.deleted_at.is_(None),
         )
-        weight, volume = self._session.execute(statement).one()
+        weight, volume = self._session.execute(stmt).one()
         return float(weight), float(volume)
 
+<<<<<<< HEAD
+    def _validate_driver(self, driver: Driver) -> None:
+        if driver.user is None or driver.user.role != UserRole.DRIVER:
+            raise AssignmentError("Driver profile is not linked to a driver-role user.")
+        if not driver.is_available:
+            raise AssignmentError("Driver is marked unavailable for assignments.")
+
+    def _validate_vehicle(self, vehicle: Vehicle) -> None:
+        if vehicle.status != VehicleStatus.ACTIVE:
+            raise AssignmentError("Vehicle is not active for assignments.")
+
+    def _assert_driver_not_busy(self, driver_id, exclude) -> None:
+        if self._shipments.count_active_for_driver(driver_id, exclude_shipment_id=exclude) > 0:
+            raise AssignmentError("Driver already assigned to an active shipment.")
+
+    def _assert_vehicle_not_busy(self, vehicle_id, exclude) -> None:
+        if self._shipments.count_active_for_vehicle(vehicle_id, exclude_shipment_id=exclude) > 0:
+            raise AssignmentError("Vehicle already assigned to an active shipment.")
+
+    def _assert_vehicle_capacity(self, vehicle: Vehicle, shipment: Shipment) -> None:
+        if float(shipment.weight_kg) > float(vehicle.capacity_weight_kg):
+            raise AssignmentError("Shipment exceeds vehicle weight capacity.")
+        if float(shipment.volume_m3) > float(vehicle.capacity_volume_m3):
+            raise AssignmentError("Shipment exceeds vehicle volume capacity.")
+
+    def _get_latest_event_time(self, shipment_id) -> Optional[datetime]:
+        stmt = (
+=======
     def _get_latest_event_time(self, shipment_id) -> Optional[datetime]:
         """Most recent tracking-event time, to enforce monotonic ordering."""
         statement = (
+>>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
             select(ShipmentTrackingEvent.event_time)
             .where(ShipmentTrackingEvent.shipment_id == shipment_id)
             .order_by(ShipmentTrackingEvent.event_time.desc())
             .limit(1)
         )
-        result = self._session.execute(statement).first()
+        result = self._session.execute(stmt).first()
         return result[0] if result else None
 
 

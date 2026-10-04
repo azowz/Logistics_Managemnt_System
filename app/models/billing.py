@@ -68,27 +68,45 @@ class Quote(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     quote_number: Mapped[str] = mapped_column(String(64), nullable=False)
     customer_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("customers.id", ondelete="SET NULL"), nullable=True, index=True
+        UUID(as_uuid=True),
+        ForeignKey("customers.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     order_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("orders.id", ondelete="SET NULL"), nullable=True, index=True
     )
     shipment_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("shipments.id", ondelete="SET NULL"), nullable=True, index=True
+        UUID(as_uuid=True),
+        ForeignKey("shipments.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     status: Mapped[QuoteStatus] = mapped_column(
         SAEnum(QuoteStatus, native_enum=False, length=32, values_callable=_enum_values),
-        nullable=False, default=QuoteStatus.DRAFT, server_default="draft", index=True,
+        nullable=False,
+        default=QuoteStatus.DRAFT,
+        server_default="draft",
+        index=True,
     )
     currency_code: Mapped[str] = mapped_column(String(3), nullable=False, server_default="SAR")
-    subtotal_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, server_default="0")
+    subtotal_amount: Mapped[Decimal] = mapped_column(
+        Numeric(14, 2), nullable=False, server_default="0"
+    )
     tax_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, server_default="0")
-    discount_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, server_default="0")
-    total_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, server_default="0")
+    discount_amount: Mapped[Decimal] = mapped_column(
+        Numeric(14, 2), nullable=False, server_default="0"
+    )
+    total_amount: Mapped[Decimal] = mapped_column(
+        Numeric(14, 2), nullable=False, server_default="0"
+    )
     valid_until: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     issued_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     approved_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
@@ -98,7 +116,9 @@ class Quote(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     notes: Mapped[Optional[str]] = mapped_column(Text)
     terms: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
 
-    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True, default=None)
+    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), nullable=True, default=None
+    )
     version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
     __mapper_args__ = {"version_id_col": version}
 
@@ -106,7 +126,9 @@ class Quote(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
 class Invoice(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     __tablename__ = "invoices"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "invoice_number", name="uq_invoices_tenant_id_invoice_number"),
+        UniqueConstraint(
+            "tenant_id", "invoice_number", name="uq_invoices_tenant_id_invoice_number"
+        ),
         CheckConstraint(
             "status IN ('draft', 'issued', 'partially_paid', 'paid', 'overdue', 'voided', 'cancelled')",
             name="status",
@@ -122,17 +144,26 @@ class Invoice(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     invoice_number: Mapped[str] = mapped_column(String(64), nullable=False)
     customer_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("customers.id", ondelete="SET NULL"), nullable=True, index=True
+        UUID(as_uuid=True),
+        ForeignKey("customers.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     order_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("orders.id", ondelete="SET NULL"), nullable=True, index=True
     )
     shipment_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("shipments.id", ondelete="SET NULL"), nullable=True, index=True
+        UUID(as_uuid=True),
+        ForeignKey("shipments.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     quote_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("quotes.id", ondelete="SET NULL"), nullable=True
@@ -142,16 +173,31 @@ class Invoice(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     )
     status: Mapped[InvoiceStatus] = mapped_column(
         SAEnum(InvoiceStatus, native_enum=False, length=32, values_callable=_enum_values),
-        nullable=False, default=InvoiceStatus.DRAFT, server_default="draft", index=True,
+        nullable=False,
+        default=InvoiceStatus.DRAFT,
+        server_default="draft",
+        index=True,
     )
     currency_code: Mapped[str] = mapped_column(String(3), nullable=False, server_default="SAR")
-    subtotal_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, server_default="0")
+    subtotal_amount: Mapped[Decimal] = mapped_column(
+        Numeric(14, 2), nullable=False, server_default="0"
+    )
     tax_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, server_default="0")
-    discount_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, server_default="0")
-    penalty_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, server_default="0")
-    claim_adjustment_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, server_default="0")
-    total_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, server_default="0")
-    is_credit_note: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, server_default="false")
+    discount_amount: Mapped[Decimal] = mapped_column(
+        Numeric(14, 2), nullable=False, server_default="0"
+    )
+    penalty_amount: Mapped[Decimal] = mapped_column(
+        Numeric(14, 2), nullable=False, server_default="0"
+    )
+    claim_adjustment_amount: Mapped[Decimal] = mapped_column(
+        Numeric(14, 2), nullable=False, server_default="0"
+    )
+    total_amount: Mapped[Decimal] = mapped_column(
+        Numeric(14, 2), nullable=False, server_default="0"
+    )
+    is_credit_note: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="false"
+    )
     due_date: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     issued_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     paid_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
@@ -159,7 +205,9 @@ class Invoice(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     cancelled_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     notes: Mapped[Optional[str]] = mapped_column(Text)
 
-    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True, default=None)
+    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), nullable=True, default=None
+    )
     version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
     __mapper_args__ = {"version_id_col": version}
 
@@ -180,22 +228,32 @@ class InvoiceLine(TimestampMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     invoice_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("invoices.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("invoices.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     line_type: Mapped[InvoiceLineType] = mapped_column(
-        SAEnum(InvoiceLineType, native_enum=False, length=32, values_callable=_enum_values), nullable=False
+        SAEnum(InvoiceLineType, native_enum=False, length=32, values_callable=_enum_values),
+        nullable=False,
     )
     description: Mapped[Optional[str]] = mapped_column(String(512))
     quantity: Mapped[Decimal] = mapped_column(Numeric(14, 3), nullable=False, server_default="1")
     unit_price: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, server_default="0")
     tax_rate: Mapped[Decimal] = mapped_column(Numeric(5, 2), nullable=False, server_default="0")
-    discount_amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, server_default="0")
+    discount_amount: Mapped[Decimal] = mapped_column(
+        Numeric(14, 2), nullable=False, server_default="0"
+    )
     line_total: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, server_default="0")
     reference_type: Mapped[Optional[LineReferenceType]] = mapped_column(
-        SAEnum(LineReferenceType, native_enum=False, length=16, values_callable=_enum_values), nullable=True
+        SAEnum(LineReferenceType, native_enum=False, length=16, values_callable=_enum_values),
+        nullable=True,
     )
     reference_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
 
@@ -203,9 +261,7 @@ class InvoiceLine(TimestampMixin, Base):
 class Payment(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     __tablename__ = "payments"
     __table_args__ = (
-        CheckConstraint(
-            "status IN ('pending', 'confirmed', 'failed', 'reversed')", name="status"
-        ),
+        CheckConstraint("status IN ('pending', 'confirmed', 'failed', 'reversed')", name="status"),
         CheckConstraint(
             "method IN ('bank_transfer', 'cash', 'card', 'sadad', 'internal_adjustment')",
             name="method",
@@ -216,26 +272,38 @@ class Payment(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     invoice_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("invoices.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("invoices.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     payment_reference: Mapped[Optional[str]] = mapped_column(String(128))
     amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
     currency_code: Mapped[str] = mapped_column(String(3), nullable=False, server_default="SAR")
     method: Mapped[PaymentMethod] = mapped_column(
-        SAEnum(PaymentMethod, native_enum=False, length=32, values_callable=_enum_values), nullable=False
+        SAEnum(PaymentMethod, native_enum=False, length=32, values_callable=_enum_values),
+        nullable=False,
     )
     status: Mapped[PaymentStatus] = mapped_column(
         SAEnum(PaymentStatus, native_enum=False, length=16, values_callable=_enum_values),
-        nullable=False, default=PaymentStatus.CONFIRMED, server_default="confirmed", index=True,
+        nullable=False,
+        default=PaymentStatus.CONFIRMED,
+        server_default="confirmed",
+        index=True,
     )
     paid_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     received_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
     notes: Mapped[Optional[str]] = mapped_column(Text)
 
-    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True, default=None)
+    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), nullable=True, default=None
+    )
     version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
     __mapper_args__ = {"version_id_col": version}
 
@@ -243,7 +311,9 @@ class Payment(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
 class Settlement(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     __tablename__ = "settlements"
     __table_args__ = (
-        UniqueConstraint("tenant_id", "settlement_number", name="uq_settlements_tenant_id_settlement_number"),
+        UniqueConstraint(
+            "tenant_id", "settlement_number", name="uq_settlements_tenant_id_settlement_number"
+        ),
         CheckConstraint(
             "status IN ('draft', 'pending_approval', 'approved', 'settled', 'cancelled')",
             name="status",
@@ -259,14 +329,20 @@ class Settlement(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     settlement_number: Mapped[str] = mapped_column(String(64), nullable=False)
     claim_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("claims.id", ondelete="SET NULL"), nullable=True, index=True
     )
     invoice_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("invoices.id", ondelete="SET NULL"), nullable=True, index=True
+        UUID(as_uuid=True),
+        ForeignKey("invoices.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     customer_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("customers.id", ondelete="SET NULL"), nullable=True
@@ -279,10 +355,14 @@ class Settlement(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     )
     status: Mapped[SettlementStatus] = mapped_column(
         SAEnum(SettlementStatus, native_enum=False, length=32, values_callable=_enum_values),
-        nullable=False, default=SettlementStatus.DRAFT, server_default="draft", index=True,
+        nullable=False,
+        default=SettlementStatus.DRAFT,
+        server_default="draft",
+        index=True,
     )
     settlement_type: Mapped[SettlementType] = mapped_column(
-        SAEnum(SettlementType, native_enum=False, length=32, values_callable=_enum_values), nullable=False
+        SAEnum(SettlementType, native_enum=False, length=32, values_callable=_enum_values),
+        nullable=False,
     )
     amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, server_default="0")
     currency_code: Mapped[str] = mapped_column(String(3), nullable=False, server_default="SAR")
@@ -291,7 +371,9 @@ class Settlement(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     cancelled_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     notes: Mapped[Optional[str]] = mapped_column(Text)
 
-    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True, default=None)
+    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), nullable=True, default=None
+    )
     version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
     __mapper_args__ = {"version_id_col": version}
 
@@ -310,25 +392,36 @@ class Payout(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     settlement_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("settlements.id", ondelete="CASCADE"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("settlements.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     payout_reference: Mapped[Optional[str]] = mapped_column(String(128))
     amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, server_default="0")
     currency_code: Mapped[str] = mapped_column(String(3), nullable=False, server_default="SAR")
     method: Mapped[PaymentMethod] = mapped_column(
-        SAEnum(PaymentMethod, native_enum=False, length=32, values_callable=_enum_values), nullable=False
+        SAEnum(PaymentMethod, native_enum=False, length=32, values_callable=_enum_values),
+        nullable=False,
     )
     status: Mapped[PayoutStatus] = mapped_column(
         SAEnum(PayoutStatus, native_enum=False, length=16, values_callable=_enum_values),
-        nullable=False, default=PayoutStatus.PENDING, server_default="pending",
+        nullable=False,
+        default=PayoutStatus.PENDING,
+        server_default="pending",
     )
     paid_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     notes: Mapped[Optional[str]] = mapped_column(Text)
 
-    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True, default=None)
+    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), nullable=True, default=None
+    )
     version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
     __mapper_args__ = {"version_id_col": version}
 
@@ -347,25 +440,37 @@ class Penalty(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="RESTRICT"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("tenants.id", ondelete="RESTRICT"),
+        nullable=False,
+        index=True,
     )
     order_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), ForeignKey("orders.id", ondelete="SET NULL"), nullable=True, index=True
     )
     shipment_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("shipments.id", ondelete="SET NULL"), nullable=True, index=True
+        UUID(as_uuid=True),
+        ForeignKey("shipments.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     invoice_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("invoices.id", ondelete="SET NULL"), nullable=True, index=True
+        UUID(as_uuid=True),
+        ForeignKey("invoices.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
     )
     penalty_type: Mapped[PenaltyType] = mapped_column(
-        SAEnum(PenaltyType, native_enum=False, length=32, values_callable=_enum_values), nullable=False
+        SAEnum(PenaltyType, native_enum=False, length=32, values_callable=_enum_values),
+        nullable=False,
     )
     amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, server_default="0")
     currency_code: Mapped[str] = mapped_column(String(3), nullable=False, server_default="SAR")
     reason: Mapped[Optional[str]] = mapped_column(Text)
     applied_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
 
-    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True, default=None)
+    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), nullable=True, default=None
+    )
     version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
     __mapper_args__ = {"version_id_col": version}

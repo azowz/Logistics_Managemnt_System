@@ -130,4 +130,28 @@ def projection_health_check() -> dict[str, int]:
     }
 
 
-__all__ = ["ping", "relay_outbox", "projection_health_check"]
+@celery_app.task(name="mesaar.webhook_delivery_sweep")
+def webhook_delivery_sweep(batch_per_tenant: int = 100) -> dict[str, int]:
+    """Attempt one batch of due webhook deliveries across all tenants.
+
+    Thin wrapper over :func:`app.integrations.sweep.run_webhook_delivery_sweep` (the worker
+    layer holds no business logic). Non-destructive (never replays/rebuilds the event
+    store), idempotent, per-delivery isolated, and safe to overlap-guard at the scheduler.
+
+    Returns:
+        A summary dict ``{tenants, attempted, delivered, failed, errors}``.
+    """
+    # Lazy import keeps the integration/SQLAlchemy stack off worker module load.
+    from app.integrations.sweep import run_webhook_delivery_sweep
+
+    result = run_webhook_delivery_sweep(batch_per_tenant=batch_per_tenant)
+    return {
+        "tenants": result.tenants,
+        "attempted": result.attempted,
+        "delivered": result.delivered,
+        "failed": result.failed,
+        "errors": result.errors,
+    }
+
+
+__all__ = ["ping", "relay_outbox", "projection_health_check", "webhook_delivery_sweep"]

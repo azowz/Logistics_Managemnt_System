@@ -181,3 +181,9 @@ Full suite: **1361 passed, 13 skipped**; OpenAPI builds; alembic single head `00
 | The unread-urgent badge counts `Created` − `Read`; a notification that is failed/cancelled while unread is not decremented. | LOW | The badge is a glanceable operational hint, not an authoritative inbox count; it is fully recomputed on rebuild. |
 | Staleness threshold (6 h) is a fixed constant. | LOW | Sweep is non-destructive and advisory; the constant can be promoted to settings if per-tenant SLAs diverge. |
 | Internal sample-count columns are exposed on the model but not the API. | LOW | Intentional — they back the running means; documented here and in the model. |
+
+---
+
+## Sprint 13 — enriched fields flow to partners (sanitized)
+
+The Sprint 12 enrichment fields (shipment timing, currency codes, claim amounts) are surfaced to external partners only through the whitelist sanitizer in the Integrations & Webhooks context (docs/27). Whitelisted enriched keys (e.g. `currency_code`, `total_amount`, `delay_minutes`, `claimed_amount`) may appear in outbound webhook payloads; internal-only keys (`tenant_id`, free-text `reason`/`notes`) are dropped. No event backbone change was made in Sprint 13.

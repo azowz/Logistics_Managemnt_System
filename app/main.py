@@ -51,9 +51,18 @@ _OPENAPI_TAGS: list[dict[str, str]] = [
     {"name": "compliance", "description": "Compliance, permits, escorts, and dispatch gating."},
     {"name": "insurance", "description": "Insurance policies and coverage rules."},
     {"name": "claims", "description": "Claim workflow, damage reports, and liability."},
-    {"name": "billing", "description": "Quotes, invoices, payments, settlements, payouts, and penalties."},
-    {"name": "notifications", "description": "Notification templates, notifications, and delivery tracking."},
-    {"name": "analytics", "description": "Reporting & analytics dashboards and CQRS projection rebuild."},
+    {
+        "name": "billing",
+        "description": "Quotes, invoices, payments, settlements, payouts, and penalties.",
+    },
+    {
+        "name": "notifications",
+        "description": "Notification templates, notifications, and delivery tracking.",
+    },
+    {
+        "name": "analytics",
+        "description": "Reporting & analytics dashboards and CQRS projection rebuild.",
+    },
 ]
 
 

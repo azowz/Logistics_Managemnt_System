@@ -42,8 +42,7 @@ class NotificationProvider(Protocol):
     channel: NotificationChannel
     name: str
 
-    def is_configured(self) -> bool:
-        ...
+    def is_configured(self) -> bool: ...
 
     def send(self, notification) -> DeliveryResult:  # noqa: ANN001
         ...

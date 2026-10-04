@@ -15,7 +15,9 @@ class UserCreate(BaseModel):
 
     email: EmailStr = Field(description="Unique email for login and contact.")
     full_name: Optional[str] = Field(default=None, description="Display name of the user.")
-    password: str = Field(min_length=8, description="Plaintext password; will be hashed server-side.")
+    password: str = Field(
+        min_length=8, description="Plaintext password; will be hashed server-side."
+    )
     role: UserRole = Field(description="Role defining permissions.")
 
 
@@ -23,8 +25,12 @@ class UserUpdate(BaseModel):
     """Mutable fields for updating an existing user."""
 
     full_name: Optional[str] = Field(default=None, description="Updated display name.")
-    password: Optional[str] = Field(default=None, min_length=8, description="New password if rotation is needed.")
-    is_active: Optional[bool] = Field(default=None, description="Activate or deactivate the account.")
+    password: Optional[str] = Field(
+        default=None, min_length=8, description="New password if rotation is needed."
+    )
+    is_active: Optional[bool] = Field(
+        default=None, description="Activate or deactivate the account."
+    )
 
     @field_validator("password")
     @classmethod

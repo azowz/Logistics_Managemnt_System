@@ -25,14 +25,20 @@ class NotificationStateMachine:
 
     ALLOWED_TRANSITIONS: Dict[NotificationStatus, FrozenSet[NotificationStatus]] = {
         NotificationStatus.PENDING: frozenset(
-            {NotificationStatus.QUEUED, NotificationStatus.SENT,
-             NotificationStatus.FAILED, NotificationStatus.CANCELLED}
+            {
+                NotificationStatus.QUEUED,
+                NotificationStatus.SENT,
+                NotificationStatus.FAILED,
+                NotificationStatus.CANCELLED,
+            }
         ),
         NotificationStatus.QUEUED: frozenset(
             {NotificationStatus.SENT, NotificationStatus.FAILED, NotificationStatus.CANCELLED}
         ),
         NotificationStatus.SENT: frozenset({NotificationStatus.READ, NotificationStatus.FAILED}),
-        NotificationStatus.FAILED: frozenset({NotificationStatus.QUEUED, NotificationStatus.CANCELLED}),
+        NotificationStatus.FAILED: frozenset(
+            {NotificationStatus.QUEUED, NotificationStatus.CANCELLED}
+        ),
         # Terminal states.
         NotificationStatus.CANCELLED: frozenset(),
         NotificationStatus.READ: frozenset(),
@@ -83,7 +89,9 @@ class TemplateRenderer:
 
     @classmethod
     def validate_variables(cls, variables_schema: Mapping | None, variables: Mapping) -> None:
-        missing = [k for k in cls.required_variables(variables_schema) if k not in (variables or {})]
+        missing = [
+            k for k in cls.required_variables(variables_schema) if k not in (variables or {})
+        ]
         if missing:
             raise ValidationError(
                 f"Missing required template variable(s): {', '.join(sorted(missing))}."

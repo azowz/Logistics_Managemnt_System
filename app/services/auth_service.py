@@ -48,6 +48,7 @@ class AuthService:
         # Lazy Redis import so tests that do not need Redis can skip it.
         if redis is None:
             from app.core.redis import get_redis
+
             redis = get_redis()
         self._token_service = TokenService(redis)
 

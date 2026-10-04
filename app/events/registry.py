@@ -74,7 +74,9 @@ class EventRegistry:
         return event_type in self._classes
 
     # ---- upcasting + deserialization -----------------------------------
-    def upcast(self, event_type: str, version: int, payload: Mapping[str, Any]) -> tuple[int, dict[str, Any]]:
+    def upcast(
+        self, event_type: str, version: int, payload: Mapping[str, Any]
+    ) -> tuple[int, dict[str, Any]]:
         """Apply the upcaster chain, returning ``(current_version, payload)``.
 
         Missing intermediate upcasters raise :class:`EventDeserializationError`
@@ -102,9 +104,7 @@ class EventRegistry:
         )
         event_cls = self.get(envelope.event_type, target_version)
         if event_cls is None:  # pragma: no cover - guarded by upcast()
-            raise UnknownEventTypeError(
-                f"No class for {envelope.event_type} v{target_version}"
-            )
+            raise UnknownEventTypeError(f"No class for {envelope.event_type} v{target_version}")
         try:
             return event_cls.from_payload(payload)
         except Exception as exc:  # noqa: BLE001 - normalize to a typed error

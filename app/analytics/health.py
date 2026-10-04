@@ -65,14 +65,18 @@ def run_projection_health_check() -> HealthCheckResult:
         except Exception as exc:  # noqa: BLE001 - one tenant must not stall the sweep
             logger.warning(
                 "Projection health check failed for tenant; continuing",
-                tenant_id=str(tenant_id), error=str(exc),
+                tenant_id=str(tenant_id),
+                error=str(exc),
             )
 
     if result.tenants:
         logger.info(
             "Projection health sweep complete",
-            tenants=result.tenants, checked=result.checked,
-            healthy=result.healthy, stale=result.stale, error=result.error,
+            tenants=result.tenants,
+            checked=result.checked,
+            healthy=result.healthy,
+            stale=result.stale,
+            error=result.error,
         )
     return result
 
