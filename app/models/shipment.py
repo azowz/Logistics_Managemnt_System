@@ -23,18 +23,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 from app.db.mixins import AuditMixin, SoftDeleteMixin, TimestampMixin
 from app.models.enums import ShipmentPriority, ShipmentStatus
-<<<<<<< HEAD
-
-
-def _enum_values(enum_cls) -> list[str]:
-    """Persist enum *values* (e.g. 'created'), not member names ('CREATED').
-
-    Without ``values_callable`` SQLAlchemy stores the enum member name, which
-    violates the lowercase VARCHAR CHECK constraints (ADR-001 / docs/03).
-    """
-    return [member.value for member in enum_cls]
-=======
->>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
 
 if TYPE_CHECKING:  # pragma: no cover
     from app.models.user import User
@@ -84,27 +72,14 @@ class Shipment(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         ForeignKey("users.id", ondelete="RESTRICT"),
         nullable=False,
     )
-<<<<<<< HEAD
-    # Optional link to the originating Order (Sprint 4). Nullable + SET NULL so
-    # shipments survive order deletion and pre-order shipments remain valid.
-=======
     # Optional upstream order this shipment fulfils (Sprint 5). Nullable so
     # shipments created outside the order flow (e.g. ad-hoc dispatch) still work.
->>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
     order_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("orders.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
-<<<<<<< HEAD
-    # Forward-looking heavy-equipment link (docs/08); no equipment table yet, so
-    # this is an unconstrained UUID until that domain lands.
-    equipment_id: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), nullable=True, index=True
-    )
-=======
->>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
     origin_warehouse_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("warehouses.id", ondelete="RESTRICT"),
@@ -124,12 +99,10 @@ class Shipment(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         ForeignKey("vehicles.id", ondelete="SET NULL"),
     )
     status: Mapped[ShipmentStatus] = mapped_column(
-        SAEnum(ShipmentStatus, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(ShipmentStatus, native_enum=False, length=32),
         nullable=False,
         default=ShipmentStatus.CREATED,
         index=True,
-<<<<<<< HEAD
-=======
     )
     # Operational priority for dispatch ordering (Sprint 5). Stored lowercase.
     priority: Mapped[ShipmentPriority] = mapped_column(
@@ -143,15 +116,7 @@ class Shipment(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         default=ShipmentPriority.NORMAL,
         server_default="normal",
         index=True,
->>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
     )
-    priority: Mapped[ShipmentPriority] = mapped_column(
-        SAEnum(ShipmentPriority, native_enum=False, length=32, values_callable=_enum_values),
-        nullable=False,
-        default=ShipmentPriority.NORMAL,
-        server_default="normal",
-    )
-    cargo_description: Mapped[Optional[str]] = mapped_column(Text)
     weight_kg: Mapped[float] = mapped_column(Numeric(12, 2), nullable=False)
     volume_m3: Mapped[float] = mapped_column(Numeric(12, 3), nullable=False)
     pickup_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
@@ -163,8 +128,6 @@ class Shipment(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     failed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     failure_reason: Mapped[Optional[str]] = mapped_column(String(255))
     return_reason: Mapped[Optional[str]] = mapped_column(String(255))
-<<<<<<< HEAD
-=======
 
     # Optional equipment reference (Sprint 5). The Equipment aggregate landed in
     # Sprint 6 (context #15, ADR-009); the FK constraint is added by migration
@@ -175,7 +138,6 @@ class Shipment(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         nullable=True,
         index=True,
     )
->>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
 
     # Commercial / offer metadata surfaced to drivers (nullable; populated by
     # quoting/dispatch). Added in migration 0002 to back the driver offer feed.
@@ -186,19 +148,12 @@ class Shipment(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     # (docs/03 §0 multi-market readiness).
     currency_code: Mapped[str] = mapped_column(String(3), nullable=False, server_default="SAR")
     required_vehicle_type: Mapped[Optional[str]] = mapped_column(String(64))
-<<<<<<< HEAD
-    # Soft-delete actor attribution (beyond SoftDeleteMixin's deleted_at).
-    deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(
-        UUID(as_uuid=True), nullable=True, default=None
-    )
-=======
 
     # Soft-delete actor attribution beyond SoftDeleteMixin (Sprint 5).
     deleted_by: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True), nullable=True, default=None
     )
 
->>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
     version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
     # Optimistic concurrency (ADR-004 / docs/03 §0).
     __mapper_args__ = {"version_id_col": version}

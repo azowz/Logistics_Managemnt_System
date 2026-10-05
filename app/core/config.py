@@ -11,6 +11,7 @@ application keeps booting without an ``.env`` file.
 
 from __future__ import annotations
 
+import json
 from functools import lru_cache
 from typing import Any, Literal
 
@@ -81,9 +82,11 @@ class Settings(BaseSettings):
     # ------------------------------------------------------------------
     # CORS.
     # ------------------------------------------------------------------
-    cors_origins: list[str] = Field(
+    # The str alternative lets raw wildcard/CSV values pass the settings source's
+    # JSON decoding. The validator below always normalizes the result to a list.
+    cors_origins: list[str] | str = Field(
         default_factory=lambda: ["*"],
-        description="Allowed CORS origins; accepts a comma-separated env string.",
+        description="Allowed CORS origins; accepts a wildcard, CSV, or JSON array.",
     )
 
     # ------------------------------------------------------------------
@@ -202,7 +205,7 @@ class Settings(BaseSettings):
     @field_validator("cors_origins", mode="before")
     @classmethod
     def _split_cors_origins(cls, value: Any) -> Any:
-        """Allow CORS origins to be supplied as a comma-separated string.
+        """Normalize wildcard, comma-separated, and JSON-array CORS settings.
 
         Environment variables are always strings, so an operator may set
         ``CORS_ORIGINS=https://a.com,https://b.com``. We split such a value
@@ -214,6 +217,8 @@ class Settings(BaseSettings):
             stripped = value.strip()
             if not stripped:
                 return []
+            if stripped.startswith("["):
+                return json.loads(stripped)
             return [origin.strip() for origin in stripped.split(",") if origin.strip()]
         return value
 

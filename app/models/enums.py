@@ -48,15 +48,11 @@ class ShipmentStatus(str, Enum):
 
 
 class ShipmentPriority(str, Enum):
-<<<<<<< HEAD
-    """Operational priority for dispatch scheduling."""
-=======
     """Operational priority used for dispatch ordering (Sprint 5).
 
     Stored as lowercase values (``values_callable``) so the database
     representation matches the Order domain's priority column.
     """
->>>>>>> f7f7b8d849bc2a1c28e9522e7d41b99bd920bb49
 
     LOW = "low"
     NORMAL = "normal"

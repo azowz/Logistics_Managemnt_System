@@ -69,7 +69,7 @@ services:
       redis:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "celery", "-A", "app.workers.celery_app", "inspect", "ping", "-d", "celery@$$HOSTNAME"]
+      test: ["CMD-SHELL", "celery -A app.workers.celery_app inspect ping -d celery@$$HOSTNAME"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -87,6 +87,8 @@ services:
       - app.workers.celery_app
       - beat
       - --loglevel=info
+      - --pidfile=/tmp/celerybeat.pid
+      - --schedule=/tmp/celerybeat-schedule
     env_file:
       - .env
     environment:
@@ -99,6 +101,13 @@ services:
         condition: service_healthy
       worker:
         condition: service_started
+    # Beat has no HTTP server; override the image's API liveness probe.
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os; from pathlib import Path; os.kill(int(Path('/tmp/celerybeat.pid').read_text()), 0)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
 
   db:
     image: postgres:16

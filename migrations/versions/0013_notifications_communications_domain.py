@@ -4,8 +4,9 @@ Additive: creates ``notification_templates``, ``notifications``,
 ``notification_delivery_attempts`` — tenant-scoped, RLS, soft-delete, audit,
 optimistic lock, JSONB fields. A per-recipient idempotency unique constraint
 ``(tenant_id, idempotency_key)`` makes event-driven creation safe under replay.
-No existing table is modified. PostgreSQL-specific operations (RLS, regex email
-CHECK) are guarded by ``_is_postgres()``.
+No existing domain table is modified. Alembic's version column is widened to
+store this and subsequent revision IDs. PostgreSQL-specific operations (RLS,
+regex email CHECK) are guarded by ``_is_postgres()``.
 
 Revision ID: 0013_notifications_communications_domain
 Revises:     0012_billing_settlements_domain
@@ -67,6 +68,17 @@ def _enable_rls(table: str) -> None:
 
 
 def upgrade() -> None:
+    if _is_postgres():
+        # This is the first revision ID longer than Alembic's default VARCHAR(32).
+        # Widen before Alembic records the revision; keep the width on downgrade.
+        op.alter_column(
+            "alembic_version",
+            "version_num",
+            existing_type=sa.String(32),
+            type_=sa.String(128),
+            existing_nullable=False,
+        )
+
     # ----- notification_templates -----
     op.create_table(
         "notification_templates",

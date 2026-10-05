@@ -17,9 +17,10 @@ from pydantic import ValidationError as PydanticValidationError
 
 
 def _make_settings(**overrides):
-    """Return a fresh Settings instance, bypassing the lru_cache."""
+    """Return fresh Settings without depending on a developer's local .env."""
     from app.core.config import Settings
 
+    overrides.setdefault("_env_file", None)
     return Settings(**overrides)
 
 
@@ -154,6 +155,58 @@ def test_cors_origins_whitespace_only_yields_empty_list() -> None:
 def test_cors_origins_single_value_string() -> None:
     s = _make_settings(cors_origins="https://app.example.com")
     assert s.cors_origins == ["https://app.example.com"]
+
+
+@pytest.mark.parametrize("source", ["environment", "dotenv"])
+@pytest.mark.parametrize(
+    "raw, expected",
+    [
+        ("*", ["*"]),
+        ("https://a.example.com", ["https://a.example.com"]),
+        (
+            " https://a.example.com , https://b.example.com ",
+            ["https://a.example.com", "https://b.example.com"],
+        ),
+        (
+            '["https://a.example.com", "https://b.example.com"]',
+            ["https://a.example.com", "https://b.example.com"],
+        ),
+        ('["*"]', ["*"]),
+        ("", []),
+        ("   ", []),
+    ],
+)
+def test_cors_origins_loaded_from_settings_sources(monkeypatch, tmp_path, source, raw, expected):
+    """Exercise source decoding, where wildcard/CSV previously crashed startup."""
+    monkeypatch.delenv("CORS_ORIGINS", raising=False)
+    overrides = {}
+    if source == "environment":
+        monkeypatch.setenv("CORS_ORIGINS", raw)
+    else:
+        env_file = tmp_path / ".env"
+        env_file.write_text(f"CORS_ORIGINS='{raw}'\n", encoding="utf-8")
+        overrides["_env_file"] = env_file
+
+    settings = _make_settings(**overrides)
+
+    assert settings.cors_origins == expected
+    assert isinstance(settings.cors_origins, list)
+
+
+def test_cors_origins_environment_overrides_dotenv(monkeypatch, tmp_path):
+    env_file = tmp_path / ".env"
+    env_file.write_text('CORS_ORIGINS=["https://file.example.com"]\n', encoding="utf-8")
+    monkeypatch.setenv("CORS_ORIGINS", "https://env.example.com")
+
+    settings = _make_settings(_env_file=env_file)
+
+    assert settings.cors_origins == ["https://env.example.com"]
+
+
+def test_cors_origins_rejects_malformed_json(monkeypatch):
+    monkeypatch.setenv("CORS_ORIGINS", '["https://app.example.com"')
+    with pytest.raises(PydanticValidationError):
+        _make_settings()
 
 
 # ---------------------------------------------------------------------------

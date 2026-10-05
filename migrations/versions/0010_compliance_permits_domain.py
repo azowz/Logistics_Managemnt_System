@@ -272,7 +272,12 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id", name="pk_operator_certifications"),
         sa.ForeignKeyConstraint(["tenant_id"], ["tenants.id"], name="fk_operator_certifications_tenant_id_tenants", ondelete="RESTRICT"),
         sa.ForeignKeyConstraint(["user_id"], ["users.id"], name="fk_operator_certifications_user_id_users", ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["equipment_category_id"], ["equipment_categories.id"], name="fk_operator_certifications_equipment_category_id_equipment_categories", ondelete="SET NULL"),
+        sa.ForeignKeyConstraint(
+            ["equipment_category_id"],
+            ["equipment_categories.id"],
+            name=op.f("fk_operator_certifications_equipment_category_id_equipment_categories"),
+            ondelete="SET NULL",
+        ),
         sa.CheckConstraint(
             "status IN ('active', 'expired', 'suspended', 'revoked')", name="ck_operator_certifications_status"
         ),
