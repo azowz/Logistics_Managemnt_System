@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 import uuid
 from datetime import datetime
 from decimal import Decimal
@@ -20,7 +19,12 @@ from app.models.enums import (
     InsurancePolicyType,
     ResponsiblePartyType,
 )
-from app.schemas.common import IdModel, TimestampMixin
+from app.schemas.common import (
+    IdModel,
+    TimestampMixin,
+    require_aware_datetime,
+    validate_currency_code,
+)
 
 _POLICY_SORT = frozenset(
     {"policy_number", "status", "policy_type", "coverage_end_date", "created_at", "updated_at"}
@@ -36,21 +40,6 @@ _CLAIM_SORT = frozenset(
         "updated_at",
     }
 )
-
-
-def _currency(v: Optional[str]) -> Optional[str]:
-    if v is None:
-        return None
-    v = v.upper()
-    if not re.fullmatch(r"[A-Z]{3}", v):
-        raise ValueError("currency_code must be a 3-letter ISO-4217 code.")
-    return v
-
-
-def _tz(v: Optional[datetime]) -> Optional[datetime]:
-    if v is not None and v.tzinfo is None:
-        raise ValueError("Datetime fields must be timezone-aware (UTC).")
-    return v
 
 
 # --- Insurance policy ------------------------------------------------------
@@ -75,12 +64,12 @@ class InsurancePolicyCreate(BaseModel):
     @field_validator("currency_code")
     @classmethod
     def cur(cls, v):
-        return _currency(v)
+        return validate_currency_code(v)
 
     @field_validator("coverage_start_date", "coverage_end_date")
     @classmethod
     def tz(cls, v):
-        return _tz(v)
+        return require_aware_datetime(v)
 
     @model_validator(mode="after")
     def window(self) -> "InsurancePolicyCreate":
@@ -110,7 +99,7 @@ class InsurancePolicyUpdate(BaseModel):
     @field_validator("currency_code")
     @classmethod
     def cur(cls, v):
-        return _currency(v)
+        return validate_currency_code(v)
 
     @model_validator(mode="after")
     def at_least_one(self) -> "InsurancePolicyUpdate":
@@ -237,12 +226,12 @@ class ClaimCreate(BaseModel):
     @field_validator("currency_code")
     @classmethod
     def cur(cls, v):
-        return _currency(v)
+        return validate_currency_code(v)
 
     @field_validator("incident_date")
     @classmethod
     def tz(cls, v):
-        return _tz(v)
+        return require_aware_datetime(v)
 
 
 class ClaimUpdate(BaseModel):
@@ -257,7 +246,7 @@ class ClaimUpdate(BaseModel):
     @field_validator("currency_code")
     @classmethod
     def cur(cls, v):
-        return _currency(v)
+        return validate_currency_code(v)
 
     @model_validator(mode="after")
     def at_least_one(self) -> "ClaimUpdate":
@@ -361,7 +350,7 @@ class DamageReportCreate(BaseModel):
     @field_validator("currency_code")
     @classmethod
     def cur(cls, v):
-        return _currency(v)
+        return validate_currency_code(v)
 
 
 class DamageReportRead(IdModel, TimestampMixin):
@@ -397,7 +386,7 @@ class LiabilityRecordCreate(BaseModel):
     @field_validator("currency_code")
     @classmethod
     def cur(cls, v):
-        return _currency(v)
+        return validate_currency_code(v)
 
 
 class LiabilityRecordRead(IdModel, TimestampMixin):

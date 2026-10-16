@@ -7,10 +7,9 @@ tenant-scoped reads via RLS; soft-delete aware.
 from __future__ import annotations
 
 import uuid
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
 from sqlalchemy import asc, desc, func, or_, select
-from sqlalchemy.orm import Session
 
 from app.models.enums import (
     InsurancePolicyStatus,
@@ -22,59 +21,10 @@ from app.models.insurance import (
     InsurancePolicy,
     LiabilityRecord,
 )
-from app.repositories.errors import NotFoundError
+from app.repositories.base import BaseRepository
 
 
-def _coerce_uuid(value: Union[str, uuid.UUID]) -> Optional[uuid.UUID]:
-    if isinstance(value, uuid.UUID):
-        return value
-    try:
-        return uuid.UUID(str(value))
-    except (ValueError, TypeError):
-        return None
-
-
-class _BaseRepo:
-    model = None
-
-    def __init__(self, session: Session) -> None:
-        self._session = session
-
-    def create(self, **data):
-        obj = self.model(**data)
-        self._session.add(obj)
-        return obj
-
-    def update(self, obj, **data):
-        for field, value in data.items():
-            if value is not None:
-                setattr(obj, field, value)
-        return obj
-
-    def get_by_id(self, obj_id):
-        oid = _coerce_uuid(obj_id)
-        if oid is None:
-            return None
-        return self._session.get(self.model, oid)
-
-    def get_by_id_or_raise(self, obj_id):
-        obj = self.get_by_id(obj_id)
-        if obj is None:
-            raise NotFoundError(f"{self.model.__name__} {obj_id} not found.")
-        return obj
-
-    def soft_delete(self, obj, *, deleted_by=None):
-        obj.soft_delete()
-        obj.deleted_by = deleted_by
-        return obj
-
-    def restore(self, obj):
-        obj.restore()
-        obj.deleted_by = None
-        return obj
-
-
-class InsurancePolicyRepository(_BaseRepo):
+class InsurancePolicyRepository(BaseRepository):
     model = InsurancePolicy
 
     def get_by_number(self, policy_number: str) -> Optional[InsurancePolicy]:
@@ -117,7 +67,7 @@ class InsurancePolicyRepository(_BaseRepo):
         return list(self._session.scalars(stmt).all()), total
 
 
-class CoverageRuleRepository(_BaseRepo):
+class CoverageRuleRepository(BaseRepository):
     model = CoverageRule
 
     def get_rules_for_policy(
@@ -141,7 +91,7 @@ class CoverageRuleRepository(_BaseRepo):
         return list(self._session.scalars(stmt).all()), total
 
 
-class ClaimRepository(_BaseRepo):
+class ClaimRepository(BaseRepository):
     model = Claim
 
     def get_by_number(self, claim_number: str) -> Optional[Claim]:
@@ -206,7 +156,7 @@ class ClaimRepository(_BaseRepo):
         return list(self._session.scalars(stmt).all()), total
 
 
-class DamageReportRepository(_BaseRepo):
+class DamageReportRepository(BaseRepository):
     model = DamageReport
 
     def list_damage_reports_for_claim(self, claim_id: uuid.UUID) -> List[DamageReport]:
@@ -218,7 +168,7 @@ class DamageReportRepository(_BaseRepo):
         return list(self._session.scalars(stmt).all())
 
 
-class LiabilityRecordRepository(_BaseRepo):
+class LiabilityRecordRepository(BaseRepository):
     model = LiabilityRecord
 
     def list_liability_records_for_claim(self, claim_id: uuid.UUID) -> List[LiabilityRecord]:

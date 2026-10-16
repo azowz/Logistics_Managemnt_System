@@ -8,10 +8,9 @@ from __future__ import annotations
 
 import uuid
 from decimal import Decimal
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
 from sqlalchemy import asc, desc, func, select
-from sqlalchemy.orm import Session
 
 from app.models.billing import (
     Invoice,
@@ -23,59 +22,10 @@ from app.models.billing import (
     Settlement,
 )
 from app.models.enums import PaymentStatus
-from app.repositories.errors import NotFoundError
+from app.repositories.base import BaseRepository
 
 
-def _coerce_uuid(value: Union[str, uuid.UUID]) -> Optional[uuid.UUID]:
-    if isinstance(value, uuid.UUID):
-        return value
-    try:
-        return uuid.UUID(str(value))
-    except (ValueError, TypeError):
-        return None
-
-
-class _BaseRepo:
-    model = None
-
-    def __init__(self, session: Session) -> None:
-        self._session = session
-
-    def create(self, **data):
-        obj = self.model(**data)
-        self._session.add(obj)
-        return obj
-
-    def update(self, obj, **data):
-        for field, value in data.items():
-            if value is not None:
-                setattr(obj, field, value)
-        return obj
-
-    def get_by_id(self, obj_id):
-        oid = _coerce_uuid(obj_id)
-        if oid is None:
-            return None
-        return self._session.get(self.model, oid)
-
-    def get_by_id_or_raise(self, obj_id):
-        obj = self.get_by_id(obj_id)
-        if obj is None:
-            raise NotFoundError(f"{self.model.__name__} {obj_id} not found.")
-        return obj
-
-    def soft_delete(self, obj, *, deleted_by=None):
-        obj.soft_delete()
-        obj.deleted_by = deleted_by
-        return obj
-
-    def restore(self, obj):
-        obj.restore()
-        obj.deleted_by = None
-        return obj
-
-
-class QuoteRepository(_BaseRepo):
+class QuoteRepository(BaseRepository):
     model = Quote
 
     def get_by_number(self, quote_number: str, *, include_deleted: bool = False) -> Optional[Quote]:
@@ -117,7 +67,7 @@ class QuoteRepository(_BaseRepo):
         return list(self._session.scalars(stmt).all()), total
 
 
-class InvoiceRepository(_BaseRepo):
+class InvoiceRepository(BaseRepository):
     model = Invoice
 
     def get_by_number(
@@ -191,7 +141,7 @@ class InvoiceRepository(_BaseRepo):
         return list(self._session.scalars(stmt).all()), total
 
 
-class InvoiceLineRepository(_BaseRepo):
+class InvoiceLineRepository(BaseRepository):
     model = InvoiceLine
 
     def list_lines_for_invoice(self, invoice_id: uuid.UUID) -> List[InvoiceLine]:
@@ -203,7 +153,7 @@ class InvoiceLineRepository(_BaseRepo):
         return list(self._session.scalars(stmt).all())
 
 
-class PaymentRepository(_BaseRepo):
+class PaymentRepository(BaseRepository):
     model = Payment
 
     def list_payments_for_invoice(
@@ -225,7 +175,7 @@ class PaymentRepository(_BaseRepo):
         return Decimal(str(total or 0))
 
 
-class SettlementRepository(_BaseRepo):
+class SettlementRepository(BaseRepository):
     model = Settlement
 
     def get_by_number(
@@ -275,7 +225,7 @@ class SettlementRepository(_BaseRepo):
         return list(self._session.scalars(stmt).all()), total
 
 
-class PayoutRepository(_BaseRepo):
+class PayoutRepository(BaseRepository):
     model = Payout
 
     def list_payouts_for_settlement(self, settlement_id: uuid.UUID) -> List[Payout]:
@@ -285,7 +235,7 @@ class PayoutRepository(_BaseRepo):
         return list(self._session.scalars(stmt.order_by(Payout.created_at)).all())
 
 
-class PenaltyRepository(_BaseRepo):
+class PenaltyRepository(BaseRepository):
     model = Penalty
 
     def list_penalties_for_order(self, order_id: uuid.UUID) -> List[Penalty]:

@@ -7,10 +7,9 @@ tenant-scoped reads via RLS; soft-delete aware.
 from __future__ import annotations
 
 import uuid
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
 from sqlalchemy import asc, desc, func, or_, select
-from sqlalchemy.orm import Session
 
 from app.models.enums import NotificationStatus
 from app.models.notification import (
@@ -18,62 +17,13 @@ from app.models.notification import (
     NotificationDeliveryAttempt,
     NotificationTemplate,
 )
-from app.repositories.errors import NotFoundError
+from app.repositories.base import BaseRepository
 
 # Statuses that a relay/worker can pick up for delivery.
 _PENDING_STATES = (NotificationStatus.PENDING, NotificationStatus.QUEUED)
 
 
-def _coerce_uuid(value: Union[str, uuid.UUID]) -> Optional[uuid.UUID]:
-    if isinstance(value, uuid.UUID):
-        return value
-    try:
-        return uuid.UUID(str(value))
-    except (ValueError, TypeError):
-        return None
-
-
-class _BaseRepo:
-    model = None
-
-    def __init__(self, session: Session) -> None:
-        self._session = session
-
-    def create(self, **data):
-        obj = self.model(**data)
-        self._session.add(obj)
-        return obj
-
-    def update(self, obj, **data):
-        for field, value in data.items():
-            if value is not None:
-                setattr(obj, field, value)
-        return obj
-
-    def get_by_id(self, obj_id):
-        oid = _coerce_uuid(obj_id)
-        if oid is None:
-            return None
-        return self._session.get(self.model, oid)
-
-    def get_by_id_or_raise(self, obj_id):
-        obj = self.get_by_id(obj_id)
-        if obj is None:
-            raise NotFoundError(f"{self.model.__name__} {obj_id} not found.")
-        return obj
-
-    def soft_delete(self, obj, *, deleted_by=None):
-        obj.soft_delete()
-        obj.deleted_by = deleted_by
-        return obj
-
-    def restore(self, obj):
-        obj.restore()
-        obj.deleted_by = None
-        return obj
-
-
-class NotificationTemplateRepository(_BaseRepo):
+class NotificationTemplateRepository(BaseRepository):
     model = NotificationTemplate
 
     def get_by_code(
@@ -136,7 +86,7 @@ class NotificationTemplateRepository(_BaseRepo):
         return list(self._session.scalars(stmt).all()), total
 
 
-class NotificationRepository(_BaseRepo):
+class NotificationRepository(BaseRepository):
     model = Notification
 
     def get_by_event_recipient_key(self, idempotency_key: str) -> Optional[Notification]:
@@ -223,7 +173,7 @@ class NotificationRepository(_BaseRepo):
         return list(self._session.scalars(stmt).all()), total
 
 
-class NotificationDeliveryAttemptRepository(_BaseRepo):
+class NotificationDeliveryAttemptRepository(BaseRepository):
     model = NotificationDeliveryAttempt
 
     def list_attempts_for_notification(

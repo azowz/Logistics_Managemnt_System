@@ -9,6 +9,16 @@ from __future__ import annotations
 from enum import Enum
 
 
+def enum_values(enum_cls: type[Enum]) -> list[str]:
+    """``values_callable`` for SQLAlchemy ``Enum`` columns: persist values, not names.
+
+    SQLAlchemy stores member *names* (``DRAFT``) by default; the CHECK
+    constraints, migrations and API contract all use the lowercase *values*
+    (``draft``), so every domain ``Enum`` column passes this callable.
+    """
+    return [member.value for member in enum_cls]
+
+
 class UserRole(str, Enum):
     ADMIN = "admin"
     MANAGER = "manager"

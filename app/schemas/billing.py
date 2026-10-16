@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import re
 import uuid
 from datetime import datetime
 from decimal import Decimal
@@ -21,7 +20,12 @@ from app.models.enums import (
     SettlementStatus,
     SettlementType,
 )
-from app.schemas.common import IdModel, TimestampMixin
+from app.schemas.common import (
+    IdModel,
+    TimestampMixin,
+    require_aware_datetime,
+    validate_currency_code,
+)
 
 _QUOTE_SORT = frozenset(
     {"quote_number", "status", "total_amount", "valid_until", "created_at", "updated_at"}
@@ -33,21 +37,6 @@ _SETTLEMENT_SORT = frozenset(
     {"settlement_number", "status", "settlement_type", "amount", "created_at", "updated_at"}
 )
 _PENALTY_SORT = frozenset({"penalty_type", "amount", "applied_at", "created_at", "updated_at"})
-
-
-def _currency(v: Optional[str]) -> Optional[str]:
-    if v is None:
-        return None
-    v = v.upper()
-    if not re.fullmatch(r"[A-Z]{3}", v):
-        raise ValueError("currency_code must be a 3-letter ISO-4217 code.")
-    return v
-
-
-def _tz(v: Optional[datetime]) -> Optional[datetime]:
-    if v is not None and v.tzinfo is None:
-        raise ValueError("Datetime fields must be timezone-aware (UTC).")
-    return v
 
 
 # --- Quote -----------------------------------------------------------------
@@ -69,12 +58,12 @@ class QuoteCreate(BaseModel):
     @field_validator("currency_code")
     @classmethod
     def cur(cls, v):
-        return _currency(v)
+        return validate_currency_code(v)
 
     @field_validator("valid_until")
     @classmethod
     def tz(cls, v):
-        return _tz(v)
+        return require_aware_datetime(v)
 
 
 class QuoteUpdate(BaseModel):
@@ -92,7 +81,7 @@ class QuoteUpdate(BaseModel):
     @field_validator("currency_code")
     @classmethod
     def cur(cls, v):
-        return _currency(v)
+        return validate_currency_code(v)
 
     @model_validator(mode="after")
     def at_least_one(self) -> "QuoteUpdate":
@@ -199,12 +188,12 @@ class InvoiceCreate(BaseModel):
     @field_validator("currency_code")
     @classmethod
     def cur(cls, v):
-        return _currency(v)
+        return validate_currency_code(v)
 
     @field_validator("due_date")
     @classmethod
     def tz(cls, v):
-        return _tz(v)
+        return require_aware_datetime(v)
 
 
 class InvoiceUpdate(BaseModel):
@@ -218,7 +207,7 @@ class InvoiceUpdate(BaseModel):
     @field_validator("currency_code")
     @classmethod
     def cur(cls, v):
-        return _currency(v)
+        return validate_currency_code(v)
 
     @model_validator(mode="after")
     def at_least_one(self) -> "InvoiceUpdate":
@@ -304,7 +293,7 @@ class PaymentCreate(BaseModel):
     @field_validator("currency_code")
     @classmethod
     def cur(cls, v):
-        return _currency(v)
+        return validate_currency_code(v)
 
 
 class PaymentRead(IdModel, TimestampMixin):
@@ -342,7 +331,7 @@ class SettlementCreate(BaseModel):
     @field_validator("currency_code")
     @classmethod
     def cur(cls, v):
-        return _currency(v)
+        return validate_currency_code(v)
 
 
 class SettlementUpdate(BaseModel):
@@ -355,7 +344,7 @@ class SettlementUpdate(BaseModel):
     @field_validator("currency_code")
     @classmethod
     def cur(cls, v):
-        return _currency(v)
+        return validate_currency_code(v)
 
     @model_validator(mode="after")
     def at_least_one(self) -> "SettlementUpdate":
@@ -453,7 +442,7 @@ class PenaltyCreate(BaseModel):
     @field_validator("currency_code")
     @classmethod
     def cur(cls, v):
-        return _currency(v)
+        return validate_currency_code(v)
 
 
 class PenaltyRead(IdModel, TimestampMixin):

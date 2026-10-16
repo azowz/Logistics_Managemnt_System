@@ -19,19 +19,13 @@ from app.models.enums import (
     PermitType,
     RouteRestrictionType,
 )
-from app.schemas.common import IdModel, TimestampMixin
+from app.schemas.common import IdModel, TimestampMixin, require_aware_datetime
 
 _PERMIT_SORT = frozenset(
     {"permit_number", "status", "permit_type", "valid_until", "created_at", "updated_at"}
 )
 _CHECK_SORT = frozenset({"check_type", "status", "created_at", "updated_at"})
 _ESCORT_SORT = frozenset({"status", "scheduled_start", "created_at", "updated_at"})
-
-
-def _require_tz(value: Optional[datetime]) -> Optional[datetime]:
-    if value is not None and value.tzinfo is None:
-        raise ValueError("Datetime fields must be timezone-aware (UTC).")
-    return value
 
 
 # --- Permit ----------------------------------------------------------------
@@ -60,7 +54,7 @@ class PermitCreate(BaseModel):
     @field_validator("valid_from", "valid_until")
     @classmethod
     def tz(cls, v):
-        return _require_tz(v)
+        return require_aware_datetime(v)
 
     @model_validator(mode="after")
     def window(self) -> "PermitCreate":

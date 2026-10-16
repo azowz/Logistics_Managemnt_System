@@ -22,7 +22,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
 from app.db.mixins import AuditMixin, SoftDeleteMixin, TimestampMixin
-from app.models.enums import ShipmentPriority, ShipmentStatus
+from app.models.enums import ShipmentPriority, ShipmentStatus, enum_values
 
 if TYPE_CHECKING:  # pragma: no cover
     from app.models.user import User
@@ -31,11 +31,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from app.models.vehicle import Vehicle
     from app.models.warehouse import Warehouse
     from app.models.shipment_tracking_event import ShipmentTrackingEvent
-
-
-def _enum_values(enum_cls) -> list[str]:
-    """Persist enum *values* (e.g. 'normal'), not member names ('NORMAL')."""
-    return [member.value for member in enum_cls]
 
 
 class Shipment(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
@@ -110,7 +105,7 @@ class Shipment(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
             ShipmentPriority,
             native_enum=False,
             length=32,
-            values_callable=_enum_values,
+            values_callable=enum_values,
         ),
         nullable=False,
         default=ShipmentPriority.NORMAL,

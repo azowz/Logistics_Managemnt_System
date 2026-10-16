@@ -32,15 +32,12 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 from app.db.mixins import AuditMixin, SoftDeleteMixin, TimestampMixin
 from app.models.enums import (
+    enum_values,
     DeliveryAttemptStatus,
     NotificationChannel,
     NotificationPriority,
     NotificationStatus,
 )
-
-
-def _enum_values(enum_cls) -> list[str]:
-    return [member.value for member in enum_cls]
 
 
 class NotificationTemplate(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
@@ -62,7 +59,7 @@ class NotificationTemplate(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     template_code: Mapped[str] = mapped_column(String(128), nullable=False)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     channel: Mapped[NotificationChannel] = mapped_column(
-        SAEnum(NotificationChannel, native_enum=False, length=16, values_callable=_enum_values),
+        SAEnum(NotificationChannel, native_enum=False, length=16, values_callable=enum_values),
         nullable=False,
         index=True,
     )
@@ -131,21 +128,21 @@ class Notification(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     recipient_email: Mapped[Optional[str]] = mapped_column(String(320))
     recipient_phone: Mapped[Optional[str]] = mapped_column(String(32))
     channel: Mapped[NotificationChannel] = mapped_column(
-        SAEnum(NotificationChannel, native_enum=False, length=16, values_callable=_enum_values),
+        SAEnum(NotificationChannel, native_enum=False, length=16, values_callable=enum_values),
         nullable=False,
         index=True,
     )
     subject: Mapped[Optional[str]] = mapped_column(String(512))
     body: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[NotificationStatus] = mapped_column(
-        SAEnum(NotificationStatus, native_enum=False, length=16, values_callable=_enum_values),
+        SAEnum(NotificationStatus, native_enum=False, length=16, values_callable=enum_values),
         nullable=False,
         default=NotificationStatus.PENDING,
         server_default="pending",
         index=True,
     )
     priority: Mapped[NotificationPriority] = mapped_column(
-        SAEnum(NotificationPriority, native_enum=False, length=16, values_callable=_enum_values),
+        SAEnum(NotificationPriority, native_enum=False, length=16, values_callable=enum_values),
         nullable=False,
         default=NotificationPriority.NORMAL,
         server_default="normal",
@@ -193,12 +190,12 @@ class NotificationDeliveryAttempt(TimestampMixin, Base):
         index=True,
     )
     channel: Mapped[NotificationChannel] = mapped_column(
-        SAEnum(NotificationChannel, native_enum=False, length=16, values_callable=_enum_values),
+        SAEnum(NotificationChannel, native_enum=False, length=16, values_callable=enum_values),
         nullable=False,
     )
     provider: Mapped[Optional[str]] = mapped_column(String(64))
     status: Mapped[DeliveryAttemptStatus] = mapped_column(
-        SAEnum(DeliveryAttemptStatus, native_enum=False, length=16, values_callable=_enum_values),
+        SAEnum(DeliveryAttemptStatus, native_enum=False, length=16, values_callable=enum_values),
         nullable=False,
     )
     attempt_number: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")

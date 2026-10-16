@@ -7,11 +7,9 @@ lookups back the webhook consumer and inbound de-duplication.
 
 from __future__ import annotations
 
-import uuid
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
 from sqlalchemy import asc, desc, func, or_, select
-from sqlalchemy.orm import Session
 
 from app.models.enums import ApiKeyStatus, WebhookDeliveryStatus
 from app.models.integration import (
@@ -22,49 +20,10 @@ from app.models.integration import (
     WebhookDeliveryAttempt,
     WebhookSubscription,
 )
-from app.repositories.errors import NotFoundError
+from app.repositories.base import BaseRepository
 
 
-def _coerce_uuid(value: Union[str, uuid.UUID]) -> Optional[uuid.UUID]:
-    if isinstance(value, uuid.UUID):
-        return value
-    try:
-        return uuid.UUID(str(value))
-    except (ValueError, TypeError):
-        return None
-
-
-class _BaseRepo:
-    model = None
-
-    def __init__(self, session: Session) -> None:
-        self._session = session
-
-    def create(self, **data):
-        obj = self.model(**data)
-        self._session.add(obj)
-        return obj
-
-    def update(self, obj, **data):
-        for field, value in data.items():
-            if value is not None:
-                setattr(obj, field, value)
-        return obj
-
-    def get_by_id(self, obj_id):
-        oid = _coerce_uuid(obj_id)
-        if oid is None:
-            return None
-        return self._session.get(self.model, oid)
-
-    def get_by_id_or_raise(self, obj_id):
-        obj = self.get_by_id(obj_id)
-        if obj is None:
-            raise NotFoundError(f"{self.model.__name__} {obj_id} not found.")
-        return obj
-
-
-class _SoftDeleteRepo(_BaseRepo):
+class _SoftDeleteRepo(BaseRepository):
     def soft_delete(self, obj, *, deleted_by=None):
         obj.soft_delete()
         obj.deleted_by = deleted_by
@@ -120,7 +79,7 @@ class IntegrationPartnerRepository(_SoftDeleteRepo):
         return list(self._session.scalars(stmt).all()), total
 
 
-class PartnerApiKeyRepository(_BaseRepo):
+class PartnerApiKeyRepository(BaseRepository):
     model = PartnerApiKey
 
     def get_by_prefix(self, key_prefix: str) -> Optional[PartnerApiKey]:
@@ -192,7 +151,7 @@ class WebhookSubscriptionRepository(_SoftDeleteRepo):
         return list(self._session.scalars(stmt).all()), total
 
 
-class WebhookDeliveryRepository(_BaseRepo):
+class WebhookDeliveryRepository(BaseRepository):
     model = WebhookDelivery
 
     def find_for_source(self, subscription_id, source_event_id) -> Optional[WebhookDelivery]:
@@ -253,7 +212,7 @@ class WebhookDeliveryRepository(_BaseRepo):
         return list(self._session.scalars(stmt).all())
 
 
-class WebhookDeliveryAttemptRepository(_BaseRepo):
+class WebhookDeliveryAttemptRepository(BaseRepository):
     model = WebhookDeliveryAttempt
 
     def next_attempt_number(self, delivery_id) -> int:
@@ -273,7 +232,7 @@ class WebhookDeliveryAttemptRepository(_BaseRepo):
         return list(self._session.scalars(stmt).all())
 
 
-class InboundIntegrationEventRepository(_BaseRepo):
+class InboundIntegrationEventRepository(BaseRepository):
     model = InboundIntegrationEvent
 
     def find_by_idempotency(

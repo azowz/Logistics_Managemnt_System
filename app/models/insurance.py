@@ -34,6 +34,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 from app.db.mixins import AuditMixin, SoftDeleteMixin, TimestampMixin
 from app.models.enums import (
+    enum_values,
     ClaimSeverity,
     ClaimStatus,
     ClaimType,
@@ -43,10 +44,6 @@ from app.models.enums import (
     InsurancePolicyType,
     ResponsiblePartyType,
 )
-
-
-def _enum_values(enum_cls) -> list[str]:
-    return [member.value for member in enum_cls]
 
 
 class InsurancePolicy(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
@@ -86,11 +83,11 @@ class InsurancePolicy(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     policy_number: Mapped[str] = mapped_column(String(64), nullable=False)
     provider_name: Mapped[Optional[str]] = mapped_column(String(255))
     policy_type: Mapped[InsurancePolicyType] = mapped_column(
-        SAEnum(InsurancePolicyType, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(InsurancePolicyType, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
     )
     status: Mapped[InsurancePolicyStatus] = mapped_column(
-        SAEnum(InsurancePolicyStatus, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(InsurancePolicyStatus, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=InsurancePolicyStatus.DRAFT,
         server_default="draft",
@@ -151,7 +148,7 @@ class CoverageRule(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         index=True,
     )
     coverage_type: Mapped[CoverageType] = mapped_column(
-        SAEnum(CoverageType, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(CoverageType, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
     )
     cargo_type: Mapped[Optional[str]] = mapped_column(String(128))
@@ -240,18 +237,18 @@ class Claim(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         UUID(as_uuid=True), ForeignKey("permits.id", ondelete="SET NULL"), nullable=True
     )
     claim_type: Mapped[ClaimType] = mapped_column(
-        SAEnum(ClaimType, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(ClaimType, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
     )
     status: Mapped[ClaimStatus] = mapped_column(
-        SAEnum(ClaimStatus, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(ClaimStatus, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=ClaimStatus.CREATED,
         server_default="created",
         index=True,
     )
     severity: Mapped[ClaimSeverity] = mapped_column(
-        SAEnum(ClaimSeverity, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(ClaimSeverity, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=ClaimSeverity.MEDIUM,
         server_default="medium",
@@ -311,11 +308,11 @@ class DamageReport(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         UUID(as_uuid=True), ForeignKey("equipment.id", ondelete="SET NULL"), nullable=True
     )
     damage_type: Mapped[DamageType] = mapped_column(
-        SAEnum(DamageType, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(DamageType, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
     )
     severity: Mapped[ClaimSeverity] = mapped_column(
-        SAEnum(ClaimSeverity, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(ClaimSeverity, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=ClaimSeverity.MEDIUM,
         server_default="medium",
@@ -365,7 +362,7 @@ class LiabilityRecord(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         UUID(as_uuid=True), ForeignKey("claims.id", ondelete="CASCADE"), nullable=False, index=True
     )
     responsible_party_type: Mapped[ResponsiblePartyType] = mapped_column(
-        SAEnum(ResponsiblePartyType, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(ResponsiblePartyType, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
     )
     responsible_party_id: Mapped[Optional[uuid.UUID]] = mapped_column(

@@ -17,7 +17,12 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.models.enums import ShipmentPriority, ShipmentStatus
-from app.schemas.common import IdModel, TimestampMixin
+from app.schemas.common import (
+    IdModel,
+    TimestampMixin,
+    require_aware_datetime,
+    validate_currency_code,
+)
 
 # Whitelist of sortable fields (prevents ORDER BY injection).
 _SORTABLE_FIELDS: frozenset[str] = frozenset(
@@ -33,21 +38,6 @@ _SORTABLE_FIELDS: frozenset[str] = frozenset(
         "updated_at",
     }
 )
-
-
-def _validate_currency(value: Optional[str]) -> Optional[str]:
-    if value is None:
-        return None
-    value = value.upper()
-    if not re.fullmatch(r"[A-Z]{3}", value):
-        raise ValueError("currency_code must be a 3-letter ISO-4217 code.")
-    return value
-
-
-def _require_tz(value: Optional[datetime]) -> Optional[datetime]:
-    if value is not None and value.tzinfo is None:
-        raise ValueError("Datetime fields must be timezone-aware (UTC).")
-    return value
 
 
 # ---------------------------------------------------------------------------
@@ -98,12 +88,12 @@ class ShipmentCreate(BaseModel):
     @field_validator("currency_code")
     @classmethod
     def normalize_currency(cls, value: str) -> str:
-        return _validate_currency(value)
+        return validate_currency_code(value)
 
     @field_validator("pickup_at", "delivery_due_at")
     @classmethod
     def require_tz(cls, value: Optional[datetime]) -> Optional[datetime]:
-        return _require_tz(value)
+        return require_aware_datetime(value)
 
     @model_validator(mode="after")
     def pickup_before_delivery(self) -> "ShipmentCreate":
@@ -148,12 +138,12 @@ class ShipmentUpdate(BaseModel):
     @field_validator("currency_code")
     @classmethod
     def normalize_currency(cls, value: Optional[str]) -> Optional[str]:
-        return _validate_currency(value)
+        return validate_currency_code(value)
 
     @field_validator("pickup_at", "delivery_due_at")
     @classmethod
     def require_tz(cls, value: Optional[datetime]) -> Optional[datetime]:
-        return _require_tz(value)
+        return require_aware_datetime(value)
 
     @model_validator(mode="after")
     def at_least_one_field(self) -> "ShipmentUpdate":

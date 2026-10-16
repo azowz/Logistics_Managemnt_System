@@ -35,6 +35,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 from app.db.mixins import AuditMixin, SoftDeleteMixin, TimestampMixin
 from app.models.enums import (
+    enum_values,
     ApiKeyStatus,
     InboundEventStatus,
     IntegrationPartnerStatus,
@@ -44,10 +45,6 @@ from app.models.enums import (
     WebhookDeliveryStatus,
     WebhookSubscriptionStatus,
 )
-
-
-def _enum_values(enum_cls) -> list[str]:
-    return [member.value for member in enum_cls]
 
 
 class IntegrationPartner(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
@@ -70,14 +67,12 @@ class IntegrationPartner(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     partner_type: Mapped[IntegrationPartnerType] = mapped_column(
-        SAEnum(IntegrationPartnerType, native_enum=False, length=16, values_callable=_enum_values),
+        SAEnum(IntegrationPartnerType, native_enum=False, length=16, values_callable=enum_values),
         nullable=False,
         index=True,
     )
     status: Mapped[IntegrationPartnerStatus] = mapped_column(
-        SAEnum(
-            IntegrationPartnerStatus, native_enum=False, length=16, values_callable=_enum_values
-        ),
+        SAEnum(IntegrationPartnerStatus, native_enum=False, length=16, values_callable=enum_values),
         nullable=False,
         server_default=IntegrationPartnerStatus.ACTIVE.value,
         index=True,
@@ -122,7 +117,7 @@ class PartnerApiKey(TimestampMixin, Base):
     key_prefix: Mapped[str] = mapped_column(String(32), nullable=False, index=True)
     key_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     status: Mapped[ApiKeyStatus] = mapped_column(
-        SAEnum(ApiKeyStatus, native_enum=False, length=16, values_callable=_enum_values),
+        SAEnum(ApiKeyStatus, native_enum=False, length=16, values_callable=enum_values),
         nullable=False,
         server_default=ApiKeyStatus.ACTIVE.value,
         index=True,
@@ -168,7 +163,7 @@ class WebhookSubscription(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     event_types: Mapped[list] = mapped_column(JSONB, nullable=False)
     status: Mapped[WebhookSubscriptionStatus] = mapped_column(
         SAEnum(
-            WebhookSubscriptionStatus, native_enum=False, length=16, values_callable=_enum_values
+            WebhookSubscriptionStatus, native_enum=False, length=16, values_callable=enum_values
         ),
         nullable=False,
         server_default=WebhookSubscriptionStatus.ACTIVE.value,
@@ -180,7 +175,7 @@ class WebhookSubscription(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     encryption_provider: Mapped[Optional[str]] = mapped_column(String(32))
     encryption_key_id: Mapped[Optional[str]] = mapped_column(String(64))
     signing_algorithm: Mapped[SigningAlgorithm] = mapped_column(
-        SAEnum(SigningAlgorithm, native_enum=False, length=16, values_callable=_enum_values),
+        SAEnum(SigningAlgorithm, native_enum=False, length=16, values_callable=enum_values),
         nullable=False,
         server_default=SigningAlgorithm.HMAC_SHA256.value,
     )
@@ -244,7 +239,7 @@ class WebhookDelivery(TimestampMixin, Base):
     aggregate_type: Mapped[Optional[str]] = mapped_column(String(64))
     aggregate_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True))
     status: Mapped[WebhookDeliveryStatus] = mapped_column(
-        SAEnum(WebhookDeliveryStatus, native_enum=False, length=16, values_callable=_enum_values),
+        SAEnum(WebhookDeliveryStatus, native_enum=False, length=16, values_callable=enum_values),
         nullable=False,
         server_default=WebhookDeliveryStatus.PENDING.value,
         index=True,
@@ -286,7 +281,7 @@ class WebhookDeliveryAttempt(TimestampMixin, Base):
     )
     attempt_number: Mapped[int] = mapped_column(Integer, nullable=False)
     status: Mapped[WebhookAttemptStatus] = mapped_column(
-        SAEnum(WebhookAttemptStatus, native_enum=False, length=16, values_callable=_enum_values),
+        SAEnum(WebhookAttemptStatus, native_enum=False, length=16, values_callable=enum_values),
         nullable=False,
     )
     requested_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
@@ -338,7 +333,7 @@ class InboundIntegrationEvent(TimestampMixin, Base):
     payload: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
     signature_valid: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     status: Mapped[InboundEventStatus] = mapped_column(
-        SAEnum(InboundEventStatus, native_enum=False, length=16, values_callable=_enum_values),
+        SAEnum(InboundEventStatus, native_enum=False, length=16, values_callable=enum_values),
         nullable=False,
         server_default=InboundEventStatus.RECEIVED.value,
         index=True,

@@ -18,16 +18,8 @@ from sqlalchemy.orm import Session
 
 from app.models.enums import EquipmentAvailability, EquipmentStatus
 from app.models.equipment import Equipment, EquipmentCategory, EquipmentModel
+from app.repositories.base import coerce_uuid
 from app.repositories.errors import NotFoundError
-
-
-def _coerce_uuid(value: Union[str, uuid.UUID]) -> Optional[uuid.UUID]:
-    if isinstance(value, uuid.UUID):
-        return value
-    try:
-        return uuid.UUID(str(value))
-    except (ValueError, TypeError):
-        return None
 
 
 class EquipmentCategoryRepository:
@@ -37,7 +29,7 @@ class EquipmentCategoryRepository:
         self._session = session
 
     def get_by_id(self, category_id: Union[str, uuid.UUID]) -> Optional[EquipmentCategory]:
-        cid = _coerce_uuid(category_id)
+        cid = coerce_uuid(category_id)
         if cid is None:
             return None
         return self._session.get(EquipmentCategory, cid)
@@ -75,7 +67,7 @@ class EquipmentModelRepository:
         self._session = session
 
     def get_by_id(self, model_id: Union[str, uuid.UUID]) -> Optional[EquipmentModel]:
-        mid = _coerce_uuid(model_id)
+        mid = coerce_uuid(model_id)
         if mid is None:
             return None
         return self._session.get(EquipmentModel, mid)
@@ -132,7 +124,7 @@ class EquipmentRepository:
     # ------------------------------------------------------------------
 
     def get_by_id(self, equipment_id: Union[str, uuid.UUID]) -> Optional[Equipment]:
-        eid = _coerce_uuid(equipment_id)
+        eid = coerce_uuid(equipment_id)
         if eid is None:
             return None
         return self._session.get(Equipment, eid)

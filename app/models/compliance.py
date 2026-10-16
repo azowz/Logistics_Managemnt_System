@@ -35,6 +35,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 from app.db.mixins import AuditMixin, SoftDeleteMixin, TimestampMixin
 from app.models.enums import (
+    enum_values,
     ComplianceCheckStatus,
     ComplianceCheckType,
     EscortStatus,
@@ -44,10 +45,6 @@ from app.models.enums import (
     PermitType,
     RouteRestrictionType,
 )
-
-
-def _enum_values(enum_cls) -> list[str]:
-    return [member.value for member in enum_cls]
 
 
 class Permit(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
@@ -98,11 +95,11 @@ class Permit(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     route_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
 
     permit_type: Mapped[PermitType] = mapped_column(
-        SAEnum(PermitType, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(PermitType, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
     )
     status: Mapped[PermitStatus] = mapped_column(
-        SAEnum(PermitStatus, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(PermitStatus, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=PermitStatus.DRAFT,
         server_default="draft",
@@ -173,7 +170,7 @@ class Escort(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         UUID(as_uuid=True), ForeignKey("permits.id", ondelete="SET NULL"), nullable=True, index=True
     )
     escort_type: Mapped[EscortType] = mapped_column(
-        SAEnum(EscortType, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(EscortType, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
     )
     provider_name: Mapped[Optional[str]] = mapped_column(String(255))
@@ -184,7 +181,7 @@ class Escort(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     scheduled_start: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     scheduled_end: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     status: Mapped[EscortStatus] = mapped_column(
-        SAEnum(EscortStatus, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(EscortStatus, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=EscortStatus.PLANNED,
         server_default="planned",
@@ -221,7 +218,7 @@ class RouteRestriction(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     region: Mapped[Optional[str]] = mapped_column(String(128), index=True)
     road_name: Mapped[Optional[str]] = mapped_column(String(255))
     restriction_type: Mapped[RouteRestrictionType] = mapped_column(
-        SAEnum(RouteRestrictionType, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(RouteRestrictionType, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         index=True,
     )
@@ -325,12 +322,12 @@ class ComplianceCheck(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         UUID(as_uuid=True), ForeignKey("permits.id", ondelete="SET NULL"), nullable=True
     )
     check_type: Mapped[ComplianceCheckType] = mapped_column(
-        SAEnum(ComplianceCheckType, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(ComplianceCheckType, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         index=True,
     )
     status: Mapped[ComplianceCheckStatus] = mapped_column(
-        SAEnum(ComplianceCheckStatus, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(ComplianceCheckStatus, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=ComplianceCheckStatus.PENDING,
         server_default="pending",
@@ -386,7 +383,7 @@ class OperatorCertification(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     valid_until: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True))
     status: Mapped[OperatorCertificationStatus] = mapped_column(
         SAEnum(
-            OperatorCertificationStatus, native_enum=False, length=32, values_callable=_enum_values
+            OperatorCertificationStatus, native_enum=False, length=32, values_callable=enum_values
         ),
         nullable=False,
         default=OperatorCertificationStatus.ACTIVE,

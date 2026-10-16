@@ -42,17 +42,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
 from app.db.mixins import AuditMixin, SoftDeleteMixin, TimestampMixin
-from app.models.enums import OrderPriority, OrderSource, OrderStatus, OrderType
-
-
-def _enum_values(enum_cls) -> list[str]:
-    """Persist enum *values* (e.g. 'draft'), not member names ('DRAFT').
-
-    SQLAlchemy's ``Enum`` stores member names by default; our CHECK constraints,
-    migrations, and API contract all use the lowercase values, so every
-    ``SAEnum`` column must opt into ``values_callable``.
-    """
-    return [member.value for member in enum_cls]
+from app.models.enums import OrderPriority, OrderSource, OrderStatus, OrderType, enum_values
 
 
 class Order(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
@@ -118,17 +108,17 @@ class Order(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     # ------------------------------------------------------------------
 
     order_type: Mapped[OrderType] = mapped_column(
-        SAEnum(OrderType, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(OrderType, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=OrderType.STANDARD,
     )
     order_source: Mapped[OrderSource] = mapped_column(
-        SAEnum(OrderSource, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(OrderSource, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=OrderSource.WEB,
     )
     priority: Mapped[OrderPriority] = mapped_column(
-        SAEnum(OrderPriority, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(OrderPriority, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=OrderPriority.NORMAL,
         index=True,
@@ -139,7 +129,7 @@ class Order(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     # ------------------------------------------------------------------
 
     status: Mapped[OrderStatus] = mapped_column(
-        SAEnum(OrderStatus, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(OrderStatus, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=OrderStatus.DRAFT,
         index=True,

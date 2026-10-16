@@ -2,13 +2,13 @@
 
 from __future__ import annotations
 
-import re
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
+
 
 _PROJECTION_TYPES = frozenset(
     {
@@ -22,15 +22,6 @@ _PROJECTION_TYPES = frozenset(
     }
 )
 _MAX_RANGE_DAYS = 366 * 3  # guard against unbounded scans
-
-
-def _currency(v: Optional[str]) -> Optional[str]:
-    if v is None:
-        return None
-    v = v.upper()
-    if not re.fullmatch(r"[A-Z]{3}", v):
-        raise ValueError("currency_code must be a 3-letter ISO-4217 code.")
-    return v
 
 
 # --- query params ----------------------------------------------------------

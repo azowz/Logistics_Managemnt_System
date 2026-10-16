@@ -36,15 +36,11 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
 from app.db.mixins import AuditMixin, SoftDeleteMixin, TimestampMixin
 from app.models.enums import (
+    enum_values,
     EquipmentAvailability,
     EquipmentOwnershipType,
     EquipmentStatus,
 )
-
-
-def _enum_values(enum_cls) -> list[str]:
-    """Persist enum *values* (e.g. 'active'), not member names ('ACTIVE')."""
-    return [member.value for member in enum_cls]
 
 
 class EquipmentCategory(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
@@ -181,7 +177,7 @@ class Equipment(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
             EquipmentOwnershipType,
             native_enum=False,
             length=32,
-            values_callable=_enum_values,
+            values_callable=enum_values,
         ),
         nullable=False,
         default=EquipmentOwnershipType.OWNED,
@@ -190,7 +186,7 @@ class Equipment(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
 
     # --- lifecycle ---
     status: Mapped[EquipmentStatus] = mapped_column(
-        SAEnum(EquipmentStatus, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(EquipmentStatus, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=EquipmentStatus.ACTIVE,
         server_default="active",
@@ -201,7 +197,7 @@ class Equipment(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
             EquipmentAvailability,
             native_enum=False,
             length=32,
-            values_callable=_enum_values,
+            values_callable=enum_values,
         ),
         nullable=False,
         default=EquipmentAvailability.AVAILABLE,

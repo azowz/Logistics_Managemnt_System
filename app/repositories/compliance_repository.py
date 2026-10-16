@@ -7,10 +7,9 @@ rollback; no FastAPI; no events; tenant-scoped reads via RLS; soft-delete aware.
 from __future__ import annotations
 
 import uuid
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
 from sqlalchemy import asc, desc, func, or_, select
-from sqlalchemy.orm import Session
 
 from app.models.compliance import (
     AxleWeightProfile,
@@ -27,61 +26,10 @@ from app.models.enums import (
     PermitStatus,
     PermitType,
 )
-from app.repositories.errors import NotFoundError
+from app.repositories.base import BaseRepository
 
 
-def _coerce_uuid(value: Union[str, uuid.UUID]) -> Optional[uuid.UUID]:
-    if isinstance(value, uuid.UUID):
-        return value
-    try:
-        return uuid.UUID(str(value))
-    except (ValueError, TypeError):
-        return None
-
-
-class _BaseRepo:
-    """Shared no-commit create/get/soft-delete plumbing."""
-
-    model = None  # set by subclass
-
-    def __init__(self, session: Session) -> None:
-        self._session = session
-
-    def create(self, **data):
-        obj = self.model(**data)
-        self._session.add(obj)
-        return obj
-
-    def update(self, obj, **data):
-        for field, value in data.items():
-            if value is not None:
-                setattr(obj, field, value)
-        return obj
-
-    def get_by_id(self, obj_id: Union[str, uuid.UUID]):
-        oid = _coerce_uuid(obj_id)
-        if oid is None:
-            return None
-        return self._session.get(self.model, oid)
-
-    def get_by_id_or_raise(self, obj_id: Union[str, uuid.UUID]):
-        obj = self.get_by_id(obj_id)
-        if obj is None:
-            raise NotFoundError(f"{self.model.__name__} {obj_id} not found.")
-        return obj
-
-    def soft_delete(self, obj, *, deleted_by: Optional[uuid.UUID]):
-        obj.soft_delete()
-        obj.deleted_by = deleted_by
-        return obj
-
-    def restore(self, obj):
-        obj.restore()
-        obj.deleted_by = None
-        return obj
-
-
-class PermitRepository(_BaseRepo):
+class PermitRepository(BaseRepository):
     model = Permit
 
     def get_by_number(self, permit_number: str) -> Optional[Permit]:
@@ -146,7 +94,7 @@ class PermitRepository(_BaseRepo):
         return list(self._session.scalars(stmt).all()), total
 
 
-class EscortRepository(_BaseRepo):
+class EscortRepository(BaseRepository):
     model = Escort
 
     def get_active_escorts_for_shipment(self, shipment_id: uuid.UUID) -> List[Escort]:
@@ -181,7 +129,7 @@ class EscortRepository(_BaseRepo):
         return list(self._session.scalars(stmt).all()), total
 
 
-class RouteRestrictionRepository(_BaseRepo):
+class RouteRestrictionRepository(BaseRepository):
     model = RouteRestriction
 
     def get_route_restrictions(
@@ -212,7 +160,7 @@ class RouteRestrictionRepository(_BaseRepo):
         return list(self._session.scalars(stmt).all()), total
 
 
-class AxleWeightProfileRepository(_BaseRepo):
+class AxleWeightProfileRepository(BaseRepository):
     model = AxleWeightProfile
 
     def list_profiles(
@@ -233,7 +181,7 @@ class AxleWeightProfileRepository(_BaseRepo):
         return list(self._session.scalars(stmt).all()), total
 
 
-class ComplianceCheckRepository(_BaseRepo):
+class ComplianceCheckRepository(BaseRepository):
     model = ComplianceCheck
 
     def list_checks(
@@ -269,7 +217,7 @@ class ComplianceCheckRepository(_BaseRepo):
         return list(self._session.scalars(stmt).all())
 
 
-class OperatorCertificationRepository(_BaseRepo):
+class OperatorCertificationRepository(BaseRepository):
     model = OperatorCertification
 
     def get_valid_operator_certification(

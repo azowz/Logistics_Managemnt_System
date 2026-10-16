@@ -36,17 +36,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
 from app.db.mixins import AuditMixin, SoftDeleteMixin, TimestampMixin
-from app.models.enums import CreditStatus, CustomerStatus, CustomerType, RiskLevel
-
-
-def _enum_values(enum_cls) -> list[str]:
-    """Persist enum *values* (e.g. 'active'), not member names ('ACTIVE').
-
-    SQLAlchemy's ``Enum`` stores member names by default; our CHECK constraints,
-    migrations, and API contract all use the lowercase values, so every
-    ``SAEnum`` column must opt into ``values_callable``.
-    """
-    return [member.value for member in enum_cls]
+from app.models.enums import CreditStatus, CustomerStatus, CustomerType, RiskLevel, enum_values
 
 
 class Customer(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
@@ -97,7 +87,7 @@ class Customer(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     # ------------------------------------------------------------------
 
     customer_type: Mapped[CustomerType] = mapped_column(
-        SAEnum(CustomerType, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(CustomerType, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=CustomerType.CORPORATE,
     )
@@ -153,18 +143,18 @@ class Customer(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     # ------------------------------------------------------------------
 
     status: Mapped[CustomerStatus] = mapped_column(
-        SAEnum(CustomerStatus, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(CustomerStatus, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=CustomerStatus.ACTIVE,
         index=True,
     )
     risk_level: Mapped[RiskLevel] = mapped_column(
-        SAEnum(RiskLevel, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(RiskLevel, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=RiskLevel.LOW,
     )
     credit_status: Mapped[CreditStatus] = mapped_column(
-        SAEnum(CreditStatus, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(CreditStatus, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=CreditStatus.GOOD,
     )

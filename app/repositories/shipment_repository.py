@@ -22,6 +22,7 @@ from sqlalchemy.orm import Session
 
 from app.models.enums import ShipmentPriority, ShipmentStatus
 from app.models.shipment import Shipment
+from app.repositories.base import coerce_uuid
 from app.repositories.errors import NotFoundError
 
 # Statuses that count as an *active* (in-flight) assignment for driver/vehicle
@@ -44,16 +45,6 @@ NON_TERMINAL_STATUSES: Tuple[ShipmentStatus, ...] = (
     ShipmentStatus.IN_TRANSIT,
     ShipmentStatus.DELAYED,
 )
-
-
-def _coerce_uuid(value: Union[str, uuid.UUID]) -> Optional[uuid.UUID]:
-    """Best-effort coercion of a value to ``uuid.UUID`` (``None`` if invalid)."""
-    if isinstance(value, uuid.UUID):
-        return value
-    try:
-        return uuid.UUID(str(value))
-    except (ValueError, TypeError):
-        return None
 
 
 class ShipmentRepository:
@@ -85,7 +76,7 @@ class ShipmentRepository:
 
     def get_by_id(self, shipment_id: Union[str, uuid.UUID]) -> Optional[Shipment]:
         """Return a shipment by PK, or ``None`` if not found / malformed id."""
-        shipment_uuid = _coerce_uuid(shipment_id)
+        shipment_uuid = coerce_uuid(shipment_id)
         if shipment_uuid is None:
             return None
         return self._session.get(Shipment, shipment_uuid)

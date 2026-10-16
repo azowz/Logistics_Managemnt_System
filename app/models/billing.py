@@ -34,6 +34,7 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 from app.db.mixins import AuditMixin, SoftDeleteMixin, TimestampMixin
 from app.models.enums import (
+    enum_values,
     InvoiceLineType,
     InvoiceStatus,
     LineReferenceType,
@@ -45,10 +46,6 @@ from app.models.enums import (
     SettlementStatus,
     SettlementType,
 )
-
-
-def _enum_values(enum_cls) -> list[str]:
-    return [member.value for member in enum_cls]
 
 
 class Quote(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
@@ -90,7 +87,7 @@ class Quote(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         index=True,
     )
     status: Mapped[QuoteStatus] = mapped_column(
-        SAEnum(QuoteStatus, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(QuoteStatus, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=QuoteStatus.DRAFT,
         server_default="draft",
@@ -172,7 +169,7 @@ class Invoice(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         UUID(as_uuid=True), ForeignKey("claims.id", ondelete="SET NULL"), nullable=True, index=True
     )
     status: Mapped[InvoiceStatus] = mapped_column(
-        SAEnum(InvoiceStatus, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(InvoiceStatus, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=InvoiceStatus.DRAFT,
         server_default="draft",
@@ -240,7 +237,7 @@ class InvoiceLine(TimestampMixin, Base):
         index=True,
     )
     line_type: Mapped[InvoiceLineType] = mapped_column(
-        SAEnum(InvoiceLineType, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(InvoiceLineType, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
     )
     description: Mapped[Optional[str]] = mapped_column(String(512))
@@ -252,7 +249,7 @@ class InvoiceLine(TimestampMixin, Base):
     )
     line_total: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, server_default="0")
     reference_type: Mapped[Optional[LineReferenceType]] = mapped_column(
-        SAEnum(LineReferenceType, native_enum=False, length=16, values_callable=_enum_values),
+        SAEnum(LineReferenceType, native_enum=False, length=16, values_callable=enum_values),
         nullable=True,
     )
     reference_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
@@ -287,11 +284,11 @@ class Payment(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False)
     currency_code: Mapped[str] = mapped_column(String(3), nullable=False, server_default="SAR")
     method: Mapped[PaymentMethod] = mapped_column(
-        SAEnum(PaymentMethod, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(PaymentMethod, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
     )
     status: Mapped[PaymentStatus] = mapped_column(
-        SAEnum(PaymentStatus, native_enum=False, length=16, values_callable=_enum_values),
+        SAEnum(PaymentStatus, native_enum=False, length=16, values_callable=enum_values),
         nullable=False,
         default=PaymentStatus.CONFIRMED,
         server_default="confirmed",
@@ -354,14 +351,14 @@ class Settlement(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         UUID(as_uuid=True), ForeignKey("shipments.id", ondelete="SET NULL"), nullable=True
     )
     status: Mapped[SettlementStatus] = mapped_column(
-        SAEnum(SettlementStatus, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(SettlementStatus, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=SettlementStatus.DRAFT,
         server_default="draft",
         index=True,
     )
     settlement_type: Mapped[SettlementType] = mapped_column(
-        SAEnum(SettlementType, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(SettlementType, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
     )
     amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, server_default="0")
@@ -407,11 +404,11 @@ class Payout(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, server_default="0")
     currency_code: Mapped[str] = mapped_column(String(3), nullable=False, server_default="SAR")
     method: Mapped[PaymentMethod] = mapped_column(
-        SAEnum(PaymentMethod, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(PaymentMethod, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
     )
     status: Mapped[PayoutStatus] = mapped_column(
-        SAEnum(PayoutStatus, native_enum=False, length=16, values_callable=_enum_values),
+        SAEnum(PayoutStatus, native_enum=False, length=16, values_callable=enum_values),
         nullable=False,
         default=PayoutStatus.PENDING,
         server_default="pending",
@@ -461,7 +458,7 @@ class Penalty(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         index=True,
     )
     penalty_type: Mapped[PenaltyType] = mapped_column(
-        SAEnum(PenaltyType, native_enum=False, length=32, values_callable=_enum_values),
+        SAEnum(PenaltyType, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
     )
     amount: Mapped[Decimal] = mapped_column(Numeric(14, 2), nullable=False, server_default="0")

@@ -2,9 +2,28 @@
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+def validate_currency_code(value: Optional[str]) -> Optional[str]:
+    """Upper-case and validate an ISO-4217 code (``None`` passes through)."""
+    if value is None:
+        return None
+    value = value.upper()
+    if not re.fullmatch(r"[A-Z]{3}", value):
+        raise ValueError("currency_code must be a 3-letter ISO-4217 code.")
+    return value
+
+
+def require_aware_datetime(value: Optional[datetime]) -> Optional[datetime]:
+    """Reject naive datetimes on write payloads; every timestamp is stored as UTC."""
+    if value is not None and value.tzinfo is None:
+        raise ValueError("Datetime fields must be timezone-aware (UTC).")
+    return value
 
 
 class TimestampMixin(BaseModel):
