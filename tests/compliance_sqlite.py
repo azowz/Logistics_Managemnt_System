@@ -1,21 +1,15 @@
 """Shared helpers for SQLite-backed Compliance tests.
 
 Builds a cross-domain schema (tenant, user, warehouse, equipment, vehicle,
-shipment + the six compliance tables), stripping the PostgreSQL-only regex CHECK
-on ``shipments`` so SQLite can create it.
+shipment + the six compliance tables).
 """
 
 from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import CheckConstraint, create_engine
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.pool import StaticPool
 
 import app.models  # noqa: F401
-from app.db.base import Base
 from app.models.compliance import (
     AxleWeightProfile,
     ComplianceCheck,
@@ -31,53 +25,30 @@ from app.models.tenant import Tenant
 from app.models.user import User
 from app.models.vehicle import Vehicle
 from app.models.warehouse import Warehouse
-
-
-@compiles(JSONB, "sqlite")
-def _jsonb(element, compiler, **kw):  # noqa: ANN001, ANN201
-    return "JSON"
-
-
-def _strip_pg_checks() -> None:
-    for c in list(Shipment.__table__.constraints):
-        if isinstance(c, CheckConstraint) and "~" in str(c.sqltext):
-            Shipment.__table__.constraints.discard(c)
+from sqlite_support import make_sqlite_engine
+from sqlite_support import seed_tenant_user  # noqa: F401  (re-exported for tests)
 
 
 def make_engine():
-    _strip_pg_checks()
-    engine = create_engine(
-        "sqlite+pysqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
+    return make_sqlite_engine(
+        [
+            Tenant,
+            User,
+            Warehouse,
+            EquipmentCategory,
+            EquipmentModel,
+            Equipment,
+            Vehicle,
+            Driver,
+            Shipment,
+            RouteRestriction,
+            Permit,
+            Escort,
+            AxleWeightProfile,
+            ComplianceCheck,
+            OperatorCertification,
+        ]
     )
-    Base.metadata.create_all(
-        bind=engine,
-        tables=[
-            Tenant.__table__, User.__table__, Warehouse.__table__,
-            EquipmentCategory.__table__, EquipmentModel.__table__, Equipment.__table__,
-            Vehicle.__table__, Driver.__table__, Shipment.__table__,
-            RouteRestriction.__table__, Permit.__table__, Escort.__table__,
-            AxleWeightProfile.__table__, ComplianceCheck.__table__,
-            OperatorCertification.__table__,
-        ],
-    )
-    return engine
-
-
-def seed_tenant_user(SessionLocal, *, tenant_id, user_id):
-    s = SessionLocal()
-    try:
-        if s.get(Tenant, tenant_id) is None:
-            s.add(Tenant(id=tenant_id, slug=f"t-{tenant_id.hex[:8]}", name="Compliance T",
-                         status="active", isolation_mode="shared"))
-            s.commit()
-        if s.get(User, user_id) is None:
-            s.add(User(id=user_id, tenant_id=tenant_id, email=f"u-{user_id.hex[:8]}@t.test",
-                       hashed_password="x", role="manager", is_active=True))
-            s.commit()
-    finally:
-        s.close()
 
 
 def seed_shipment_with_equipment(

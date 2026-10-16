@@ -1,20 +1,14 @@
 """Shared helpers for SQLite-backed Shipment tests.
 
-The production ``shipments`` table carries a PostgreSQL-only regex CHECK
-(``currency_code ~ '^[A-Z]{3}$'``) that SQLite cannot parse. These helpers
-strip such PG-only CHECK constraints from the in-memory test schema (they are
-irrelevant on SQLite) and seed the FK prerequisites a shipment references.
+Builds the shipment schema and seeds the FK prerequisites a shipment references.
 """
 
 from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import CheckConstraint, create_engine
-from sqlalchemy.pool import StaticPool
 
 import app.models  # noqa: F401 — register all models on Base.metadata
-from app.db.base import Base
 from app.models.customer import Customer
 from app.models.equipment import Equipment, EquipmentCategory, EquipmentModel
 from app.models.order import Order
@@ -24,40 +18,26 @@ from app.models.user import User
 from app.models.vehicle import Vehicle
 from app.models.driver import Driver
 from app.models.warehouse import Warehouse
-
-
-def _strip_pg_only_checks() -> None:
-    """Remove regex (``~``) CHECK constraints unsupported by SQLite (idempotent)."""
-    for c in list(Shipment.__table__.constraints):
-        if isinstance(c, CheckConstraint) and "~" in str(c.sqltext):
-            Shipment.__table__.constraints.discard(c)
+from sqlite_support import make_sqlite_engine
 
 
 def make_engine():
     """Return a shared-connection in-memory SQLite engine with the schema built."""
-    _strip_pg_only_checks()
-    engine = create_engine(
-        "sqlite+pysqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
+    return make_sqlite_engine(
+        [
+            Tenant,
+            User,
+            Customer,
+            Order,
+            Warehouse,
+            Driver,
+            Vehicle,
+            EquipmentCategory,
+            EquipmentModel,
+            Equipment,
+            Shipment,
+        ]
     )
-    Base.metadata.create_all(
-        bind=engine,
-        tables=[
-            Tenant.__table__,
-            User.__table__,
-            Customer.__table__,
-            Order.__table__,
-            Warehouse.__table__,
-            Driver.__table__,
-            Vehicle.__table__,
-            EquipmentCategory.__table__,
-            EquipmentModel.__table__,
-            Equipment.__table__,
-            Shipment.__table__,
-        ],
-    )
-    return engine
 
 
 def seed_equipment(

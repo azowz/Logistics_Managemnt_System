@@ -2,21 +2,15 @@
 
 Builds the projection tables + the event backbone (for real dispatcher
 idempotency) + the Billing invoice/customer tables (for the AR-aging
-read-through projection). The PostgreSQL-only regex currency CHECK (``~``) on
-``invoices`` is stripped so SQLite can create it.
+read-through projection).
 """
 
 from __future__ import annotations
 
 from decimal import Decimal
 
-from sqlalchemy import CheckConstraint, create_engine
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.pool import StaticPool
 
 import app.models  # noqa: F401
-from app.db.base import Base
 from app.models.audit_log import AuditLog
 from app.models.billing import Invoice, Payment
 from app.models.customer import Customer
@@ -33,18 +27,7 @@ from app.models.projection import (
 )
 from app.models.tenant import Tenant
 from app.models.user import User
-
-
-@compiles(JSONB, "sqlite")
-def _jsonb(element, compiler, **kw):  # noqa: ANN001, ANN201
-    return "JSON"
-
-
-def _strip_pg_checks() -> None:
-    for model in (Invoice, Payment):
-        for c in list(model.__table__.constraints):
-            if isinstance(c, CheckConstraint) and "~" in str(c.sqltext):
-                model.__table__.constraints.discard(c)
+from sqlite_support import make_sqlite_engine
 
 
 _PROJECTIONS = [
@@ -55,23 +38,20 @@ _PROJECTIONS = [
 
 
 def make_engine():
-    _strip_pg_checks()
-    engine = create_engine(
-        "sqlite+pysqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
+    return make_sqlite_engine(
+        [
+            Tenant,
+            User,
+            Customer,
+            Invoice,
+            Payment,
+            EventStore,
+            ProcessedEvent,
+            DeadLetterEvent,
+            AuditLog,
+            *_PROJECTIONS,
+        ]
     )
-    Base.metadata.create_all(
-        bind=engine,
-        tables=[
-            Tenant.__table__, User.__table__, Customer.__table__,
-            Invoice.__table__, Payment.__table__,
-            EventStore.__table__, ProcessedEvent.__table__, DeadLetterEvent.__table__,
-            AuditLog.__table__,
-            *[m.__table__ for m in _PROJECTIONS],
-        ],
-    )
-    return engine
 
 
 def seed_tenant(SessionLocal, *, tenant_id):

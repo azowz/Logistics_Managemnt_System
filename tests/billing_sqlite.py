@@ -1,22 +1,15 @@
 """Shared helpers for SQLite-backed Billing & Settlements tests.
 
 Builds the full cross-domain schema needed by billing (tenant, user, customer,
-order, warehouse, equipment, shipment, claims, billing tables), stripping the
-PostgreSQL-only regex CHECKs (``~``) so SQLite can create the tables that carry
-a ``currency_code ~ '^[A-Z]{3}$'`` constraint.
+order, warehouse, equipment, shipment, claims, billing tables).
 """
 
 from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import CheckConstraint, create_engine
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.pool import StaticPool
 
 import app.models  # noqa: F401
-from app.db.base import Base
 from app.models.billing import (
     Invoice,
     InvoiceLine,
@@ -34,56 +27,32 @@ from app.models.shipment import Shipment
 from app.models.tenant import Tenant
 from app.models.user import User
 from app.models.warehouse import Warehouse
-
-
-@compiles(JSONB, "sqlite")
-def _jsonb(element, compiler, **kw):  # noqa: ANN001, ANN201
-    return "JSON"
-
-
-_PG_CHECK_MODELS = (Shipment, InsurancePolicy, Claim, Quote, Invoice, Payment, Settlement, Payout, Penalty)
-
-
-def _strip_pg_checks() -> None:
-    for model in _PG_CHECK_MODELS:
-        for c in list(model.__table__.constraints):
-            if isinstance(c, CheckConstraint) and "~" in str(c.sqltext):
-                model.__table__.constraints.discard(c)
+from sqlite_support import make_sqlite_engine
+from sqlite_support import seed_tenant_user  # noqa: F401  (re-exported for tests)
 
 
 def make_engine():
-    _strip_pg_checks()
-    engine = create_engine(
-        "sqlite+pysqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
+    return make_sqlite_engine(
+        [
+            Tenant,
+            User,
+            Customer,
+            Order,
+            Warehouse,
+            EquipmentCategory,
+            Equipment,
+            Shipment,
+            InsurancePolicy,
+            Claim,
+            Quote,
+            Invoice,
+            InvoiceLine,
+            Payment,
+            Settlement,
+            Payout,
+            Penalty,
+        ]
     )
-    Base.metadata.create_all(
-        bind=engine,
-        tables=[
-            Tenant.__table__, User.__table__, Customer.__table__, Order.__table__,
-            Warehouse.__table__, EquipmentCategory.__table__, Equipment.__table__,
-            Shipment.__table__, InsurancePolicy.__table__, Claim.__table__,
-            Quote.__table__, Invoice.__table__, InvoiceLine.__table__, Payment.__table__,
-            Settlement.__table__, Payout.__table__, Penalty.__table__,
-        ],
-    )
-    return engine
-
-
-def seed_tenant_user(SessionLocal, *, tenant_id, user_id):
-    s = SessionLocal()
-    try:
-        if s.get(Tenant, tenant_id) is None:
-            s.add(Tenant(id=tenant_id, slug=f"t-{tenant_id.hex[:8]}", name="Bill T",
-                         status="active", isolation_mode="shared"))
-            s.commit()
-        if s.get(User, user_id) is None:
-            s.add(User(id=user_id, tenant_id=tenant_id, email=f"u-{user_id.hex[:8]}@t.test",
-                       hashed_password="x", role="manager", is_active=True))
-            s.commit()
-    finally:
-        s.close()
 
 
 def seed_customer(SessionLocal, *, tenant_id, customer_id):

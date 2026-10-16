@@ -31,3 +31,21 @@ from sqlalchemy.ext.compiler import compiles  # noqa: E402
 @compiles(JSONB, "sqlite")
 def _render_jsonb_as_json_on_sqlite(element, compiler, **kw):  # noqa: ANN001, ANN201
     return "JSON"
+
+
+# ---------------------------------------------------------------------------
+# Cross-dialect test shim: skip PostgreSQL regex CHECK constraints on SQLite.
+#
+# Some CHECKs use the PostgreSQL ``~`` regex operator (currency codes, emails),
+# which SQLite cannot parse. Returning ``None`` drops the clause from SQLite DDL
+# only; the shared ``Base.metadata`` is left untouched, so PostgreSQL-backed
+# tests in the same process still create the real constraints.
+# ---------------------------------------------------------------------------
+from sqlalchemy import CheckConstraint  # noqa: E402
+
+
+@compiles(CheckConstraint, "sqlite")
+def _skip_pg_regex_checks_on_sqlite(element, compiler, **kw):  # noqa: ANN001, ANN201
+    if "~" in str(element.sqltext):
+        return None
+    return compiler.visit_check_constraint(element, **kw)

@@ -9,40 +9,24 @@ from __future__ import annotations
 
 import uuid
 
-from sqlalchemy import create_engine
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.pool import StaticPool
 
 import app.models  # noqa: F401 — register all models
-from app.db.base import Base
 from app.models.equipment import Equipment, EquipmentCategory, EquipmentModel
 from app.models.tenant import Tenant
 from app.models.warehouse import Warehouse
-
-
-@compiles(JSONB, "sqlite")
-def _render_jsonb_as_json(element, compiler, **kw):  # noqa: ANN001, ANN201
-    return "JSON"
+from sqlite_support import make_sqlite_engine
 
 
 def make_engine():
-    engine = create_engine(
-        "sqlite+pysqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
+    return make_sqlite_engine(
+        [
+            Tenant,
+            Warehouse,
+            EquipmentCategory,
+            EquipmentModel,
+            Equipment,
+        ]
     )
-    Base.metadata.create_all(
-        bind=engine,
-        tables=[
-            Tenant.__table__,
-            Warehouse.__table__,
-            EquipmentCategory.__table__,
-            EquipmentModel.__table__,
-            Equipment.__table__,
-        ],
-    )
-    return engine
 
 
 def seed_prereqs(
