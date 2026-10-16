@@ -14,7 +14,6 @@ from app.integrations.encryption import (
     set_secret_provider,
 )
 from app.models.enums import IntegrationPartnerType
-from app.models.integration import WebhookSubscription
 from app.services.integration_service import IntegrationService
 from integrations_sqlite import make_engine, seed_tenant_user
 

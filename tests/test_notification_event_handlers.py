@@ -11,7 +11,6 @@ from sqlalchemy.orm import sessionmaker
 from app.events.envelope import EventEnvelope
 from app.events.shipment_events import ShipmentDelayed
 from app.models.enums import NotificationChannel, NotificationStatus
-from app.models.notification import Notification
 from app.notifications.handlers import (
     NotificationEventHandler,
     TRIGGER_EVENT_TYPES,

@@ -8,14 +8,11 @@ read-through projection). The PostgreSQL-only regex currency CHECK (``~``) on
 
 from __future__ import annotations
 
-import uuid
-from datetime import datetime, timezone
 from decimal import Decimal
 
 from sqlalchemy import CheckConstraint, create_engine
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 import app.models  # noqa: F401

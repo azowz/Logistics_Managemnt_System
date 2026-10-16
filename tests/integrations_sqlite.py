@@ -7,12 +7,10 @@ on SQLite; the integration models use no PostgreSQL regex CHECKs, so none need s
 
 from __future__ import annotations
 
-import uuid
 
 from sqlalchemy import create_engine
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 import app.models  # noqa: F401  (register all mappers)

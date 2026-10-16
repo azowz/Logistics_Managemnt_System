@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import time
 import uuid
-from datetime import timezone
 from unittest.mock import MagicMock, patch
 
 import pytest

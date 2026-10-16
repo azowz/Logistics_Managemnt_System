@@ -141,12 +141,14 @@ def test_delivery_and_inbound_list_filters():
         sub = WebhookSubscription(id=uuid.uuid4(), tenant_id=_TENANT, partner_id=p.id, name="s",
                                   target_url="https://x/s", event_types=["shipment.delivered"],
                                   status="active", encrypted_secret="e")
-        s.add(sub); s.flush()
+        s.add(sub)
+        s.flush()
         d = WebhookDelivery(id=uuid.uuid4(), tenant_id=_TENANT, subscription_id=sub.id, partner_id=p.id,
                             source_event_id=uuid.uuid4(), source_event_type="ShipmentDelivered",
                             external_event_type="shipment.delivered", status="pending",
                             payload={}, payload_hash="h", signature="sha256=x")
-        s.add(d); s.flush()
+        s.add(d)
+        s.flush()
         drepo = WebhookDeliveryRepository(s)
         items, total = drepo.list_deliveries(subscription_id=sub.id, status="pending",
                                              external_event_type="shipment.delivered", partner_id=p.id)
@@ -154,10 +156,12 @@ def test_delivery_and_inbound_list_filters():
 
         key = PartnerApiKey(id=uuid.uuid4(), tenant_id=_TENANT, partner_id=p.id, name="k",
                             key_prefix="ip123", key_hash="h", status="active")
-        s.add(key); s.flush()
+        s.add(key)
+        s.flush()
         ie = InboundIntegrationEvent(id=uuid.uuid4(), tenant_id=_TENANT, partner_id=p.id, api_key_id=key.id,
                                      idempotency_key="ik", event_type="order.updated", status="accepted")
-        s.add(ie); s.flush()
+        s.add(ie)
+        s.flush()
         irepo = InboundIntegrationEventRepository(s)
         items2, total2 = irepo.list_inbound(partner_id=p.id, status="accepted", event_type="order.updated")
         assert total2 >= 1

@@ -40,7 +40,9 @@ def test_policy_defaults(Session):
     s = Session()
     try:
         p = _policy()
-        s.add(p); s.commit(); s.refresh(p)
+        s.add(p)
+        s.commit()
+        s.refresh(p)
         assert p.status == InsurancePolicyStatus.DRAFT
         assert p.currency_code == "SAR"
         assert p.version == 1
@@ -53,19 +55,23 @@ def test_policy_number_unique(Session):
     s = Session()
     try:
         num = f"POL-DUP-{uuid.uuid4().hex[:6]}"
-        s.add(_policy(policy_number=num)); s.commit()
+        s.add(_policy(policy_number=num))
+        s.commit()
         s.add(_policy(policy_number=num))
         with pytest.raises(IntegrityError):
             s.commit()
     finally:
-        s.rollback(); s.close()
+        s.rollback()
+        s.close()
 
 
 def test_claim_defaults_and_jsonb(Session):
     s = Session()
     try:
         c = _claim(evidence={"photos": ["a.jpg"]})
-        s.add(c); s.commit(); s.refresh(c)
+        s.add(c)
+        s.commit()
+        s.refresh(c)
         assert c.status == ClaimStatus.CREATED
         assert c.severity.value == "medium"
         assert c.evidence["photos"] == ["a.jpg"]
@@ -78,12 +84,14 @@ def test_claim_number_unique(Session):
     s = Session()
     try:
         num = f"CLM-DUP-{uuid.uuid4().hex[:6]}"
-        s.add(_claim(claim_number=num)); s.commit()
+        s.add(_claim(claim_number=num))
+        s.commit()
         s.add(_claim(claim_number=num))
         with pytest.raises(IntegrityError):
             s.commit()
     finally:
-        s.rollback(); s.close()
+        s.rollback()
+        s.close()
 
 
 def test_negative_claimed_amount_rejected(Session):
@@ -93,28 +101,40 @@ def test_negative_claimed_amount_rejected(Session):
         with pytest.raises(IntegrityError):
             s.commit()
     finally:
-        s.rollback(); s.close()
+        s.rollback()
+        s.close()
 
 
 def test_liability_percentage_range(Session):
     s = Session()
     try:
-        c = _claim(); s.add(c); s.commit()
+        c = _claim()
+        s.add(c)
+        s.commit()
         s.add(LiabilityRecord(tenant_id=_TENANT, claim_id=c.id, responsible_party_type="carrier",
                               liability_percentage=150))
         with pytest.raises(IntegrityError):
             s.commit()
     finally:
-        s.rollback(); s.close()
+        s.rollback()
+        s.close()
 
 
 def test_claim_soft_delete_restore(Session):
     s = Session()
     try:
-        c = _claim(); s.add(c); s.commit()
-        c.soft_delete(); c.deleted_by = _USER; s.commit(); s.refresh(c)
+        c = _claim()
+        s.add(c)
+        s.commit()
+        c.soft_delete()
+        c.deleted_by = _USER
+        s.commit()
+        s.refresh(c)
         assert c.is_deleted
-        c.restore(); c.deleted_by = None; s.commit(); s.refresh(c)
+        c.restore()
+        c.deleted_by = None
+        s.commit()
+        s.refresh(c)
         assert not c.is_deleted
     finally:
         s.close()
@@ -123,9 +143,13 @@ def test_claim_soft_delete_restore(Session):
 def test_policy_version_increments(Session):
     s = Session()
     try:
-        p = _policy(); s.add(p); s.commit()
+        p = _policy()
+        s.add(p)
+        s.commit()
         assert p.version == 1
-        p.notes = "x"; s.commit(); s.refresh(p)
+        p.notes = "x"
+        s.commit()
+        s.refresh(p)
         assert p.version == 2
     finally:
         s.close()

@@ -190,7 +190,6 @@ def test_error_response_serialises_to_dict() -> None:
 @pytest.fixture(scope="module")
 def test_app() -> FastAPI:
     """Minimal FastAPI application with all exception handlers installed."""
-    from fastapi import Request
 
     app = FastAPI()
     install_exception_handlers(app)

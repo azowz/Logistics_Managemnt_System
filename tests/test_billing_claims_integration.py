@@ -12,7 +12,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.models.enums import ClaimStatus, SettlementStatus, SettlementType
 from app.models.insurance import Claim
-from app.services.exceptions import StatusTransitionError, ValidationError
+from app.services.exceptions import ValidationError
 from app.services.settlement_service import SettlementService
 from billing_sqlite import make_engine, seed_claim, seed_tenant_user
 

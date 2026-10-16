@@ -16,7 +16,6 @@ Coverage:
 from __future__ import annotations
 
 import uuid
-from typing import Optional
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -321,7 +320,7 @@ def test_activate_customer_from_suspended():
     customer = _make_customer(status=CustomerStatus.SUSPENDED)
     repo.get_by_id_or_raise.return_value = customer
 
-    result = svc.activate_customer(CUSTOMER_ID)
+    svc.activate_customer(CUSTOMER_ID)
 
     assert customer.status == CustomerStatus.ACTIVE
     session.commit.assert_called_once()

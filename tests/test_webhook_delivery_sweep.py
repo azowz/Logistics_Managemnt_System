@@ -125,7 +125,7 @@ def test_sweep_does_not_double_send_delivered():
     sweep.run_webhook_delivery_sweep(provider=_FakeProvider(succeed=True))
     # second sweep: the delivered row is no longer due → not attempted again
     provider2 = _FakeProvider(succeed=True)
-    result2 = sweep.run_webhook_delivery_sweep(provider=provider2)
+    sweep.run_webhook_delivery_sweep(provider=provider2)
     assert provider2.calls == 0
     assert _status(ids[0]) == WebhookDeliveryStatus.DELIVERED
 

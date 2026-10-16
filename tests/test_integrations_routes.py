@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import time as _time
 import types
+import types as _types
 import uuid
 from typing import Iterator
 from unittest.mock import patch
@@ -15,8 +17,15 @@ from sqlalchemy.orm import sessionmaker
 from app.api.routes.integrations import router as integrations_router
 from app.core.exceptions import install_exception_handlers
 from app.core.security import get_current_user
+from app.integrations import crypto as _crypto
+from app.integrations.auth import (
+    SCOPE_INBOUND_WRITE,
+    AuthenticatedPartner,
+    get_current_api_key_partner,
+)
 from app.db.session import get_session
 from app.models.enums import UserRole
+from app.services.integration_service import ApiKeyAuthContext
 from integrations_sqlite import make_engine, seed_tenant_user
 
 _TENANT = uuid.uuid4()
@@ -147,13 +156,6 @@ def test_admin_can_revoke_key(client):
 
 # --- inbound endpoint: scope + replay-window + signature (Sprint 14) ---------
 
-import time as _time
-import types as _types
-
-from app.integrations.auth import AuthenticatedPartner, SCOPE_INBOUND_WRITE, get_current_api_key_partner
-from app.integrations import crypto as _crypto
-from app.services.integration_service import ApiKeyAuthContext
-
 
 def _seed_partner_key(scopes=None, allowed_ips=None):
     """Create a partner + api key directly; returns (partner_id, key_id, plaintext)."""
@@ -175,7 +177,6 @@ def _principal(partner_id, key_id, plaintext, *, scopes=(SCOPE_INBOUND_WRITE,)):
 
 
 def _override(principal):
-    client_fixture = None  # set by caller
     return principal
 
 

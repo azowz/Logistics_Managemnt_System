@@ -18,7 +18,6 @@ from sqlalchemy.orm import sessionmaker
 from app.events.dispatcher import PROCESSED, SKIPPED, Dispatcher
 from app.events.envelope import EventEnvelope
 from app.events.shipment_events import ShipmentDelivered
-from app.models.notification import Notification
 from app.notifications.handlers import NotificationEventHandler
 from app.repositories.notification_repository import NotificationRepository
 from notifications_sqlite import make_engine, seed_tenant_user

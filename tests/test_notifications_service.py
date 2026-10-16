@@ -8,10 +8,10 @@ from unittest.mock import patch
 import pytest
 from sqlalchemy.orm import sessionmaker
 
-from app.models.enums import NotificationChannel, NotificationPriority, NotificationStatus
-from app.services.exceptions import ConflictError, NotFoundError, StatusTransitionError, ValidationError
+from app.models.enums import NotificationChannel, NotificationStatus
+from app.services.exceptions import ConflictError, NotFoundError, ValidationError
 from app.services.notification_service import NotificationService
-from notifications_sqlite import make_engine, seed_template, seed_tenant_user
+from notifications_sqlite import make_engine, seed_tenant_user
 
 _TENANT = uuid.uuid4()
 _USER = uuid.uuid4()

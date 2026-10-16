@@ -65,7 +65,8 @@ def test_cross_tenant_equipment_rejected(Session):
     from app.models.tenant import Tenant
     s0 = Session()
     s0.add(Tenant(id=other, slug=f"o{other.hex[:6]}", name="O", status="active", isolation_mode="shared"))
-    s0.commit(); s0.close()
+    s0.commit()
+    s0.close()
     eid = uuid.uuid4()
     seed_equipment(Session, tenant_id=other, category_id=uuid.uuid4(), equipment_id=eid)
     s = Session()

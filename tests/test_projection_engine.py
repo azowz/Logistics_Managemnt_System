@@ -9,11 +9,9 @@ from __future__ import annotations
 import dataclasses
 import uuid
 from typing import Optional
-from unittest.mock import MagicMock, call
 
 import pytest
 
-from app.events.bus import BaseEventHandler
 from app.events.domain_event import DomainEvent
 from app.events.envelope import EventEnvelope
 from app.events.registry import EventRegistry
@@ -56,7 +54,6 @@ class _FakeRow:
 
     def __init__(self, event: DomainEvent, tenant_id: uuid.UUID, agg_id: uuid.UUID, version: int) -> None:
         from app.events.envelope import EventEnvelope
-        from app.common.datetime import utcnow
 
         env = EventEnvelope.create(
             event,
@@ -156,7 +153,6 @@ def test_rebuild_by_tenant_applies_only_matching_events() -> None:
 
     # Monkey-patch session_scope to yield our fake_session.
     import contextlib
-    from app import projections as proj_pkg
     import app.projections.engine as engine_mod
 
     @contextlib.contextmanager

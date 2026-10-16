@@ -16,9 +16,8 @@ These tests are pure Python — no database connection required.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime
 
-import pytest
 
 from app.models.customer import Customer
 from app.models.enums import (

@@ -61,7 +61,8 @@ def test_cross_tenant_compliance_check_rejected(Session):
     from app.models.tenant import Tenant
     s0 = Session()
     s0.add(Tenant(id=other, slug=f"o{other.hex[:6]}", name="O", status="active", isolation_mode="shared"))
-    s0.commit(); s0.close()
+    s0.commit()
+    s0.close()
     chk = uuid.uuid4()
     seed_compliance_check(Session, tenant_id=other, check_id=chk, status="failed")
     s = Session()

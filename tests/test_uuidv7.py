@@ -15,7 +15,6 @@ from __future__ import annotations
 import threading
 import uuid
 
-import pytest
 
 from app.db.uuidv7 import uuid7
 

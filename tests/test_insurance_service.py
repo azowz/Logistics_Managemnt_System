@@ -164,7 +164,9 @@ def _claim(*, status=ClaimStatus.CREATED, is_deleted=False, claim_type=ClaimType
 
 
 def _owned(*, tenant_id=TENANT, is_deleted=False):
-    o = MagicMock(); o.tenant_id = tenant_id; o.is_deleted = is_deleted
+    o = MagicMock()
+    o.tenant_id = tenant_id
+    o.is_deleted = is_deleted
     return o
 
 
@@ -277,7 +279,8 @@ def test_reject_requires_reason():
 
 def test_settle_requires_approved_amount():
     svc, session = _make_claims()
-    c = _claim(status=ClaimStatus.APPROVED); c.approved_amount = None
+    c = _claim(status=ClaimStatus.APPROVED)
+    c.approved_amount = None
     svc._claims.get_by_id_or_raise.return_value = c
     with pytest.raises(ValidationError, match="approved_amount"):
         svc.settle_claim(CLAIM, settlement_notes="x")

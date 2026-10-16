@@ -42,9 +42,15 @@ def backbone():
     from app.db.session import engine, session_scope
     from app.db.tenant import PLATFORM_TENANT_ID
     import app.models  # noqa: F401 - ensure all models import
-    import app.models.tenant, app.models.user, app.models.driver, app.models.vehicle  # noqa: F401
-    import app.models.warehouse, app.models.shipment, app.models.shipment_tracking_event  # noqa: F401
-    import app.models.event_store, app.models.audit_log  # noqa: F401
+    import app.models.tenant
+    import app.models.user
+    import app.models.driver
+    import app.models.vehicle  # noqa: F401
+    import app.models.warehouse
+    import app.models.shipment
+    import app.models.shipment_tracking_event  # noqa: F401
+    import app.models.event_store
+    import app.models.audit_log  # noqa: F401
     from app.events.bus import InProcessEventBus, BaseEventHandler
     from app.events.dispatcher import Dispatcher
     from app.events.domain_event import DomainEvent
@@ -226,8 +232,6 @@ def test_relay_state_accumulates_across_runs(backbone) -> None:
 def test_dlq_listing_and_replay(backbone) -> None:
     """get_dead_letters returns DLQ entries; mark_dead_letter_replayed returns the original envelope."""
     from app.db.session import session_scope
-    from app.db.tenant import PLATFORM_TENANT_ID
-    from app.events.envelope import EventEnvelope
     from app.repositories.event_store_repository import EventStoreRepository
 
     env = _append(backbone, version=1)
@@ -279,8 +283,6 @@ def test_dlq_listing_and_replay(backbone) -> None:
 def test_projection_rebuilder_end_to_end(backbone) -> None:
     """ProjectionRebuilder.rebuild_by_tenant must fold all events into the projection."""
     from app.projections.engine import Projection, ProjectionRebuilder
-    from app.events.domain_event import DomainEvent
-    from app.events.envelope import EventEnvelope
 
     # Append three events.
     w1 = uuid.uuid4()

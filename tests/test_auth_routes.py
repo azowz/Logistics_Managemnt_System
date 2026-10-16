@@ -18,7 +18,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.core.config import get_settings
 from app.core.exceptions import install_exception_handlers
 from app.core.security import hash_password
 from app.db.base import Base

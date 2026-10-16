@@ -11,7 +11,6 @@ from __future__ import annotations
 import uuid
 
 from sqlalchemy import CheckConstraint, create_engine
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 import app.models  # noqa: F401 — register all models on Base.metadata
@@ -75,7 +74,6 @@ def seed_equipment(
     asset_tag: str = None,
 ) -> None:
     """Seed a category + a single equipment unit for integration tests."""
-    import uuid as _uuid
 
     s = SessionLocal()
     try:

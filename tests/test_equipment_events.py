@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import uuid
 from dataclasses import FrozenInstanceError
-from datetime import datetime, timezone
 from decimal import Decimal
 
 import pytest
