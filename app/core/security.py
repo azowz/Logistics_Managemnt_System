@@ -6,16 +6,15 @@ This module is part of the Mesaar backend foundation. The public surface
 compatibility contract relied upon by existing application code and other
 foundation generators; their signatures must never change.
 
-Backward-compatible additions only: ``decode_access_token`` tolerates the
-optional ``iss``/``aud`` claims that the richer token service in
-``app.auth.tokens`` emits, but never *requires* them, so legacy access tokens
-minted by :func:`create_access_token` continue to validate unchanged.
+Refresh tokens and the access-token denylist live in
+:mod:`app.core.token_service` (opaque Redis-backed tokens).
 """
 
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timedelta, timezone
+from dataclasses import dataclass
+from datetime import timedelta
 from typing import Optional
 
 from fastapi import Depends, HTTPException, status
@@ -24,8 +23,10 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
+from app.common.datetime import utcnow
 from app.core.config import get_settings
 from app.core.redis import get_redis
+from app.core.token_service import TokenService
 from app.db.session import get_session
 from app.db.tenant import set_current_tenant, set_current_user_id
 from app.models.enums import UserRole
@@ -72,14 +73,13 @@ def create_access_token(
     without it (legacy / platform) simply omit the claim.
     """
     settings = get_settings()
-    expire = datetime.now(tz=timezone.utc) + (
-        expires_delta or timedelta(minutes=settings.access_token_expire_minutes)
-    )
+    issued_at = utcnow()
+    expire = issued_at + (expires_delta or timedelta(minutes=settings.access_token_expire_minutes))
     to_encode = {
         "sub": subject,
         "role": role,
         "exp": expire,
-        "iat": datetime.now(tz=timezone.utc),
+        "iat": issued_at,
     }
     if tenant_id is not None:
         to_encode["tid"] = tenant_id
@@ -105,68 +105,85 @@ def decode_access_token(token: str) -> dict:
         ) from exc
 
 
-def get_current_user(
+_UNAUTHORIZED_HEADERS = {"WWW-Authenticate": "Bearer"}
+
+
+def _unauthorized(detail: str) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail=detail,
+        headers=_UNAUTHORIZED_HEADERS,
+    )
+
+
+@dataclass(frozen=True)
+class _AuthenticatedPrincipal:
+    user: User
+    tenant_id: Optional[uuid.UUID]
+    user_id: uuid.UUID
+
+
+def _authenticate(
     token: str = Depends(oauth2_scheme),
     session: Session = Depends(get_session),
-) -> User:
-    """Resolve the current authenticated user from the JWT."""
+) -> _AuthenticatedPrincipal:
+    """Validate the JWT and load the active user (sync: runs in the threadpool).
+
+    The tenant/user ContextVars set here only cover the user lookup itself:
+    FastAPI runs sync dependencies inside a *copy* of the request context, so
+    anything set here is discarded on return. :func:`get_current_user` re-binds
+    them in the request context.
+    """
     payload = decode_access_token(token)
 
-    # Reject denylisted tokens (logout revocation path).  Redis errors are
-    # logged and swallowed — the denylist is a defence-in-depth control, not a
-    # hard dependency; a Redis outage must not block authentication.
-    _jti = payload.get("jti")
-    if _jti:
+    # Reject denylisted tokens (logout revocation path). The denylist is a
+    # defence-in-depth control, not a hard dependency: a Redis outage is logged
+    # and must not block authentication.
+    jti = payload.get("jti")
+    if jti:
         try:
-            if get_redis().exists(f"denylist:{_jti}") > 0:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
-                    detail="Token has been revoked.",
-                    headers={"WWW-Authenticate": "Bearer"},
-                )
+            if TokenService(get_redis()).is_denylisted(jti):
+                raise _unauthorized("Token has been revoked.")
         except HTTPException:
             raise
-        except Exception as _exc:
-            logger.warning("Denylist check skipped — Redis unavailable: {}", _exc)
+        except Exception as exc:
+            logger.warning("Denylist check skipped — Redis unavailable: {}", exc)
 
-    user_id: Optional[str] = payload.get("sub")
-    if user_id is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Malformed token.",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    # Bind the tenant from the token BEFORE any query so Row-Level Security
-    # scopes the user lookup (and everything after) to the caller's tenant
-    # (ADR-001). Tokens without a ``tid`` run platform-scoped (e.g. legacy).
-    tenant_claim = payload.get("tid")
-    if tenant_claim is not None:
-        try:
-            set_current_tenant(uuid.UUID(str(tenant_claim)))
-        except ValueError as exc:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Malformed token.",
-                headers={"WWW-Authenticate": "Bearer"},
-            ) from exc
-    # Bind the acting user for audit/event attribution (app.current_user_id).
+    subject: Optional[str] = payload.get("sub")
+    if subject is None:
+        raise _unauthorized("Malformed token.")
     try:
-        set_current_user_id(uuid.UUID(str(user_id)))
+        user_id = uuid.UUID(str(subject))
+        tenant_claim = payload.get("tid")
+        tenant_id = uuid.UUID(str(tenant_claim)) if tenant_claim is not None else None
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Malformed token.",
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from exc
-    repo = UserRepository(session)
-    user = repo.get_by_id(user_id)
+        raise _unauthorized("Malformed token.") from exc
+
+    # Bind the token tenant BEFORE any query so RLS scopes the user lookup to
+    # the caller's tenant (ADR-001). Tokens without ``tid`` run platform-scoped.
+    if tenant_id is not None:
+        set_current_tenant(tenant_id)
+    set_current_user_id(user_id)
+
+    user = UserRepository(session).get_by_id(str(user_id))
     if user is None or not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found or inactive.",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    return user
+        raise _unauthorized("User not found or inactive.")
+    return _AuthenticatedPrincipal(user=user, tenant_id=tenant_id, user_id=user_id)
+
+
+async def get_current_user(principal: _AuthenticatedPrincipal = Depends(_authenticate)) -> User:
+    """Resolve the authenticated user and bind tenant/user to the request context.
+
+    Deliberately ``async``: FastAPI awaits async dependencies inside the request
+    task, so the ContextVars set here are visible to the endpoint and every
+    service it calls (tenant-scoped writes, the RLS GUC on each later
+    transaction, audit attribution). The token tenant always overrides any
+    client-supplied ``X-Tenant-ID`` header bound by the middleware.
+    """
+    if principal.tenant_id is not None:
+        set_current_tenant(principal.tenant_id)
+    set_current_user_id(principal.user_id)
+    return principal.user
 
 
 def require_roles(*roles: UserRole):

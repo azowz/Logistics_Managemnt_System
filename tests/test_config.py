@@ -86,7 +86,7 @@ def test_default_jwt_audience() -> None:
 
 
 def test_is_production_true_when_environment_is_production() -> None:
-    s = _make_settings(environment="production")
+    s = _make_settings(environment="production", cors_origins="https://ops.example.com")
     assert s.is_production is True
 
 
@@ -251,3 +251,38 @@ def test_get_settings_returns_settings_type() -> None:
     from app.core.config import Settings, get_settings
 
     assert isinstance(get_settings(), Settings)
+
+
+# ---------------------------------------------------------------------------
+# Production guards
+# ---------------------------------------------------------------------------
+
+_STRONG_SECRET = "d3f1c0a9b8e7d6c5b4a3928170f6e5d4c3b2a190"
+
+
+def test_production_rejects_placeholder_secret() -> None:
+    with pytest.raises(PydanticValidationError, match="placeholder"):
+        _make_settings(
+            environment="production",
+            secret_key="change-me-in-production-please-use-a-long-random-string",
+            cors_origins="https://ops.example.com",
+        )
+
+
+def test_production_rejects_wildcard_cors() -> None:
+    with pytest.raises(PydanticValidationError, match="CORS_ORIGINS"):
+        _make_settings(environment="production", secret_key=_STRONG_SECRET, cors_origins="*")
+
+
+def test_production_accepts_explicit_origins_and_strong_secret() -> None:
+    s = _make_settings(
+        environment="production",
+        secret_key=_STRONG_SECRET,
+        cors_origins="https://ops.example.com,https://app.example.com",
+    )
+    assert s.cors_origins == ["https://ops.example.com", "https://app.example.com"]
+
+
+def test_development_keeps_permissive_defaults() -> None:
+    s = _make_settings(environment="development", cors_origins="*")
+    assert s.cors_origins == ["*"]

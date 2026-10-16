@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.security import require_roles
 from app.db.session import get_session
 from app.models.enums import UserRole
+from app.models.user import User
 from app.repositories.errors import NotFoundError
 from app.repositories.vehicle_repository import VehicleRepository
 from app.schemas.vehicle import VehicleCreate, VehicleRead, VehicleUpdate
@@ -24,11 +25,11 @@ router = APIRouter(prefix="/vehicles", tags=["vehicles"])
 def create_vehicle(
     payload: VehicleCreate,
     session: Session = Depends(get_session),
-    _: None = Depends(require_roles(UserRole.ADMIN, UserRole.MANAGER)),
+    current_user: User = Depends(require_roles(UserRole.ADMIN, UserRole.MANAGER)),
 ) -> VehicleRead:
     """Create a vehicle."""
     repo = VehicleRepository(session)
-    vehicle = repo.create(**payload.model_dump())
+    vehicle = repo.create(**payload.model_dump(), tenant_id=current_user.tenant_id)
     return VehicleRead.model_validate(vehicle)
 
 

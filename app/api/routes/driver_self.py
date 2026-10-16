@@ -39,6 +39,15 @@ router = APIRouter(tags=["driver-self"])
 def driver_login(
     payload: PhoneLoginRequest, session: Session = Depends(get_session)
 ) -> DriverSessionResponse:
+    settings = get_settings()
+    # OTP verification is still a stub that accepts any code; issuing tokens on
+    # a phone number alone would let anyone take over a driver account, so the
+    # endpoint stays disabled in production until an SMS/OTP provider is wired.
+    if settings.is_production:
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="Driver phone login is not available: OTP verification is not configured.",
+        )
     service = DriverService(session)
     result = service.login_by_phone(payload.phone, payload.otp)
     if result is None:
@@ -48,7 +57,6 @@ def driver_login(
             headers={"WWW-Authenticate": "Bearer"},
         )
     token, driver = result
-    settings = get_settings()
     return DriverSessionResponse(
         access_token=token,
         token_type="bearer",

@@ -977,6 +977,7 @@ class ShipmentService:
             ShipmentStateMachine.validate_transition(previous, status)
 
         event = ShipmentTrackingEvent(
+            tenant_id=shipment.tenant_id,
             shipment_id=shipment.id,
             event_type=event_type,
             status=status,

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.security import require_roles
 from app.db.session import get_session
 from app.models.enums import UserRole
+from app.models.user import User
 from app.repositories.driver_repository import DriverRepository
 from app.repositories.errors import NotFoundError
 from app.schemas.driver import DriverCreate, DriverRead, DriverUpdate
@@ -24,11 +25,11 @@ router = APIRouter(prefix="/drivers", tags=["drivers"])
 def create_driver(
     payload: DriverCreate,
     session: Session = Depends(get_session),
-    _: None = Depends(require_roles(UserRole.ADMIN, UserRole.MANAGER)),
+    current_user: User = Depends(require_roles(UserRole.ADMIN, UserRole.MANAGER)),
 ) -> DriverRead:
     """Create a driver profile for an existing driver-role user."""
     repo = DriverRepository(session)
-    driver = repo.create(**payload.model_dump())
+    driver = repo.create(**payload.model_dump(), tenant_id=current_user.tenant_id)
     return DriverRead.model_validate(driver)
 
 

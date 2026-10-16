@@ -514,6 +514,15 @@ def test_create_tracking_event_no_status_no_event():
     svc._event_repo.append.assert_not_called()  # no status change → no domain event
 
 
+def test_create_tracking_event_inherits_shipment_tenant():
+    """tracking_events.tenant_id is NOT NULL: the row must carry the shipment's tenant."""
+    svc, session, repo = _make_service()
+    shipment = _shipment(status=ShipmentStatus.IN_TRANSIT)
+    repo.get_by_id_or_raise.return_value = shipment
+    event = svc.create_tracking_event(**_tracking_kwargs())
+    assert event.tenant_id == shipment.tenant_id
+
+
 def test_create_tracking_event_with_valid_status_emits():
     svc, session, repo = _make_service()
     repo.get_by_id_or_raise.return_value = _shipment(status=ShipmentStatus.IN_TRANSIT)

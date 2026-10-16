@@ -15,8 +15,12 @@ import json
 from functools import lru_cache
 from typing import Any, Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+# Prefixes of the placeholder secrets shipped in code/.env.example.
+_PLACEHOLDER_SECRET_PREFIXES = ("change-me", "change-this")
 
 
 class Settings(BaseSettings):
@@ -221,6 +225,24 @@ class Settings(BaseSettings):
                 return json.loads(stripped)
             return [origin.strip() for origin in stripped.split(",") if origin.strip()]
         return value
+
+    @model_validator(mode="after")
+    def _reject_unsafe_production_defaults(self) -> "Settings":
+        """Fail fast when production would boot with development-only values.
+
+        The placeholder ``SECRET_KEY`` from ``.env.example`` is long enough to
+        pass ``min_length`` but is public: it would let anyone mint valid JWTs
+        and decrypt stored webhook secrets (both derive from it). A wildcard
+        CORS origin combined with ``allow_credentials=True`` lets any website
+        make credentialed calls on behalf of a logged-in user.
+        """
+        if not self.is_production:
+            return self
+        if self.secret_key.lower().startswith(_PLACEHOLDER_SECRET_PREFIXES):
+            raise ValueError("SECRET_KEY still holds a placeholder value; set a random secret.")
+        if "*" in self.cors_origins:
+            raise ValueError("CORS_ORIGINS must list explicit origins in production, not '*'.")
+        return self
 
     # ------------------------------------------------------------------
     # Computed properties.

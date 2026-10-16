@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import uuid
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -19,7 +20,9 @@ class VehicleBase(BaseModel):
     )
     capacity_weight_kg: float = Field(gt=0, description="Maximum payload weight.")
     capacity_volume_m3: float = Field(gt=0, description="Maximum payload volume.")
-    home_warehouse_id: Optional[str] = Field(default=None, description="Home warehouse reference.")
+    home_warehouse_id: Optional[uuid.UUID] = Field(
+        default=None, description="Home warehouse reference."
+    )
 
     @field_validator("plate_number")
     @classmethod
@@ -44,7 +47,7 @@ class VehicleUpdate(BaseModel):
     status: Optional[VehicleStatus] = Field(default=None)
     capacity_weight_kg: Optional[float] = Field(default=None, gt=0)
     capacity_volume_m3: Optional[float] = Field(default=None, gt=0)
-    home_warehouse_id: Optional[str] = Field(default=None)
+    home_warehouse_id: Optional[uuid.UUID] = Field(default=None)
 
     @field_validator("plate_number")
     @classmethod

@@ -73,11 +73,12 @@ def get_current_api_key_partner(
     request: Request,
     authorization: str | None = Header(default=None),
 ) -> AuthenticatedPartner:
-    """FastAPI dependency: authenticate a partner API key, enforce allowed-IP, bind tenant.
+    """FastAPI dependency: authenticate a partner API key and enforce allowed-IP.
 
     Authentication (and the ``last_used_at`` stamp) runs in its own platform-scoped
-    transaction; on success the partner's tenant is bound so the request's own session is
-    scoped to that tenant via RLS. Allowed-IP enforcement runs after a successful auth.
+    transaction. The partner's tenant is bound to the request by
+    :func:`bind_api_key_partner`; endpoints must depend on that (or on
+    :func:`require_api_key_scopes`), never on this function directly.
     """
     api_key = _extract_bearer(authorization)
     with session_scope(PLATFORM_TENANT_ID) as session:
@@ -88,11 +89,24 @@ def get_current_api_key_partner(
     # already authenticated; this is an authorization decision, not existence disclosure.
     if not ip_allowed(_client_ip(request), context.allowed_ips):
         raise _IP_FORBIDDEN
-    # Bind the partner's tenant for the remainder of the request (route session is
-    # RLS-scoped to it); API keys are service principals, so there is no acting user.
-    set_current_tenant(context.tenant_id)
-    set_current_user_id(None)
     return AuthenticatedPartner(context=context, api_key=api_key)
+
+
+async def bind_api_key_partner(
+    principal: AuthenticatedPartner = Depends(get_current_api_key_partner),
+) -> AuthenticatedPartner:
+    """Bind the partner's tenant to the request context (async on purpose).
+
+    :func:`get_current_api_key_partner` is sync and runs in a threadpool copy of
+    the context, so it cannot bind anything that outlives it. Awaited in the
+    request task, this binding is what the endpoint, its services and the RLS
+    GUC see — and it overrides any client-supplied ``X-Tenant-ID`` header, so a
+    partner can never write into another tenant. API keys are service
+    principals, so there is no acting user.
+    """
+    set_current_tenant(principal.context.tenant_id)
+    set_current_user_id(None)
+    return principal
 
 
 def require_api_key_scopes(*required: str):
@@ -103,7 +117,7 @@ def require_api_key_scopes(*required: str):
     """
 
     def dependency(
-        principal: AuthenticatedPartner = Depends(get_current_api_key_partner),
+        principal: AuthenticatedPartner = Depends(bind_api_key_partner),
     ) -> AuthenticatedPartner:
         held = set(principal.context.scopes or ())
         if not set(required).issubset(held):
@@ -118,6 +132,7 @@ def require_api_key_scopes(*required: str):
 
 __all__ = [
     "AuthenticatedPartner",
+    "bind_api_key_partner",
     "get_current_api_key_partner",
     "require_api_key_scopes",
     "SCOPE_INBOUND_WRITE",

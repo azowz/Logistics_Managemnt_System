@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.security import require_roles
 from app.db.session import get_session
 from app.models.enums import UserRole
+from app.models.user import User
 from app.repositories.errors import NotFoundError
 from app.repositories.warehouse_repository import WarehouseRepository
 from app.schemas.warehouse import WarehouseCreate, WarehouseRead, WarehouseUpdate
@@ -24,11 +25,11 @@ router = APIRouter(prefix="/warehouses", tags=["warehouses"])
 def create_warehouse(
     payload: WarehouseCreate,
     session: Session = Depends(get_session),
-    _: None = Depends(require_roles(UserRole.ADMIN, UserRole.MANAGER)),
+    current_user: User = Depends(require_roles(UserRole.ADMIN, UserRole.MANAGER)),
 ) -> WarehouseRead:
     """Create a warehouse."""
     repo = WarehouseRepository(session)
-    warehouse = repo.create(**payload.model_dump())
+    warehouse = repo.create(**payload.model_dump(), tenant_id=current_user.tenant_id)
     return WarehouseRead.model_validate(warehouse)
 
 

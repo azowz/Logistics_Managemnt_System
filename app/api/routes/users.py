@@ -9,6 +9,7 @@ from app.core import security
 from app.core.security import require_roles
 from app.db.session import get_session
 from app.models.enums import UserRole
+from app.models.user import User
 from app.repositories.errors import NotFoundError
 from app.repositories.user_repository import UserRepository
 from app.schemas.user import UserCreate, UserRead, UserUpdate
@@ -25,12 +26,13 @@ router = APIRouter(prefix="/users", tags=["users"])
 def create_user(
     payload: UserCreate,
     session: Session = Depends(get_session),
-    _: None = Depends(require_roles(UserRole.ADMIN)),
+    current_user: User = Depends(require_roles(UserRole.ADMIN)),
 ) -> UserRead:
-    """Create a user; only admins can perform this."""
+    """Create a user in the admin's own tenant; only admins can perform this."""
     repo = UserRepository(session)
     hashed_password = security.hash_password(payload.password)
     user = repo.create(
+        tenant_id=current_user.tenant_id,
         email=payload.email,
         full_name=payload.full_name,
         hashed_password=hashed_password,
