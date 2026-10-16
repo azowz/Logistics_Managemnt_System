@@ -4,11 +4,11 @@ This module composes the EXISTING business routers (located in
 ``app.api.routes``) into a single :class:`fastapi.APIRouter` mounted under the
 configured ``api_v1_prefix`` (``/v1`` by ADR-005).
 
-Router ordering is load-bearing and MUST match the historical wiring: the
-driver self-service router is included FIRST so its specific paths
-(``/drivers/me``, ``/shipments/nearby``, ``/shipments/{id}/accept``) take
-precedence over the generic ``/drivers/{id}`` and ``/shipments/{id}`` routes.
-The remaining order is: auth, users, drivers, vehicles, warehouses, shipments.
+Router ordering is load-bearing: the driver self-service router is included
+FIRST so its specific paths (``/drivers/me``, ``/shipments/nearby``,
+``/shipments/{id}/accept``) take precedence over the generic ``/drivers/{id}``
+and ``/shipments/{id}`` routes. To add a domain, create its router in
+``app.api.routes`` and include it below.
 """
 
 from __future__ import annotations
@@ -43,11 +43,9 @@ logger = get_logger(__name__)
 def build_v1_router() -> APIRouter:
     """Build and return the versioned ``/v1`` router.
 
-    The prefix is read from :class:`~app.core.config.Settings` so it can be
-    overridden per environment, while defaulting to ``/v1``. The inclusion order
-    is preserved exactly as in the legacy ``app.main`` wiring (driver_self
-    first); changing it would silently reroute driver-specific endpoints to the
-    generic ``{id}`` handlers.
+    The prefix is read from :class:`~app.core.config.Settings` (default ``/v1``).
+    ``driver_self`` must stay first; moving it would silently reroute
+    driver-specific endpoints to the generic ``{id}`` handlers.
 
     Returns
     -------

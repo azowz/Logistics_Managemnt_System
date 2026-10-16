@@ -47,6 +47,8 @@ _OPENAPI_TAGS: list[dict[str, str]] = [
     {"name": "vehicles", "description": "Vehicle/fleet management."},
     {"name": "warehouses", "description": "Warehouse and depot management."},
     {"name": "shipments", "description": "Shipment lifecycle operations."},
+    {"name": "customers", "description": "Customer accounts, contacts, and credit status."},
+    {"name": "orders", "description": "Transport orders and their commercial lifecycle."},
     {"name": "equipment", "description": "Equipment & asset lifecycle operations."},
     {"name": "compliance", "description": "Compliance, permits, escorts, and dispatch gating."},
     {"name": "insurance", "description": "Insurance policies and coverage rules."},
@@ -62,6 +64,10 @@ _OPENAPI_TAGS: list[dict[str, str]] = [
     {
         "name": "analytics",
         "description": "Reporting & analytics dashboards and CQRS projection rebuild.",
+    },
+    {
+        "name": "integrations",
+        "description": "Partners, API keys, outbound webhooks, and inbound partner events.",
     },
 ]
 
