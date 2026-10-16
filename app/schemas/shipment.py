@@ -12,13 +12,12 @@ import re
 import uuid
 from datetime import datetime
 from decimal import Decimal
-from typing import List, Optional
+from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.models.enums import ShipmentPriority, ShipmentStatus
 from app.schemas.common import IdModel, TimestampMixin
-from app.schemas.tracking_event import TrackingEventRead
 
 # Whitelist of sortable fields (prevents ORDER BY injection).
 _SORTABLE_FIELDS: frozenset[str] = frozenset(
@@ -242,26 +241,6 @@ class ShipmentRead(IdModel, TimestampMixin):
     deleted_by: Optional[uuid.UUID] = None
 
     version: int
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class ShipmentWithEvents(ShipmentRead):
-    """Shipment with ordered tracking events for richer detail views."""
-
-    tracking_events: List[TrackingEventRead] = Field(
-        default_factory=list, description="Ordered tracking history."
-    )
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class ShipmentStatusResponse(BaseModel):
-    """Lightweight status projection (id + status + priority)."""
-
-    id: uuid.UUID
-    status: ShipmentStatus
-    priority: ShipmentPriority
 
     model_config = ConfigDict(from_attributes=True)
 

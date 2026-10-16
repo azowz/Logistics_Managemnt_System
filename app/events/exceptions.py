@@ -23,14 +23,9 @@ class ConcurrencyConflictError(EventBackboneError):
     """
 
 
-class EventPublishError(EventBackboneError):
-    """Raised when the bus fails to publish an envelope (relay records + retries)."""
-
-
 __all__ = [
     "EventBackboneError",
     "UnknownEventTypeError",
     "EventDeserializationError",
     "ConcurrencyConflictError",
-    "EventPublishError",
 ]

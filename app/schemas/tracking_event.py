@@ -8,7 +8,7 @@ from typing import Optional
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.schemas.common import IdModel, TimestampMixin
-from app.schemas.enums import ShipmentStatus, TrackingEventType
+from app.models.enums import ShipmentStatus, TrackingEventType
 
 
 class TrackingEventCreate(BaseModel):

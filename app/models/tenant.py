@@ -25,10 +25,6 @@ from sqlalchemy.orm import Mapped, mapped_column
 from app.db.base import Base
 from app.db.mixins import AuditMixin, SoftDeleteMixin, TimestampMixin
 
-# Allowed values for the VARCHAR+CHECK status / isolation columns (ADR-001).
-_TENANT_STATUSES = ("active", "suspended")
-_ISOLATION_MODES = ("shared", "dedicated")
-
 
 class Tenant(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     """A customer organization (or the platform org) on the shared schema."""

@@ -14,8 +14,8 @@ State-changing operations follow the Sprint 3/4 pattern::
     mutate aggregate → session.flush() → create Domain Event →
     EventEnvelope.create() → EventStoreRepository.append() → session.commit()
 
-Legacy methods (``assign_driver_only``, ``assign_driver_and_vehicle``,
-``transition_status``, ``create_tracking_event``) are preserved for the mobile
+Legacy methods (``assign_driver_only``, ``transition_status``,
+``create_tracking_event``) are preserved for the mobile
 driver flow and the tracking-event ingestion route; they now route status
 changes through :class:`~app.services.shipment_policies.ShipmentStateMachine`
 and emit events like the new lifecycle methods.
@@ -858,16 +858,6 @@ class ShipmentService:
     # ==================================================================
     # Legacy API (preserved for the mobile driver flow + tracking route)
     # ==================================================================
-
-    def assign_driver_and_vehicle(
-        self, shipment_id: str, driver_id: str, vehicle_id: str
-    ) -> Shipment:
-        """Legacy: full driver+vehicle assignment. Delegates to assign_shipment."""
-        return self.assign_shipment(
-            uuid.UUID(str(shipment_id)),
-            driver_id=uuid.UUID(str(driver_id)),
-            vehicle_id=uuid.UUID(str(vehicle_id)),
-        )
 
     def assign_driver_only(self, shipment_id: str, driver_id: str) -> Shipment:
         """Legacy self-accept flow: assign just a driver (vehicle bound later).

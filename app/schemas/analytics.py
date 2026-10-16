@@ -8,7 +8,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 _PROJECTION_TYPES = frozenset(
     {
@@ -48,10 +48,6 @@ class AnalyticsDateRangeParams(BaseModel):
             if (self.end_date - self.start_date).days > _MAX_RANGE_DAYS:
                 raise ValueError(f"Date range too large (max {_MAX_RANGE_DAYS} days).")
         return self
-
-
-class AnalyticsPeriodParams(AnalyticsDateRangeParams):
-    pass
 
 
 # --- reads -----------------------------------------------------------------
@@ -224,13 +220,3 @@ class ProjectionRebuildResult(BaseModel):
     events_relevant: int
     applied: int
     dry_run: bool
-
-
-class ARAgingQueryParams(BaseModel):
-    customer_id: Optional[uuid.UUID] = None
-    currency_code: Optional[str] = Field(default=None, min_length=3, max_length=3)
-
-    @field_validator("currency_code")
-    @classmethod
-    def cur(cls, v):
-        return _currency(v)

@@ -31,7 +31,6 @@ from app.schemas.common import IdModel, TimestampMixin
 _PARTNER_SORT = {"created_at", "updated_at", "name", "status", "partner_type"}
 _SUB_SORT = {"created_at", "updated_at", "name", "status"}
 _DELIVERY_SORT = {"created_at", "updated_at", "status", "external_event_type"}
-_INBOUND_SORT = {"created_at", "updated_at", "status", "event_type"}
 
 
 # --- Partners ---------------------------------------------------------------

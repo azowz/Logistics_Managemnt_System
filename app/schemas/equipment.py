@@ -181,18 +181,6 @@ class EquipmentMaintenanceRequest(BaseModel):
     reason: Optional[str] = Field(default=None, max_length=512)
 
 
-class EquipmentAssignmentRequest(BaseModel):
-    """Payload for binding equipment to a shipment."""
-
-    shipment_id: uuid.UUID
-
-
-class EquipmentStatusUpdate(BaseModel):
-    """Generic optional-reason payload for status transitions."""
-
-    reason: Optional[str] = Field(default=None, max_length=512)
-
-
 # ---------------------------------------------------------------------------
 # Read schema
 # ---------------------------------------------------------------------------
