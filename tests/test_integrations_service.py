@@ -199,6 +199,31 @@ def test_policy_validate_target_url_and_events():
         validate_event_types(["bogus.event"])
 
 
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://localhost/h",
+        "https://127.0.0.1/h",
+        "https://10.1.2.3/h",
+        "https://192.168.0.10/h",
+        "https://169.254.169.254/latest/meta-data",
+        "https://[::1]/h",
+        "https://db.internal/h",
+    ],
+)
+def test_policy_validate_target_url_rejects_internal_hosts(url):
+    from app.integrations.policies import validate_target_url
+
+    with pytest.raises(ValidationError, match="private network"):
+        validate_target_url(url)
+
+
+def test_policy_validate_target_url_allows_public_ip():
+    from app.integrations.policies import validate_target_url
+
+    assert validate_target_url("https://8.8.8.8/hook") == "https://8.8.8.8/hook"
+
+
 def test_rate_limit_policy_allows_then_blocks_then_resets():
     from app.integrations.policies import RateLimitPolicy, InMemoryRateLimitBackend
     rl = RateLimitPolicy(limit=2, window_seconds=60, backend=InMemoryRateLimitBackend())

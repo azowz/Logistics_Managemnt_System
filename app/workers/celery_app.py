@@ -64,31 +64,35 @@ celery_app.conf.update(
     task_routes={},
     beat_schedule={
         # Transactional-outbox relay: runs every 30 s so event lag stays low
-        # (ADR-007; relay is idempotent and safe to run concurrently).
+        # (ADR-007). Consumers are idempotent via processed_events, but the relay
+        # does not claim rows (no SKIP LOCKED), so overlapping runs can publish
+        # the same event twice — run a single beat and keep batches short.
         "relay-outbox-every-30s": {
             "task": "mesaar.relay_outbox",
             "schedule": 30.0,
             "args": [],
             "kwargs": {"batch_size": 100},
-            "options": {"expires": 25},  # discard if previous is still running
+            "options": {"expires": 25},  # drop if not STARTED within 25 s (no overlap guard)
         },
         # Projection-health sweep: every 5 min, re-classify projection staleness.
-        # Non-destructive (never replays/rebuilds), idempotent, and overlap-guarded.
+        # Non-destructive (never replays/rebuilds) and idempotent; overlapping runs
+        # only repeat the same classification.
         "projection-health-check-every-5m": {
             "task": "mesaar.projection_health_check",
             "schedule": 300.0,
             "args": [],
             "kwargs": {},
-            "options": {"expires": 280},  # discard if previous is still running
+            "options": {"expires": 280},  # drop if not STARTED within 280 s
         },
         # Webhook delivery sweep: every 60 s, re-attempt due webhook deliveries.
-        # Non-destructive (never replays/rebuilds), per-delivery isolated, overlap-guarded.
+        # Per-delivery isolated. There is no row claim: overlapping sweeps can
+        # re-send a due delivery, so run a single beat instance.
         "webhook-delivery-sweep-every-60s": {
             "task": "mesaar.webhook_delivery_sweep",
             "schedule": 60.0,
             "args": [],
             "kwargs": {"batch_per_tenant": 100},
-            "options": {"expires": 55},  # discard if previous is still running
+            "options": {"expires": 55},  # drop if not STARTED within 55 s
         },
     },
 )

@@ -23,7 +23,9 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from pydantic import ValidationError as PydanticValidationError
+from sqlalchemy.orm.exc import StaleDataError
 
+from app.events.exceptions import ConcurrencyConflictError
 from app.observability.logging import get_logger
 from app.repositories.errors import NotFoundError as RepositoryNotFoundError
 from app.services.exceptions import (
@@ -293,6 +295,25 @@ def install_exception_handlers(app: FastAPI) -> None:
             message=message,
             request_id=request_id,
         )
+
+    async def _handle_concurrency_conflict(request: Request, exc: Exception) -> JSONResponse:
+        # Optimistic-concurrency losers: a stale ``version`` on UPDATE
+        # (StaleDataError) or a competing writer that already appended the same
+        # aggregate version (ConcurrencyConflictError). The client should reload
+        # and retry, so this is a 409, not a server error.
+        request_id = _get_request_id(request)
+        logger.bind(request_id=request_id, error_code="concurrency_conflict").info(
+            "Concurrency conflict: {}", exc.__class__.__name__
+        )
+        return _build_response(
+            status_code=409,
+            code="concurrency_conflict",
+            message="The resource was modified concurrently; reload it and retry.",
+            request_id=request_id,
+        )
+
+    app.add_exception_handler(StaleDataError, _handle_concurrency_conflict)
+    app.add_exception_handler(ConcurrencyConflictError, _handle_concurrency_conflict)
 
     @app.exception_handler(RequestValidationError)
     async def _handle_validation_error(

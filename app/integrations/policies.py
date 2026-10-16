@@ -33,7 +33,32 @@ def validate_target_url(url: str, *, allow_insecure: bool = False) -> str:
         raise ValidationError("target_url must include a host.")
     if parsed.scheme != "https" and not allow_insecure:
         raise ValidationError("target_url must use https.")
+    if not allow_insecure and _is_internal_host(parsed.hostname or ""):
+        raise ValidationError("target_url must not point at a local or private network address.")
     return url.strip()
+
+
+_INTERNAL_HOST_SUFFIXES = (".localhost", ".local", ".internal")
+
+
+def _is_internal_host(host: str) -> bool:
+    """True for loopback/private/link-local literals and obviously-internal names.
+
+    Server-side request forgery guard: webhook deliveries are sent from inside
+    the platform network, and attempt responses are readable through the API,
+    so a partner must not be able to aim them at internal services or the
+    cloud metadata endpoint (169.254.169.254). This checks the literal host
+    only; names resolving to private addresses (DNS rebinding) need an egress
+    proxy or resolve-time check at delivery.
+    """
+    host = host.strip("[]").lower().rstrip(".")
+    if host == "localhost" or host.endswith(_INTERNAL_HOST_SUFFIXES):
+        return True
+    try:
+        ip = ipaddress.ip_address(host)
+    except ValueError:
+        return False
+    return not ip.is_global
 
 
 def validate_event_types(event_types) -> list:

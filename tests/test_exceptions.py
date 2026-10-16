@@ -346,3 +346,23 @@ def test_handler_error_response_has_error_key(client: TestClient) -> None:
     for path in ["/app-error", "/auth-error", "/forbidden", "/not-found"]:
         r = client.get(path)
         assert "error" in r.json(), f"Missing 'error' key for {path}"
+
+
+@pytest.mark.parametrize("exc_name", ["stale", "event_version"])
+def test_handler_concurrency_conflicts_return_409(exc_name: str) -> None:
+    """Optimistic-locking losers are a retryable 409, not a 500."""
+    from sqlalchemy.orm.exc import StaleDataError
+
+    from app.events.exceptions import ConcurrencyConflictError
+
+    exc = StaleDataError("stale") if exc_name == "stale" else ConcurrencyConflictError("dup")
+    app = FastAPI()
+    install_exception_handlers(app)
+
+    @app.get("/conflict")
+    def _raise() -> None:
+        raise exc
+
+    r = TestClient(app, raise_server_exceptions=False).get("/conflict")
+    assert r.status_code == 409
+    assert r.json()["error"]["code"] == "concurrency_conflict"
