@@ -111,16 +111,19 @@ class Order(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         SAEnum(OrderType, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=OrderType.STANDARD,
+        server_default="standard",
     )
     order_source: Mapped[OrderSource] = mapped_column(
         SAEnum(OrderSource, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=OrderSource.WEB,
+        server_default="web",
     )
     priority: Mapped[OrderPriority] = mapped_column(
         SAEnum(OrderPriority, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=OrderPriority.NORMAL,
+        server_default="normal",
         index=True,
     )
 
@@ -132,6 +135,7 @@ class Order(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         SAEnum(OrderStatus, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=OrderStatus.DRAFT,
+        server_default="draft",
         index=True,
     )
 

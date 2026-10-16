@@ -24,11 +24,13 @@ from sqlalchemy import (
     CheckConstraint,
     Enum as SAEnum,
     ForeignKey,
+    Index,
     Integer,
     Numeric,
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -119,8 +121,16 @@ class Equipment(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
             "tenant_id", "equipment_code", name="uq_equipment_tenant_id_equipment_code"
         ),
         UniqueConstraint("tenant_id", "asset_tag", name="uq_equipment_tenant_id_asset_tag"),
-        # Serial uniqueness is optional (serial may be NULL); enforced per tenant
-        # for non-null values at the DB level (partial index in the migration).
+        # Serial uniqueness is optional (serial may be NULL): enforced per tenant
+        # for live rows with a serial only (partial unique index, migration 0009).
+        Index(
+            "uq_equipment_tenant_id_serial_number",
+            "tenant_id",
+            "serial_number",
+            unique=True,
+            postgresql_where=text("serial_number IS NOT NULL AND deleted_at IS NULL"),
+            sqlite_where=text("serial_number IS NOT NULL AND deleted_at IS NULL"),
+        ),
         CheckConstraint(
             "status IN ('active', 'inactive', 'under_maintenance', 'reserved', "
             "'in_transit', 'decommissioned')",

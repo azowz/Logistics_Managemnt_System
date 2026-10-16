@@ -7,6 +7,7 @@ from typing import List, Optional, TYPE_CHECKING
 
 from sqlalchemy import Boolean, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.sql.expression import true as sa_true
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -47,7 +48,9 @@ class Driver(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     license_number: Mapped[str] = mapped_column(String(64), nullable=False)
     license_class: Mapped[Optional[str]] = mapped_column(String(32))
     phone_number: Mapped[Optional[str]] = mapped_column(String(32))
-    is_available: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    is_available: Mapped[bool] = mapped_column(
+        Boolean, default=True, nullable=False, server_default=sa_true()
+    )
     home_warehouse_id: Mapped[Optional[uuid.UUID]] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("warehouses.id", ondelete="SET NULL"),

@@ -248,7 +248,7 @@ class Claim(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         index=True,
     )
     severity: Mapped[ClaimSeverity] = mapped_column(
-        SAEnum(ClaimSeverity, native_enum=False, length=32, values_callable=enum_values),
+        SAEnum(ClaimSeverity, native_enum=False, length=16, values_callable=enum_values),
         nullable=False,
         default=ClaimSeverity.MEDIUM,
         server_default="medium",
@@ -312,7 +312,7 @@ class DamageReport(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         nullable=False,
     )
     severity: Mapped[ClaimSeverity] = mapped_column(
-        SAEnum(ClaimSeverity, native_enum=False, length=32, values_callable=enum_values),
+        SAEnum(ClaimSeverity, native_enum=False, length=16, values_callable=enum_values),
         nullable=False,
         default=ClaimSeverity.MEDIUM,
         server_default="medium",

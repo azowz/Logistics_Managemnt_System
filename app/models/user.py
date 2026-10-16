@@ -7,6 +7,7 @@ from typing import List, Optional, TYPE_CHECKING
 
 from sqlalchemy import Boolean, Enum as SAEnum, ForeignKey, Integer, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.sql.expression import true as sa_true
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -52,7 +53,9 @@ class User(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         SAEnum(UserRole, native_enum=False, length=32),
         nullable=False,
     )
-    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    is_active: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, server_default=sa_true()
+    )
 
     # One-to-one driver profile for users with role=driver.
     driver: Mapped[Optional["Driver"]] = relationship(

@@ -50,6 +50,7 @@ class Tenant(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         String(32),
         nullable=False,
         default="active",
+        server_default="active",
     )
     # Hybrid escape hatch (ADR-001): a regulated tenant can be routed to its own
     # schema/database without app changes by flipping this to 'dedicated'.
@@ -57,6 +58,7 @@ class Tenant(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         String(32),
         nullable=False,
         default="shared",
+        server_default="shared",
     )
     # Data-residency hint; sharding by region is a later-stage option.
     region: Mapped[Optional[str]] = mapped_column(String(64))

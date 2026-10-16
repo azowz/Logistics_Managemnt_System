@@ -11,11 +11,13 @@ from sqlalchemy import (
     DateTime,
     Enum as SAEnum,
     ForeignKey,
+    Index,
     Integer,
     Numeric,
     String,
     Text,
     UniqueConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -33,6 +35,11 @@ if TYPE_CHECKING:  # pragma: no cover
     from app.models.shipment_tracking_event import ShipmentTrackingEvent
 
 
+_ACTIVE_ASSIGNMENT = (
+    "status IN ('ASSIGNED', 'PICKED_UP', 'IN_TRANSIT', 'DELAYED') AND deleted_at IS NULL"
+)
+
+
 class Shipment(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
     """Core shipment record representing the movement of goods."""
 
@@ -48,6 +55,23 @@ class Shipment(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         CheckConstraint("volume_m3 > 0", name="volume_positive"),
         CheckConstraint("currency_code ~ '^[A-Z]{3}$'", name="currency_code"),
         CheckConstraint("priority IN ('low', 'normal', 'high', 'urgent')", name="priority"),
+        # Indexes created by migration 0008. Declared here so autogenerate does
+        # not propose dropping them. ``status`` stores enum member NAMES
+        # (no values_callable), hence the upper-case literals.
+        Index("ix_shipments_driver_id", "driver_id"),
+        Index("ix_shipments_vehicle_id", "vehicle_id"),
+        Index("ix_shipments_delivery_due_at", "delivery_due_at"),
+        # Ready offers awaiting a driver (driver self-service offer feed).
+        Index(
+            "ix_shipments_ready_unassigned",
+            "tenant_id",
+            postgresql_where=text("status = 'READY' AND driver_id IS NULL"),
+        ),
+        # Active driver / vehicle assignment exclusivity checks.
+        Index("ix_shipments_active_driver", "driver_id", postgresql_where=text(_ACTIVE_ASSIGNMENT)),
+        Index(
+            "ix_shipments_active_vehicle", "vehicle_id", postgresql_where=text(_ACTIVE_ASSIGNMENT)
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(

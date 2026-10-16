@@ -24,6 +24,7 @@ from sqlalchemy import (
     DateTime,
     Enum as SAEnum,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
@@ -210,6 +211,8 @@ class WebhookDelivery(TimestampMixin, Base):
             name="status",
         ),
         CheckConstraint("attempt_count >= 0", name="attempt_count_non_negative"),
+        # Delivery-sweep access path: due deliveries by status (migration 0016).
+        Index("ix_webhook_deliveries_status_next_attempt_at", "status", "next_attempt_at"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

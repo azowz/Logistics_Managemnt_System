@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import Optional, TYPE_CHECKING
 
-from sqlalchemy import DateTime, Enum as SAEnum, ForeignKey, Numeric, String, Text
+from sqlalchemy import DateTime, Enum as SAEnum, ForeignKey, Numeric, String, Text, Index
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -23,6 +23,10 @@ class ShipmentTrackingEvent(TimestampMixin, Base):
     """Append-only event describing shipment status or location change."""
 
     __tablename__ = "shipment_tracking_events"
+    # Ordered history per shipment (migration 0001).
+    __table_args__ = (
+        Index("ix_shipment_tracking_events_shipment_id_event_time", "shipment_id", "event_time"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),

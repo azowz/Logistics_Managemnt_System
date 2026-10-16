@@ -90,6 +90,7 @@ class Customer(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         SAEnum(CustomerType, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=CustomerType.CORPORATE,
+        server_default="corporate",
     )
     industry: Mapped[Optional[str]] = mapped_column(String(128))
 
@@ -146,17 +147,20 @@ class Customer(TimestampMixin, AuditMixin, SoftDeleteMixin, Base):
         SAEnum(CustomerStatus, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=CustomerStatus.ACTIVE,
+        server_default="active",
         index=True,
     )
     risk_level: Mapped[RiskLevel] = mapped_column(
         SAEnum(RiskLevel, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=RiskLevel.LOW,
+        server_default="low",
     )
     credit_status: Mapped[CreditStatus] = mapped_column(
         SAEnum(CreditStatus, native_enum=False, length=32, values_callable=enum_values),
         nullable=False,
         default=CreditStatus.GOOD,
+        server_default="good",
     )
 
     # ------------------------------------------------------------------

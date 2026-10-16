@@ -107,5 +107,13 @@ jobs:
         continue-on-error: true
         run: mypy app
 
+      - name: Migrations (upgrade head + model drift check)
+        # Fails when the ORM models and the migration chain disagree, so a later
+        # `alembic revision --autogenerate` can never propose dropping indexes
+        # or defaults that production relies on.
+        run: |
+          alembic upgrade head
+          alembic check
+
       - name: Pytest
         run: pytest -q
