@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Logistic X Logistics Operations API",
+    "title": "Logistic X Operations API",
     "description": "Land-freight logistics platform API. RBAC via JWT, multi-tenant request scoping, structured logging, and Prometheus metrics. See docs/ for ADRs.",
     "version": "1.0.0"
   },

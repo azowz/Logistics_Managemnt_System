@@ -1,4 +1,4 @@
-# Logistic X Logistics Operations API — continuous integration.
+# Logistic X Operations API — continuous integration.
 #
 # Runs on every push and pull request: installs the pinned dependencies, checks
 # formatting/lint, runs an advisory type check, and executes the test suite.

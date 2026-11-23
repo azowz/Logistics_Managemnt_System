@@ -43,7 +43,7 @@ $env:DEBUG = "false"
 | `SECRET_KEY` | `change-this-secret-key` | 32 حرفًا على الأقل؛ يوقّع JWT ويشتق مفتاح تشفير أسرار Webhooks. مرفوض في الإنتاج إن بدأ بـ `change-me`/`change-this` |
 | `ENVIRONMENT` | `development` | `development`، `staging`، `production`، `test` |
 | `DEBUG` | `false` | |
-| `APP_NAME` / `APP_VERSION` | `Logistic X Logistics Operations API` / `1.0.0` | |
+| `APP_NAME` / `APP_VERSION` | `Logistic X Operations API` / `1.0.0` | |
 | `API_V1_PREFIX` | `/v1` | |
 | `CORS_ORIGINS` | أصول localhost و127.0.0.1 على 8081 | JSON array أو قائمة مفصولة بفواصل؛ أصول HTTPS صريحة للنشر و`*` مرفوض في الإنتاج |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `60` (5–1440) | المثال: 30 |

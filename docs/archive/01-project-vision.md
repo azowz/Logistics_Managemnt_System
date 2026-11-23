@@ -1,4 +1,4 @@
-# Phase 1 — Project Vision (Logistic X Logistics Operations Platform)
+# Phase 1 — Project Vision (Logistic X Operations Platform)
 
 > **Status:** Approved baseline (authored 2026-06-22, Phase 6.5 closure — fills the gap flagged in `docs/06` A.1 #1 and the Phase 6 ABSENT ledger). **Documentation only.**
 > **Purpose:** The single consolidated product/vision anchor that every later phase (`docs/02`…`docs/09a`, ADR-001…009) builds on. Where this document and an earlier doc disagree on scope wording, this vision is the intent; the technical phases remain authoritative for *design*.

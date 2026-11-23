@@ -1,4 +1,4 @@
-# Logistic X Logistics Operations API — local development orchestration.
+# Logistic X Operations API — local development orchestration.
 #
 # Services:
 #   api    — FastAPI application served by gunicorn+uvicorn (app.main:app)

@@ -1,4 +1,4 @@
-# Phase 6.5 — Reconciliation & Closure (Logistic X Logistics Operations Platform)
+# Phase 6.5 — Reconciliation & Closure (Logistic X Operations Platform)
 
 > **Status:** Closure deliverable — **documentation only** (no code, SQL, ORM, or APIs). Produced 2026-06-22.
 > **Purpose:** Resolve the remaining blockers from `docs/09-final-domain-model.md` before the **Phase 7 Final ERD Review**: ratify the CF1 (Order-cancel) resolution, add the missing events, create the three missing state machines, author the Project Vision, amend ADR-007, and issue the final readiness verdict.

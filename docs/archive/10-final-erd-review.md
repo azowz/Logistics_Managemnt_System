@@ -1,4 +1,4 @@
-# Final Database Review & Freeze — Logistic X Logistics Operations Platform
+# Final Database Review & Freeze — Logistic X Operations Platform
 
 > **Document type:** Mandatory production-grade Database Freeze review (banking/enterprise discipline). **Documentation only** — no implementation code, SQLAlchemy models, SQL, or migrations are produced here.
 > **Date:** 2026-06-22. **Supersedes** the Phase-7 freeze; **reflects the as-built reality after milestone M1** (multi-tenancy + RLS is now implemented on disk, migration `0003_multi_tenancy_rls`).
