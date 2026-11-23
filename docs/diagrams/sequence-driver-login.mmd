@@ -1,25 +1,21 @@
-%% Sequence — driver authentication + nearby offers (NOTE: starred steps are
-%% endpoints the mobile app expects that the backend does NOT expose yet —
-%% see docs/api-gap-analysis.md).
+﻿%% التطبيق Mock افتراضيًا؛ الربط الحي يحتاج محولًا وOTP.
 sequenceDiagram
     autonumber
-    actor Driver
-    participant App as Driver App (Expo)
+    actor Driver as السائق
+    participant App as تطبيق Expo
+    participant Mock as driverApi Mock
     participant API as FastAPI /v1
-    participant SEC as Security (JWT)
-    participant DB as PostgreSQL
-
-    Driver->>App: enter +966 5XXXXXXXX
-    App->>App: validate Saudi mobile -> E.164
-    App->>API: POST /auth/login  (email/password today; OTP planned*)
-    API->>SEC: authenticate() + create_access_token(sub, role)
-    SEC->>DB: load user, verify hash
-    API-->>App: 200 {access_token, user}
-    App->>App: store token, signIn(driver)
-
-    Note over App,API: Driver goes online
-    App->>API: PATCH /drivers/me {is_available:true}*
-    App->>API: GET /shipments/nearby*
-    API->>DB: query READY shipments near driver home_warehouse
-    API-->>App: 200 [ShipmentRequest]
-    App-->>Driver: render dashboard + offers
+    Driver->>App: رقم جوال سعودي
+    App->>App: تحقق وتحويل E.164
+    alt USE_MOCK=true الافتراضي
+        App->>Mock: login(phone)
+        Mock-->>App: token تجريبي وDriverProfile
+        App->>App: حفظ الجلسة وعرض اللوحة
+    else USE_MOCK=false
+        App->>App: ApiError501؛ Live login غير موصول
+    end
+    Note over App,API: المسارات موجودة بالخلفية؛ تحتاج ربط نماذج العرض
+    Note over API: POST /auth/driver/login؛ OTP غير موصول ومعطل بالإنتاج
+    Note over API: GET/PATCH /drivers/me وGET /drivers/me/stats
+    Note over API: GET /shipments/nearby وPOST /shipments/{id}/accept
+    Note over API: POST /shipments/{id}/decline يعيد204 بلا جسم

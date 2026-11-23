@@ -1,0 +1,22 @@
+name: Bug report
+description: Something is not working as expected
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: [Backend, Frontend / driver app, API contract, Design, Docs, CI / tooling]
+    validations:
+      required: true
+  - type: textarea
+    id: main
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: details
+    attributes:
+      label: Steps to reproduce

@@ -1,4 +1,4 @@
-# Mesaar Logistics Operations API — local / staging orchestration.
+# Logistic X Operations API — local development orchestration.
 #
 # Services:
 #   api    — FastAPI application served by gunicorn+uvicorn (app.main:app)
@@ -12,20 +12,21 @@
 # override the localhost defaults from the canonical settings so containers can
 # reach each other on the compose network.
 
-name: mesaar
+name: logistic_x
 
 services:
   api:
     build:
-      context: .
+      context: ./logistic-x-backend
       dockerfile: Dockerfile
-    image: mesaar/api:latest
+    image: logistic-x/api:latest
     restart: unless-stopped
     env_file:
-      - .env
+      - ./logistic-x-backend/.env
     environment:
+      CORS_ORIGINS: '${LOGISTIC_X_CORS_ORIGINS:-["http://localhost:8081","http://127.0.0.1:8081"]}'
       # Container-network service discovery overrides.
-      DATABASE_URL: postgresql+psycopg2://mesaar:mesaar@db:5432/mesaar
+      DATABASE_URL: postgresql+psycopg2://logistic_x_app:logistic_x_app@db:5432/logistic_x
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/2
@@ -44,9 +45,9 @@ services:
       start_period: 20s
 
   worker:
-    image: mesaar/api:latest
+    image: logistic-x/api:latest
     build:
-      context: .
+      context: ./logistic-x-backend
       dockerfile: Dockerfile
     restart: unless-stopped
     command:
@@ -57,9 +58,9 @@ services:
       - --loglevel=info
       - --concurrency=4
     env_file:
-      - .env
+      - ./logistic-x-backend/.env
     environment:
-      DATABASE_URL: postgresql+psycopg2://mesaar:mesaar@db:5432/mesaar
+      DATABASE_URL: postgresql+psycopg2://logistic_x_app:logistic_x_app@db:5432/logistic_x
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/2
@@ -76,9 +77,9 @@ services:
       start_period: 30s
 
   beat:
-    image: mesaar/api:latest
+    image: logistic-x/api:latest
     build:
-      context: .
+      context: ./logistic-x-backend
       dockerfile: Dockerfile
     restart: unless-stopped
     command:
@@ -90,9 +91,9 @@ services:
       - --pidfile=/tmp/celerybeat.pid
       - --schedule=/tmp/celerybeat-schedule
     env_file:
-      - .env
+      - ./logistic-x-backend/.env
     environment:
-      DATABASE_URL: postgresql+psycopg2://mesaar:mesaar@db:5432/mesaar
+      DATABASE_URL: postgresql+psycopg2://logistic_x_app:logistic_x_app@db:5432/logistic_x
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/2
@@ -109,19 +110,32 @@ services:
       retries: 3
       start_period: 30s
 
+  frontend:
+    build:
+      context: ./logistic-x-frontend
+      args:
+        EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-http://localhost:8000/v1}
+        EXPO_PUBLIC_APP_ENV: ${EXPO_PUBLIC_APP_ENV:-development}
+    image: logistic_x/frontend:latest
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    # No depends_on: the frontend serves its shell with the backend stopped.
+
   db:
     image: postgres:16
     restart: unless-stopped
     environment:
-      POSTGRES_USER: mesaar
-      POSTGRES_PASSWORD: mesaar
-      POSTGRES_DB: mesaar
+      POSTGRES_USER: logistic_x
+      POSTGRES_PASSWORD: logistic_x
+      POSTGRES_DB: logistic_x
     ports:
       - "5432:5432"
     volumes:
-      - mesaar_pgdata:/var/lib/postgresql/data
+      - logistic_x_pgdata:/var/lib/postgresql/data
+      - ./logistic-x-backend/docker/postgres/init-app-role.sql:/docker-entrypoint-initdb.d/10-app-role.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U mesaar -d mesaar"]
+      test: ["CMD-SHELL", "pg_isready -U logistic_x -d logistic_x"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -134,7 +148,7 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - mesaar_redisdata:/data
+      - logistic_x_redisdata:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
@@ -143,5 +157,5 @@ services:
       start_period: 5s
 
 volumes:
-  mesaar_pgdata:
-  mesaar_redisdata:
+  logistic_x_pgdata:
+  logistic_x_redisdata:

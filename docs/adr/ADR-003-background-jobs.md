@@ -1,30 +1,23 @@
-# ADR-003 — Background job processing
+# ADR-003 — معالجة المهام الخلفية
 
-- **Status:** Accepted — **Confirmed 2026-06-20** (SMB scale; Celery + Redis remains the choice)
-- **Date:** 2026-06-20
+- **الحالة:** Accepted؛ تأكد في 2026-06-20.
+- **التاريخ:** 2026-06-20.
 
-## Context
-SLA breach alerts, ETA recomputation, notification fan-out, freight settlement,
-and projection rebuilds must run off the request path with retries and scheduling.
+## السياق والقرار
 
-## Decision
-Use **Celery** with a **Redis** broker (Redis also serves as cache). Add
-**celery-beat** for scheduled jobs (SLA sweeps, ETA refresh). Workers are separate
-containers (see `docs/diagrams/deployment.mmd`).
+تحتاج مهام SLA و ETA والإشعارات والتسوية وإعادة بناء الإسقاطات إلى العمل خارج HTTP مع المحاولات
+والجدولة. اعتمد **Celery مع Redis Broker**، وإعادة استخدام Redis للتخزين المؤقت، و**Beat**
+للجدولة، وعاملًا في عملية/حاوية منفصلة.
 
-## Consequences
-- (+) Mature: routing, retries/backoff, rate limits, workflows (chains/groups),
-  monitoring, horizontal scaling — matches a growing SLA/settlement workload.
-- (+) Redis is reused for caching and Celery, reducing infra count.
-- (−) More moving parts than an in-process queue; needs worker observability.
+## الآثار والبدائل
 
-## Alternatives
-| Option | Pros | Cons | Verdict |
-|---|---|---|---|
-| **Celery + Redis** | HA, workflows, scheduling | Operational weight | **Chosen** |
-| RQ | Simplest, Redis-only | Fewer primitives, weaker workflows | Rejected for SLA scope |
-| FastAPI BackgroundTasks | Zero infra | No durability/retries/scheduling | Dev-only |
+Celery يدعم التوجيه والتراجع وسير العمل والمراقبة والتوسع، مقابل زيادة مكونات التشغيل.
+رُفض RQ لمحدودية قدرات سير العمل، وقُصر FastAPI BackgroundTasks على التطوير لغياب الدوام
+والجدولة. كل Handler متساوي الأثر بمفتاح الحدث، والتسليم At-least-once مع منع التكرار عند
+المستهلك وفق ADR-004.
 
-## Rules
-- All handlers **idempotent** (keyed by event id) — pairs with ADR-004.
-- Settlement/notification jobs are **at-least-once**; dedupe at the sink.
+## المطابقة الحالية
+
+Celery/Redis/Beat منفذة؛ المهام الحالية Relay و Webhook Sweep وفحص صحة الإسقاطات.
+مهام ETA/SLA والتسوية الخارجية فيالسياق مستهدفة، ولا يعني قبول ADR تنفيذها.
+التشغيل في[المعمارية](../architecture.md) و[مخطط النشر](../diagrams/deployment.mmd).

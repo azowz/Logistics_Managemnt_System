@@ -1,0 +1,31 @@
+# Disposable verification stack. Requires Docker Compose >=2.24.4 (!override).
+# docker compose -p logistic-x-separation-verify -f docker-compose.yml -f compose.verify.yml ...
+services:
+  api:
+    image: logistic-x-separation/api:verification
+    ports: !override ["18000:8000"]
+    environment:
+      ENVIRONMENT: test
+      SECRET_KEY: separation-verification-only-secret-32-characters
+      CORS_ORIGINS: '["http://127.0.0.1:18081","http://localhost:18081"]'
+  worker:
+    image: logistic-x-separation/api:verification
+    environment:
+      ENVIRONMENT: test
+      SECRET_KEY: separation-verification-only-secret-32-characters
+  beat:
+    image: logistic-x-separation/api:verification
+    environment:
+      ENVIRONMENT: test
+      SECRET_KEY: separation-verification-only-secret-32-characters
+  frontend:
+    image: logistic-x-separation/frontend:verification
+    ports: !override ["18081:8081"]
+    build:
+      args:
+        EXPO_PUBLIC_API_URL: http://127.0.0.1:18000/v1
+        EXPO_PUBLIC_APP_ENV: production
+  db:
+    ports: !override ["15439:5432"]
+  redis:
+    ports: !override ["16379:6379"]

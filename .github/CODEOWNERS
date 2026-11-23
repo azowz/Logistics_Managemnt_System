@@ -1,0 +1,10 @@
+# Default owners. Once the logistic_x organization has teams, replace these with
+# team handles, e.g. /logistic-x-backend/ @logistic_x/backend
+*                   @azowz
+
+/logistic-x-backend/    @azowz
+/logistic-x-frontend/   @azowz
+/contracts/         @azowz
+/design-system/     @azowz
+/docs/              @azowz
+/.github/           @azowz
