@@ -22,7 +22,7 @@ permissions:
 jobs:
   build-and-test:
     name: Lint, type-check & test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     defaults:
       run:
@@ -125,7 +125,7 @@ jobs:
 
   frontend:
     name: Frontend independent build and tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: logistic-x-frontend
@@ -146,7 +146,7 @@ jobs:
 
   contract-distribution:
     name: Published API snapshots agree
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - run: |
@@ -155,7 +155,7 @@ jobs:
 
   integration:
     name: Disposable Docker stack and real browser workflow
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
