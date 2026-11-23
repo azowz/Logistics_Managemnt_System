@@ -1,47 +1,17 @@
-%% C4-style System Context — Mesaar Logistics Operations Platform
+﻿%% السياق الحالي؛ الأسهم المتقطعة تمثل أجزاء مخططة أو غير موصولة.
 flowchart TB
-    subgraph actors[Actors]
-        admin([Admin])
-        ops([Operations / Manager])
-        dispatcher([Dispatcher / Manager])
-        driver([Driver])
-        client([Customer / Client])
-    end
-
-    subgraph platform[Mesaar Platform]
-        direction TB
-        web[Web Consoles<br/>Admin · Ops · Dispatch · Customer<br/>React, WCAG 2.2 AA]
-        mobile[Driver Mobile App<br/>Expo / React Native · Arabic RTL<br/>DELIVERED]
-        api[FastAPI Core API<br/>/v1 · JWT · RBAC · DDD/Clean]
-        worker[Async Workers<br/>Celery: ETA · SLA · settlement]
-        projections[Read Models / Projections<br/>control-tower, KPIs]
-        db[(PostgreSQL<br/>aggregates + append-only events)]
-        bus{{Domain Event Bus}}
-    end
-
-    subgraph external[External Systems]
-        maps[Maps / Routing Provider]
-        nafath[Nafath National SSO]
-        sms[SMS / Push Notifications]
-        erp[ERP / Billing Settlement]
-    end
-
-    admin --> web
-    ops --> web
-    dispatcher --> web
-    client --> web
-    driver --> mobile
-
-    web --> api
-    mobile --> api
-    api --> db
-    api --> bus
-    bus --> worker
-    bus --> projections
-    projections --> db
-    worker --> db
-
-    mobile -. routing/ETA .-> maps
-    mobile -. SSO .-> nafath
-    api -. notifications .-> sms
-    worker -. freight settlement .-> erp
+    driver[السائق] --> mobile[mesaar-frontend؛ Expo عربي RTL؛ بيانات حية]
+    staff[الإدارة والعمليات والعميل] -.-> web[لوحات Web مخططة]
+    mobile -- HTTP / JWT --> api[mesaar-backend؛ FastAPI /v1]
+    web -.-> api
+    partner[شريك API] --> api
+    api --> services[خدمات المجالات]
+    services --> db[(PostgreSQL؛ الحالة وevent_store)]
+    beat[Celery Beat] --> redis[(Redis)]
+    redis --> worker[Celery Worker]
+    worker --> relay[Outbox Relay]
+    relay --> db
+    relay --> consumers[إشعارات وتحليلات وWebhooks]
+    consumers --> db
+    consumers -. مزود HTTP يحتاج التسجيل .-> external[شركاء Webhook]
+    future[نفاذ وOTP وخرائط وERP وAI؛ مخطط]

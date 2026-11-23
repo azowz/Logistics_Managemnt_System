@@ -1,36 +1,32 @@
-# ADR-006 — Read models / projections
+# ADR-006 — نماذج القراءة والإسقاطات
 
-- **Status:** Accepted (default)
-- **Date:** 2026-06-20
+- **الحالة:** Accepted (الاختيار الافتراضي).
+- **التاريخ:** 2026-06-20؛ تعديل عزل المستأجرين 2026-06-22 (المرحلة 6.5).
 
-## Context
-The control tower (live map, exception center, SLA/ETA risk, capacity) needs fast,
-denormalized reads. Today those would require multi-join scans over `shipments` +
-`shipment_tracking_events`, which won't meet the p95 < 300ms read budget at scale.
+## السياق والقرار
 
-## Decision
-Build **projection tables in the same PostgreSQL** (no separate store yet), updated
-by event consumers (ADR-003/004). Initial projections:
+يحتاج برج التحكم قراءات منزوعة التطبيع للخريطة والاستثناءات و SLA/ETA والسعة، معميزانية
+p95 أقل من 300ms (هدف وليست نتيجة قياس). اعتمد Projection Tables في PostgreSQL نفسه
+تحدثها مستهلكات الأحداث وفق ADR-003/004.
 
-| Projection | Feeds | Source events |
-|---|---|---|
-| `proj_active_shipments` | Ops board, live map | Assigned/PickedUp/Delivered/Failed |
-| `proj_driver_status` | Dispatch availability | DriverWentOnline/Offline, assignment |
-| `proj_warehouse_load` | Capacity overview | ShipmentCreated/Delivered |
-| `proj_sla_risk` | Exception center | clock + delivery_due_at |
-| `proj_driver_daily_stats` | Driver app KPIs | Delivered + tracking distance |
+| الإسقاط المخطط | الاستخدام/أحداث المصدر |
+| --- | --- |
+| proj_active_shipments | الخريطة واللوحة؛ ShipmentAssigned/PickedUp/Delivered/Failed |
+| proj_driver_status | التوفر؛ DriverWentOnline/Offline و DriverAssigned |
+| proj_warehouse_load | السعة؛ ShipmentCreated/Delivered |
+| proj_sla_risk | الساعة و delivery_due_at |
+| proj_driver_daily_stats | التسليم والمسافة |
 
-> **Tenancy (Phase 6.5 amendment — closes blocker B-5 / conflict CF10).** Every `proj_*` table **carries `tenant_id`** and is created **under RLS** (ADR-001), consistent with `docs/08` ("every new table tenant-scoped + RLS"). Projection builders **`SET LOCAL` the tenant GUC per event** before reading or writing, so a missed predicate cannot surface cross-tenant rows in Ops/control-tower views. The cross-tenant isolation test (Phase-5 M1) **must cover projection reads**, not only aggregate tables. PKs are UUIDv7 per ADR-007. Source-event names in the table above are illustrative; the **canonical `event_type` literals** are `ShipmentAssigned`/`ShipmentPickedUp`/`ShipmentDelivered`/`ShipmentFailed`/`ShipmentCreated`/`DriverWentOnline`/`DriverWentOffline`/`DriverAssigned` (CF14).
+## التعديل والآثار
 
-## Consequences
-- (+) Console reads hit a single denormalized row set.
-- (+) Rebuildable from the append-only log (bounded replay).
-- (−) Eventual consistency (sub-second target); UI shows "as of" timestamps.
-- (−) Projection lag must be monitored (Prometheus gauge).
+كل proj_* يحمل tenant_id ويخضع لـ RLS؛ يضبط Builder سياق المستأجر لكلحدث عبر SET LOCAL، وتغطي
+اختبارات العزل قراءات الإسقاطات. مفاتيحها UUIDv7 وفق ADR-007. أسماء الأحداث أعلاه معتمدة
+في التصميم ولا تعني تنفيذ كل نوع. يمكن إعادة بناء الإسقاط؛ الاتساق نهائي وهدف الحداثة أقل
+من ثانية، مععرض «حتى» ومراقبة التأخر. رُفضت Materialized Views للتحديث الإجمالي والقفل،
+وأُجل مخزن خارجي مثل Elasticsearch.
 
-## Alternatives
-| Option | Verdict |
-|---|---|
-| **PG projection tables** | **Chosen** — no new infra |
-| Materialized views | Rejected: coarse refresh, locking |
-| External read store (Elasticsearch) | Deferred to search-heavy phase |
+## المطابقة الحالية
+
+المبدأ منفذ بسبعة إسقاطات تحليلية وصحة/إعادة بناء، لكن القائمة أعلاه و UUIDv7 للإسقاطات
+غير منفذة. الجداول الفعلية في[قاعدة البيانات](../database.md)، واعتماد القائمة البديلة
+بدل القرار يحتاج ADR جديدًا.

@@ -1,0 +1,10 @@
+# Default owners. Once the mesaar organization has teams, replace these with
+# team handles, e.g. /mesaar-backend/ @mesaar/backend
+*                   @azowz
+
+/mesaar-backend/    @azowz
+/mesaar-frontend/   @azowz
+/contracts/         @azowz
+/design-system/     @azowz
+/docs/              @azowz
+/.github/           @azowz

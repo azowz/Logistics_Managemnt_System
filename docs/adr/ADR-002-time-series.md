@@ -1,31 +1,22 @@
-# ADR-002 — Time-series & event analytics store
+# ADR-002 — السلاسل الزمنية وتحليلات الأحداث
 
-- **Status:** Accepted — **Confirmed 2026-06-20** (scale envelope = SMB/regional, so Postgres-only holds)
-- **Date:** 2026-06-20
+- **الحالة:** Accepted؛ تأكد في 2026-06-20 لحجم الشركات الصغيرة والمتوسطة والإقليمية.
+- **التاريخ:** 2026-06-20.
 
-## Context
-`shipment_tracking_events` is append-only and will grow fastest (location pings,
-status changes, POD). Control-tower KPIs and ETA-risk analytics read over it. We
-must decide whether plain PostgreSQL suffices or we need a time-series engine now.
+## السياق والقرار
 
-## Decision
-**Start PostgreSQL-only.** Partition `shipment_tracking_events` by month
-(declarative partitioning) and serve dashboards from **projection tables** (ADR-006),
-not live scans. Defer any time-series extension until volume justifies it.
+سجل`shipment_tracking_events` الإلحاقي أسرع الجداول نموًا بسبب المواقع والحالات و POD.
+اعتمد **PostgreSQL فقط** مع تجزئة شهرية Declarative Partitioning، و Projection Tables
+للوحات وفق ADR-006 بدل مسح السجل الخام. أُجل امتداد Time-series ومحرك OLAP خارجي.
 
-## Consequences
-- (+) One system to operate; ACID, JSONB, existing tooling.
-- (+) Projections keep read latency low regardless of raw event volume.
-- (−) At very high ping rates, manual partition/index management grows; revisit.
+## الآثار وعتبة المراجعة
 
-## Trigger to revisit
-Adopt a PostgreSQL-compatible time-series extension (hypertables / continuous
-aggregates) when **sustained event ingest > ~5k events/sec** or rollup queries
-exceed p95 latency budget. Because it is PG-compatible, migration is additive.
+قاعدة واحدة مع ACID و JSONB وأدوات مألوفة؛ الإسقاطات تفصل زمن القراءة عن نمو السجل.
+تزيد إدارة الأقسام والفهارس مع الحجم. يعاد التقييم عند إدخال مستمر نحو 5000 حدث/ثانية
+أو تجاوز Rollups ميزانية p95، لصالح امتداد PostgreSQL يدعم Hypertables/Continuous Aggregates.
+هذه عتبات تصميم وليست قياسات أداء حالية.
 
-## Alternatives
-| Option | Pros | Cons | Verdict |
-|---|---|---|---|
-| **PostgreSQL-only + partitions** | Simple, ACID | Manual at scale | **Chosen** |
-| Time-series extension now | Optimized rollups | Extra ops surface early | Deferred |
-| Separate OLAP warehouse | Heavy analytics | Sync complexity | Later (Phase 5+) |
+## المطابقة الحالية
+
+PostgreSQL والإسقاطات منفذان؛ **التجزئة الشهرية وإدارة أقسامها غير منفذتين**. يوضح
+[ADR-007](ADR-007-uuidv7-event-store-outbox.md) تعارض التجزئة معالقيد الفريد الحالي.

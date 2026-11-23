@@ -1,32 +1,29 @@
-%% Sequence — dispatch assignment through delivery
-%% Maps to: POST /shipments/{id}/assign, /status, /events (shipment_service.py)
+﻿%% المسار الحالي عبر أفعال صريحة؛ لا يوجد POST /shipments/{id}/status.
 sequenceDiagram
     autonumber
-    actor Dispatcher
+    actor Dispatcher as مسؤول الإسناد
     participant API as FastAPI /v1
     participant SVC as ShipmentService
+    participant Gate as ComplianceValidationService
     participant DB as PostgreSQL
-    participant BUS as Event Bus
-    actor Driver as Driver App
-
+    participant Relay as Outbox Relay
+    participant Consumers as المستهلكون
     Dispatcher->>API: POST /shipments/{id}/assign {driver_id, vehicle_id}
-    API->>SVC: assign_driver_and_vehicle()
-    SVC->>DB: validate driver eligible + not busy
-    SVC->>DB: validate vehicle ACTIVE + capacity
-    SVC->>DB: set driver_id, vehicle_id, assigned_at, status=assigned
-    SVC-->>BUS: ShipmentAssigned
-    BUS-->>Driver: push "new assignment"
-    API-->>Dispatcher: 200 ShipmentRead
-
-    Driver->>API: POST /shipments/{id}/status {status: in_transit}
-    API->>SVC: transition_status()  (guard: assigned->in_transit)
-    SVC->>DB: status=in_transit
-    SVC-->>BUS: ShipmentPickedUp
-
-    Driver->>API: POST /shipments/{id}/events {proof_of_delivery, status: delivered}
-    API->>SVC: create_tracking_event()
-    SVC->>DB: assert event_time >= last event_time (monotonic)
-    SVC->>DB: append event + status=delivered, delivered_at
-    SVC-->>BUS: ShipmentDelivered
-    BUS-->>API: update control-tower projection
-    API-->>Driver: 201 TrackingEventRead
+    API->>SVC: assign_shipment()
+    SVC->>Gate: validate_dispatch(stage=assign)
+    Note over SVC,DB: حدث البوابة يلتزم قبل الانتقال؛ قيد معروف
+    SVC->>DB: تحقق الأهلية والحصرية والسعة والانتقال
+    SVC->>DB: تعديل الشحنة وإلحاق ShipmentAssigned ثم commit
+    API-->>Dispatcher: ShipmentRead
+    Dispatcher->>API: POST /shipments/{id}/pickup
+    API->>SVC: pickup_shipment()
+    SVC->>DB: picked_up مع حدثه
+    Dispatcher->>API: POST /shipments/{id}/transit
+    API->>SVC: start_transit()
+    SVC->>DB: in_transit مع حدثه
+    Dispatcher->>API: POST /shipments/{id}/deliver
+    API->>SVC: deliver_shipment()
+    SVC->>DB: delivered مع ShipmentDelivered ثم commit
+    Relay->>DB: أحداث غير منشورة
+    Relay->>Consumers: تسليم تحت سياق مستأجر الحدث
+    Consumers->>DB: إشعار أوإسقاط أوWebhook مع منع التكرار

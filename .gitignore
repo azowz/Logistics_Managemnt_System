@@ -19,6 +19,17 @@ env/
 .coverage
 htmlcov/
 
+# نواتج تطوير تطبيق Expo القابلة لإعادة التوليد
+node_modules/
+.expo/
+web-build/
+*.tsbuildinfo
+playwright-report/
+test-results/
+test-results.xml
+celerybeat*
+.verification/
+
 # Local environment / secrets
 .env
 .env.*

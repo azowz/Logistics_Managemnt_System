@@ -24,6 +24,10 @@ jobs:
     name: Lint, type-check & test
     runs-on: ubuntu-latest
 
+    defaults:
+      run:
+        working-directory: mesaar-backend
+
     # A real PostgreSQL and Redis available for tests that need them.
     services:
       postgres:
@@ -76,12 +80,12 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
+          cache-dependency-path: mesaar-backend/requirements*.txt
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install ruff==0.5.5 black==24.4.2 mypy==1.10.1
+          python -m pip install -r requirements-dev.txt
 
       - name: Create non-superuser application role
         # RLS (even with FORCE) never applies to superusers, and the postgres
@@ -97,14 +101,12 @@ jobs:
           SQL
 
       - name: Ruff (lint)
-        run: ruff check app
+        run: ruff check .
 
       - name: Black (format check)
         run: black --check -l 100 app
 
-      - name: Mypy (type check, advisory)
-        # Type checking is informative but must not block the pipeline yet.
-        continue-on-error: true
+      - name: Mypy (type check)
         run: mypy app
 
       - name: Migrations (upgrade head + model drift check)
@@ -117,3 +119,70 @@ jobs:
 
       - name: Pytest
         run: pytest -q
+
+      - name: Check API contract and migration baseline
+        run: python -m scripts.check_contract
+
+  frontend:
+    name: Frontend independent build and tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mesaar-frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mesaar-frontend/package-lock.json
+      - run: npm ci
+      - run: npm run api:check
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+
+  contract-distribution:
+    name: Published API snapshots agree
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          cmp mesaar-backend/api/openapi.json contracts/openapi.json
+          cmp mesaar-backend/api/openapi.json mesaar-frontend/api/openapi.json
+
+  integration:
+    name: Disposable Docker stack and real browser workflow
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mesaar-frontend/package-lock.json
+      - name: Build isolated applications
+        run: |
+          cp mesaar-backend/.env.example mesaar-backend/.env
+          docker compose -p mesaar-separation-verify -f docker-compose.yml -f compose.verify.yml build api frontend
+          docker compose -p mesaar-separation-verify -f docker-compose.yml -f compose.verify.yml up -d --wait db redis
+          docker compose -p mesaar-separation-verify -f docker-compose.yml -f compose.verify.yml run --rm --no-deps api python -m alembic upgrade head
+          docker compose -p mesaar-separation-verify -f docker-compose.yml -f compose.verify.yml up -d --no-build --wait api worker beat frontend
+      - name: Install browser tests
+        working-directory: mesaar-frontend
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      - name: Live authenticated workflow
+        working-directory: mesaar-frontend
+        env:
+          FRONTEND_TEST_URL: http://127.0.0.1:18081
+          MESAAR_TEST_API_URL: http://127.0.0.1:18000/v1
+        run: npm run test:integration
+      - name: Independent restart verification
+        run: node scripts/verify-lifecycle.mjs
+      - name: Stop verification services
+        if: always()
+        run: docker compose -p mesaar-separation-verify -f docker-compose.yml -f compose.verify.yml down

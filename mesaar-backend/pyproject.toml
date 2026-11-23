@@ -1,0 +1,32 @@
+[tool.black]
+line-length = 100
+target-version = ["py311", "py312"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+
+# هذه المكتبات لا توزع stubs؛ تبقى أخطاء الأنواع في كود التطبيق ظاهرة.
+[[tool.mypy.overrides]]
+module = ["celery.*", "kombu.*", "jose.*", "passlib.*"]
+ignore_missing_imports = true
+[build-system]
+requires = ["setuptools>=68,<81", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mesaar-backend"
+version = "1.0.0"
+description = "Mesaar logistics API and background workers"
+requires-python = ">=3.11"
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+

@@ -1,4 +1,4 @@
-# Mesaar Logistics Operations API — local / staging orchestration.
+# Mesaar Logistics Operations API — local development orchestration.
 #
 # Services:
 #   api    — FastAPI application served by gunicorn+uvicorn (app.main:app)
@@ -17,15 +17,16 @@ name: mesaar
 services:
   api:
     build:
-      context: .
+      context: ./mesaar-backend
       dockerfile: Dockerfile
     image: mesaar/api:latest
     restart: unless-stopped
     env_file:
-      - .env
+      - ./mesaar-backend/.env
     environment:
+      CORS_ORIGINS: '${MESAAR_CORS_ORIGINS:-["http://localhost:8081","http://127.0.0.1:8081"]}'
       # Container-network service discovery overrides.
-      DATABASE_URL: postgresql+psycopg2://mesaar:mesaar@db:5432/mesaar
+      DATABASE_URL: postgresql+psycopg2://mesaar_app:mesaar_app@db:5432/mesaar
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/2
@@ -46,7 +47,7 @@ services:
   worker:
     image: mesaar/api:latest
     build:
-      context: .
+      context: ./mesaar-backend
       dockerfile: Dockerfile
     restart: unless-stopped
     command:
@@ -57,9 +58,9 @@ services:
       - --loglevel=info
       - --concurrency=4
     env_file:
-      - .env
+      - ./mesaar-backend/.env
     environment:
-      DATABASE_URL: postgresql+psycopg2://mesaar:mesaar@db:5432/mesaar
+      DATABASE_URL: postgresql+psycopg2://mesaar_app:mesaar_app@db:5432/mesaar
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/2
@@ -78,7 +79,7 @@ services:
   beat:
     image: mesaar/api:latest
     build:
-      context: .
+      context: ./mesaar-backend
       dockerfile: Dockerfile
     restart: unless-stopped
     command:
@@ -90,9 +91,9 @@ services:
       - --pidfile=/tmp/celerybeat.pid
       - --schedule=/tmp/celerybeat-schedule
     env_file:
-      - .env
+      - ./mesaar-backend/.env
     environment:
-      DATABASE_URL: postgresql+psycopg2://mesaar:mesaar@db:5432/mesaar
+      DATABASE_URL: postgresql+psycopg2://mesaar_app:mesaar_app@db:5432/mesaar
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/1
       CELERY_RESULT_BACKEND: redis://redis:6379/2
@@ -109,6 +110,18 @@ services:
       retries: 3
       start_period: 30s
 
+  frontend:
+    build:
+      context: ./mesaar-frontend
+      args:
+        EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-http://localhost:8000/v1}
+        EXPO_PUBLIC_APP_ENV: ${EXPO_PUBLIC_APP_ENV:-development}
+    image: mesaar/frontend:latest
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    # No depends_on: the frontend serves its shell with the backend stopped.
+
   db:
     image: postgres:16
     restart: unless-stopped
@@ -120,6 +133,7 @@ services:
       - "5432:5432"
     volumes:
       - mesaar_pgdata:/var/lib/postgresql/data
+      - ./mesaar-backend/docker/postgres/init-app-role.sql:/docker-entrypoint-initdb.d/10-app-role.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U mesaar -d mesaar"]
       interval: 10s

@@ -1,34 +1,24 @@
-# ADR-004 — Event model depth (CQRS-lite vs full event sourcing)
+# ADR-004 — عمق نموذج الأحداث (CQRS-lite)
 
-- **Status:** Accepted (default)
-- **Date:** 2026-06-20
+- **الحالة:** Accepted (الاختيار الافتراضي).
+- **التاريخ:** 2026-06-20.
 
-## Context
-`shipment_tracking_events` is already an **append-only** log with monotonic
-`event_time` ordering enforced in `shipment_service.create_tracking_event()`.
-We must decide how far to take event-driven design without over-engineering.
+## السياق والقرار
 
-## Decision
-Adopt **CQRS-lite**: the relational aggregate (`shipments`) remains the source of
-truth for current state; the append-only tracking table is the **audit/event log**;
-**projection tables** (ADR-006) serve read-heavy console views. We do **not** rebuild
-aggregate state purely from events (no full event sourcing).
+كان سجل التتبع إلحاقيًا بترتيب event_time تفرضه ShipmentService. اعتمد **CQRS-lite**:
+الجداول التشغيلية مصدر الحقيقة للحالة، وسجل التتبع للعرض التاريخي، والإسقاطات للقراءات
+الكثيفة. لا يعاد بناء Aggregate من الأحداث بالكامل؛ **لا يوجد Full Event Sourcing**.
+يحفظ ADR-007 أحداث المجال في event_store الموحد مع Transactional Outbox.
 
-Domain events (see `docs/event-catalog.md`) are emitted on each state transition
-and consumed by projection builders and Celery workers.
+## الآثار والبدائل
 
-## Consequences
-- (+) Keeps existing models/queries; adds auditability + fast reads incrementally.
-- (+) Replay rebuilds *projections* (cheap), not aggregates.
-- (−) Two write targets per transition (aggregate + event) — wrap in one DB tx.
-- Requires: **optimistic concurrency** (`version` column on `shipments`),
-  **idempotency keys** on events, **compensating events** for reversals
-  (e.g. `ShipmentReturned` after `ShipmentDelivered` is modeled as a new event,
-  never a mutation/delete of history).
+إعادة استخدام النماذج معالتدقيق والقراءات السريعة تدريجيًا. Replay يعيد بناء الإسقاطات
+فقط؛ يكتب الكيان والحدث في معاملة واحدة، مع version للقفل التفاؤلي ومفتاح منع التكرار.
+التراجع حدث تعويض جديد مثل ShipmentReturned، ولا يغير أو يحذف التاريخ.
+أُجل Full Event Sourcing ما لم تفرضه حاجة تنظيمية، ورُفض حفظ الحالة وحدها لضعف التدقيق.
 
-## Alternatives
-| Option | Pros | Cons | Verdict |
-|---|---|---|---|
-| **CQRS-lite (append log + projections)** | Audit + fast reads, low risk | Two writes/txn | **Chosen** |
-| Full event sourcing | Max replay/audit | Versioning, eventual consistency, cost | Deferred unless regulator-mandated |
-| State-only (no events) | Simplest | No audit, slow control tower | Rejected |
+## المطابقة الحالية
+
+Outbox وسجل المجال والإسقاطات منفذة؛ Saga والتعويض الآلي ليسا مكتملين. مرجع الأحداث
+`app/events/*_events.py` و[المجالات](../domains.md)؛ [الكتالوج القديم](../archive/event-catalog.md)
+شريحة تاريخية متجاوزة، وليس عقد الأحداث الكامل.

@@ -1,90 +1,61 @@
-# ADR-007 — UUIDv7 keys, unified Event Store, and Transactional Outbox
+# ADR-007 — UUIDv7 وسجل الأحداث الموحد و Transactional Outbox
 
-- **Status:** Accepted — **2026-06-20** (finalizes Phase 4; locks the implementation mechanics designed in `docs/03-database-architecture.md` §6–7 and modeled in `docs/04` Part 6) · **Amended 2026-06-22 (Phase 6.5): added Migration Plan + Rollback Plan (closes audit gap `docs/06` §C.2).**
-- **Date:** 2026-06-20
-- **Deciders:** Program lead
-- **Builds on:** ADR-002 (partitioning), ADR-004 (CQRS-lite event model), ADR-006 (projections)
+- **الحالة:** Accepted في 2026-06-20؛ تعديل خطة الترحيل والتراجع 2026-06-22 (المرحلة 6.5).
+- **التاريخ:** 2026-06-20؛ صاحب القرار: قائد البرنامج.
+- **يبني على:** ADR-002 و ADR-004 و ADR-006.
 
-## Context
-Phase 3 introduced UUID primary keys with a *recommendation* to adopt UUIDv7 on append-heavy
-tables, and Phase 4 modeled a CQRS-lite event flow. Three implementation mechanics were still
-"recommended" rather than ratified, leaving Phase 5 ambiguous: (1) how ids are generated,
-(2) the shape/ownership of the event log, and (3) how a state change and its event are published
-without a dual-write race. This ADR locks all three as one coherent decision.
+## السياق
 
-## Decision
+قدمت المرحلة 3 مفاتيح UUID وتوصية UUIDv7، وصممت المرحلة 4 تدفق CQRS-lite. يحسم هذا القرار
+توليد المعرّفات وملكية السجل ونشر الحدث دون سباق Dual-write.
 
-### 1. UUIDv7 primary keys on append/high-insert tables
-Adopt **UUIDv7** (RFC 9562, time-ordered) for the PKs of append-heavy tables — `event_store`,
-`shipment_tracking_events`, `audit_log`, `ml_predictions`, and `proj_*` projections — generated
-in-app via `app/db/uuidv7.uuid7` and `app/db/base_model.BaseModel`. UUIDv4 remains acceptable for
-low-churn reference tables. **Existing models keep their `uuid4` ids (no retrofit, no migration of
-in-place keys);** UUIDv7 applies to new tables only.
+## القرار
 
-### 2. A single unified Event Store
-One **`event_store`** table is the canonical, append-only domain-event log for **all** aggregates
-(not per-aggregate tables). `shipment_tracking_events` remains the user-facing *tracking slice* of
-that stream. Canonical envelope (per `docs/03` §7): `event_id` (UUIDv7, **idempotency key**),
-`tenant_id`, `aggregate_type`, `aggregate_id`, `aggregate_version`, `event_type`, `payload` (jsonb),
-`occurred_at`, `recorded_at`, `correlation_id`, `causation_id`, `published_at`. **Per-aggregate
-ordering and optimistic concurrency** are enforced by `UNIQUE(aggregate_id, aggregate_version)`.
-The table is **range-partitioned by month** on `occurred_at` (ADR-002).
+1. **UUIDv7 وفق RFC9562**، مولد داخل التطبيق عبر`app.db.uuidv7.uuid7` و`BaseModel`، للجداول
+   الجديدة كثيرة الإدراج:`event_store` و`shipment_tracking_events` و`audit_log` و
+   `ml_predictions` و`proj_*`. تبقى UUIDv4 للجداول المرجعية؛ **لا تحويل للمفاتيح القائمة**.
+2. **event_store واحد** إلحاقي لكل Aggregates. يحمل الغلاف event_id (مفتاح Idempotency)،
+   tenant_id و aggregate_type/id/version و event_type و payload و occurred_at/recorded_at
+   و correlation_id و causation_id و published_at. القيد`UNIQUE(aggregate_id,aggregate_version)`
+   للترتيب والتزامن؛ القرار يتضمن Range Partitioning شهريًا حسب occurred_at.
+   يبقى shipment_tracking_events شريحة التتبع للمستخدم.
+3. **Transactional Outbox:** يكتب التغيير وصف الحدث في معاملة محلية واحدة. Relay مستقل
+   ينشر الصفوف غير المنشورة ثم يختم published_at. لا نشر مباشر إلى Broker في مسار الأمر.
+   التسليم At-least-once وإزالة التكرار عبر processed_events(consumer,event_id).
 
-### 3. Transactional Outbox
-A command's **state change and its event row are written in one local transaction**. A separate
-**relay/poller** reads rows where `published_at IS NULL`, publishes them to the bus (Celery/Redis,
-ADR-003), and stamps `published_at`. Consumers are **at-least-once** and **dedupe on `event_id`**
-via `processed_events(consumer, event_id)`. The application **never writes to the broker directly**
-in the same flow as the DB commit.
+## الآثار والبدائل
 
-## Consequences
-- (+) UUIDv7 gives near-sequential index inserts → less B-tree page-splitting / WAL bloat on the
-  fastest-growing tables, while staying globally unique and non-enumerable.
-- (+) One event log = one mental model, one partitioning/retention policy, lossless audit, and
-  replayable projections (ADR-006).
-- (+) Outbox removes the dual-write failure mode (event lost if broker publish fails after commit).
-- (−) Operate a **relay worker** and monitor outbox lag (Prometheus gauge); pairs with ADR-003.
-- (−) **Two writes per command inside one transaction** (aggregate + event); keep payloads lean.
-- (−) Monthly partition + index management on `event_store` (ADR-002 trigger to revisit at scale).
+UUIDv7 يرتب إدراج الفهارس زمنيًا، والسجل الموحد يقلل تكرار إدارة التاريخ والإعادة، و Outbox
+يمنع فقد الحدث بين Commit والنشر. يلزم تشغيل Relay ومراقبة التأخر وإدارة الفهارس والأقسام.
+رُفض UUIDv4 للجميع و ULID/Bigint وسجل لكل Aggregate والنشر دون Outbox. أُجل Full Event Sourcing؛
+يبقى Aggregate مصدر الحالة و Replay للإسقاطات. لا توجد قياسات أداء تثبت نسبة تحسن.
 
-## Alternatives considered
-| Option | Verdict |
-|---|---|
-| **UUIDv7 (chosen)** | Native `uuid` type, time-ordered, standardized (RFC 9562) |
-| UUIDv4 everywhere | Rejected: random inserts → page splits / WAL bloat on append tables |
-| ULID / bigint identity | Rejected: ULID needs a custom type; bigint isn't federation-safe/non-enumerable |
-| Per-aggregate event tables | Rejected: schema/partition fan-out, no single replay surface |
-| Event bus **without** outbox | Rejected: dual-write race loses events |
-| Full event sourcing | Deferred (ADR-004): aggregate stays source of truth; we replay *projections* |
+## خطة الترحيل — تعديل 2026-06-22
 
-## Follow-ups (Phase 5+)
-- `event_store` + `processed_events` models/migrations (additive; `app.db.base:Base.metadata`).
-- Outbox **relay** task in `app/workers`; idempotent consumers (ADR-003 rules).
-- `app/events` (domain event types + publish port) and `app/projections` (ADR-006 builders).
-- Partition pre-create/retention job (celery-beat); outbox-lag metric.
+بعد M1 والعزل، وبلا تحويل UUIDv4 القائمة:
 
-## Migration Plan (added 2026-06-22, Phase 6.5)
+1. إنشاء Event Store و Processed Events والغلاف والقيد والتجزئة والعزل.
+2. Shadow Writes داخل معاملة الأعمال خلف`EVENT_STORE_ENABLED`، والـ Relay متوقف؛ مقارنة السجل بالتتبع.
+3. Backfill اختياري محدود ومتساوي الأثر للأحداث التاريخية.
+4. تفعيل Relay ومستهلك واحد كل مرة ومراقبة التأخر.
+5. إعادة بناء الإسقاطات ثم تحويل القراءات.
+6. جعل إلحاق الأحداث إلزاميًا وجدولة إدارة الأقسام والاحتفاظ.
 
-Additive, **zero-downtime**, Alembic-safe (`app.db.base:Base.metadata` is the target); **no retrofit** of existing `uuid4` PKs. Strictly **after M1** (tenancy: `tenant_id` + RLS + isolation test).
+الخطة تاريخية؛ **Feature Flag و Backfill وإدارة الأقسام غير منفذة حاليًا**.
 
-1. **M2.1 — Schema (additive).** Create `event_store` (UUIDv7 PK, full envelope, `UNIQUE(aggregate_id, aggregate_version)`, monthly RANGE partition on `occurred_at`) and `processed_events(consumer, event_id)`; add `published_at` semantics to the outbox path. All new tables are **tenant-scoped + RLS** (ADR-001). New tables only ⇒ no migration of existing rows.
-2. **M2.2 — Dual-write (shadow).** Behind a feature flag (`EVENT_STORE_ENABLED`), command handlers append the event row in the **same local transaction** as the aggregate write; the relay stays **off** (no publish). Validate that event rows land and reconcile counts against `shipment_tracking_events` for tracking-typed events.
-3. **M2.3 — Backfill (optional, bounded).** Replay existing `shipment_tracking_events` into `event_store` as historical events (idempotent on `event_id`) if a complete replay surface is required; tracking rows remain the user-facing slice.
-4. **M2.4 — Relay rollout.** Enable the relay/poller (publishes `published_at IS NULL` → Celery/Redis, ADR-003), **one consumer at a time**, each idempotent via `processed_events`; watch the outbox-lag Prometheus gauge.
-5. **M2.5 — Projection cutover.** Point ADR-006 projection builders at the bus, rebuild projections from the log, then switch console reads to the projections.
-6. **M2.6 — Enforce.** Once stable, make event-store append **non-optional** for new contexts; schedule partition pre-create/retention on celery-beat.
+## التراجع والتعارض الأصلي
 
-## Rollback Plan (added 2026-06-22, Phase 6.5)
+المبدأ: إيقاف النشر/الإلحاق عند الحاجة مع بقاء الحالة التشغيلية، و**عدم حذف أو تغيير تاريخ
+ملتزم**. إيقاف Relay يراكم الأحداث ويمكن استئنافه مع منع التكرار.
+اشتملت الخطة الأصلية أيضًا على تعطيل Feature Flag، وإسقاط الجداول غير المستخدمة بترحيل عكسي،
+و Truncate لإعادة Backfill. تتعارض مقترحات الحذف مع حظر حذف التاريخ، و Feature Flag غير موجود.
+لا تنفذها كدليل تشغيل؛ يلزم ADR جديد وخطة حفظ بيانات لحسم التعارض.
 
-Each step is independently reversible. The **aggregate remains the source of truth** (ADR-004), so disabling the event path never loses business state. **Rollback = stop appending/publishing, never DELETE committed events** (append-only / BR-H-24 / lossless audit).
+## المطابقة الحالية
 
-| Failure | Rollback action | Data-loss risk |
-|---|---|---|
-| Relay failure / lag spike | Stop the relay worker; rows accumulate as `published_at IS NULL`; resume after fix (consumers are at-least-once + idempotent, so replays are safe). | None |
-| Dual-write defect | Flip `EVENT_STORE_ENABLED=false`; handlers revert to aggregate-only writes; `shipment_tracking_events` keeps serving tracking. | None |
-| Schema rollback needed | With the flag off the new tables are unreferenced by live flows; drop `event_store`/`processed_events` via a down-migration; `shipments`/tracking unaffected. | None |
-| Backfill defect | Truncate backfilled historical rows and re-run (idempotent on `event_id`); projections rebuild from the canonical slice. | None (historical only) |
-
-> **Guard:** "rollback" must never mutate or delete committed event history — it only disables publication/append. Hard-delete, if ever required, applies to non-event tables only (see `event-catalog.md` CF9 correction).
-
-*Companion artifacts:* `docs/03-database-architecture.md` §6–7 · `docs/04-event-storming-and-state-machines.md` Part 6 · `docs/09a-reconciliation-and-closure.md` (Phase 6.5) · ADR-002/004/006.
+السجل الموحد و UUIDv7 للأحداث والتدقيق و Outbox و Relay و Idempotency منفذة. التجزئة غير
+منفذة؛ يشترط PostgreSQL تضمين مفتاح التقسيم في القيد الفريد، بخلاف القيد العام الحالي.
+الإسقاطات تستخدم UUIDv4 ولا ترث BaseModel. هذه فروق مسجلة دون تغيير القرار.
+المصادر التاريخية:[تصميم البيانات](../archive/03-database-architecture.md)،
+[الأحداث](../archive/04-event-storming-and-state-machines.md)،
+[تسوية 6.5](../archive/09a-reconciliation-and-closure.md).

@@ -1,89 +1,65 @@
-# Mesaar Screen Map
+# خريطة الشاشات — Mesaar
 
-Role-based screens and the states each must implement. Built on
-[`../design-system/components-index.md`](../design-system/components-index.md).
-RBAC roles map to the backend `UserRole` enum (admin / manager / driver / client);
-Operations + Dispatcher are both `manager` scoped by permission.
+تفرق الخريطة بين التنفيذ ونطاق المنتج المخطط. الأدوار الفعلية admin/manager/driver/client؛
+العمليات والإسناد كلاهما manager، ولا نظام Permissions مستقل يفرقهما حاليًا.
+المكونات في [الفهرس](../design-system/components-index.md).
 
-**Required states key:** D=default · L=loading(skeleton) · E=empty · X=error ·
-P=no-permission · DN=dense-data · M=mobile-constrained. Every data screen must ship D/L/E/X/P.
+حالات شاشة البيانات المطلوبة: Default و Loading و Empty و Error و No-permission؛ ومعالجة
+الكثافة والأجهزة الصغيرة. هذه معايير قبول مستقبلية وليست ادعاء اكتمال كل الحالات.
 
-## Driver (mobile — `driver`) — **largely shipped**
-| Screen | Route | States | Status |
-|---|---|---|---|
-| Sign in | `/auth/login` | D, X | ✅ shipped (phone +966, نفاذ, validation, error) |
-| Dashboard / task queue | `/driver/home` | D, L, E, X, M | ✅ shipped (online toggle, KPIs, offers, error/retry) |
-| Offer / order detail | `/driver/orders/[id]` | D, L, X, M | ✅ shipped (map, countdown, accept→تم قبول, ignore) |
-| Shift start | `/driver/shift` | D, X | ⏳ Phase 4 |
-| Route map (active trip) | `/driver/navigation` | D, L, X, M | ⏳ |
-| Stop detail + Pickup/POD | `/driver/stop/[id]` | D, L, X | ⏳ (POD upload, evidence_url) |
-| Issue reporting | `/driver/issue` | D, X | ⏳ (exception event) |
-| Vehicle inspection | `/driver/inspection` | D, X | ⏳ (checklist) |
-| Chat | `/driver/messages` | D, L, E, X | ⏳ |
-| Earnings / history | `/driver/performance` | D, L, E, X | ⏳ (driver_daily_stats) |
-| Documents | `/driver/documents` | D, L, E, X | ⏳ |
+## السائق
 
-## Operations / Control Tower (`manager`)
-| Screen | States | Notes |
-|---|---|---|
-| Control tower (overview) | D, L, E, X, P | KPI band + live map + exception summary |
-| Live map | D, L, X, DN | `proj_active_shipments` + driver locations |
-| Shipment board | D, L, E, X, DN | columns by `ShipmentStatus`; drag = status transition (guarded) |
-| Exception center | D, L, E, X, DN | `exception`/`failed` events; SLA-risk triage |
-| ETA / SLA risk monitor | D, L, E, X | `proj_sla_risk` vs `delivery_due_at` |
-| Capacity overview | D, L, X | `proj_warehouse_load` vs capacity |
-| Claims / incidents | D, L, E, X | incident cards |
-| AI copilot panel | D, L, X | side panel over any ops screen |
+| الشاشة | المسار | الحالة |
+| --- | --- | --- |
+| تسجيل الدخول | /auth/login | Implemented مع JWT حي؛ Mock اختياري معلن؛ نفاذ و OTP غير موصولين |
+| لوحة السائق | /driver/home | Implemented مع API حي وحالات تحميل وخطأ وفراغ وحماية الجلسة |
+| عرض الشحنة | /driver/orders/[id] | Implemented مع قبول/رفض حي؛ SVG وعدّاد في Demo عند توفر بياناتهما |
+| بدء الوردية | /driver/shift | Planned |
+| ملاحة الرحلة | /driver/navigation | Planned |
+| التوقف والاستلام/POD | /driver/stop/[id] | Planned |
+| بلاغ مشكلة | /driver/issue | Planned |
+| فحص المركبة | /driver/inspection | Planned |
+| المحادثات | /driver/messages | Planned |
+| الأرباح والسجل | /driver/performance | Planned |
+| المستندات | /driver/documents | Planned |
 
-## Dispatcher (`manager`, dispatch-scoped)
-| Screen | States | Notes |
-|---|---|---|
-| Planning board | D, L, E, X, DN | unassigned `ready` shipments |
-| Load builder | D, L, E, X | group shipments → trip |
-| Route planning | D, L, X | sequence stops, maps |
-| Assignment queue | D, L, E, X | DispatchCard: driver+vehicle eligibility (exclusivity/capacity rules from `shipment_service`) |
-| Dock scheduling | D, L, E, X, DN | warehouse slots |
-| Carrier / driver pool | D, L, E, X, DN | availability via `proj_driver_status` |
-| Comms center | D, L, E, X | broadcast/assignments |
-| Settlement review | D, L, E, X, DN | delivered → settlement |
+اختُبرت رحلة الويب الحية؛ تبقى حدود المنتج وNative موثقة في [دليل التطبيق](../mesaar-frontend/README.md).
 
-## Admin (`admin`)
-| Screen | States | Notes |
-|---|---|---|
-| Org dashboard | D, L, X, P | tenant health |
-| Users | D, L, E, X, P, DN | `/users` CRUD |
-| Roles / RBAC | D, L, X, P | role→permission matrix |
-| Tenant settings | D, X, P | shared-multitenant config (ADR-001) |
-| Integrations | D, L, E, X | maps, نفاذ, SMS, ERP |
-| Audit logs | D, L, E, X, DN | append-only audit stream |
-| Policy center | D, X | SLA/retention policies |
-| Feature flags | D, L, X | per-tenant toggles |
-| Data retention | D, X | retention windows |
-| Billing / config | D, L, X | plan config |
+## العمليات وبرج التحكم — Planned
 
-## Customer / Shipper (`client`, responsive web)
-| Screen | States | Notes |
-|---|---|---|
-| Dashboard | D, L, E, X, P | shipment summary |
-| Quote / book shipment | D, L, X | Stepper → `POST /shipments` |
-| Track shipment | D, L, E, X, M | live map + Timeline of tracking events |
-| Order detail | D, L, X | `ShipmentWithEvents` |
-| Documents | D, L, E, X | POD, invoices |
-| Notifications | D, L, E, X | — |
-| Invoices | D, L, E, X, DN | settlement |
-| Claims / support | D, L, E, X | — |
-| Address book | D, L, E, X | warehouses/locations |
-| Analytics | D, L, E, X | volume/spend |
+| الشاشة | الوظيفة |
+| --- | --- |
+| ملخص برج التحكم | مؤشرات وخريطة واستثناءات |
+| الخريطة الحية | شحنات ومواقع السائقين |
+| لوحة الشحنات | أعمدة حالة وانتقالات محروسة وبديل للسحب |
+| مركز الاستثناءات | فشل وأخطار SLA |
+| متابعة ETA/SLA | مواعيد وتوقعات؛ التنبؤ غير منفذ |
+| السعة | حمل المستودعات وحدوده |
+| المطالبات والحوادث | متابعة التأمين والتشغيل |
+| مساعد AI | اقتراحات ضمن الصلاحيات؛ غير منفذ |
 
-## Coverage summary
-| Role | Screens | Shipped | Remaining |
-|---|---|---|---|
-| Driver | 11 | 3 core | 8 (Phase 4) |
-| Operations | 8 | 0 | 8 |
-| Dispatcher | 8 | 0 | 8 |
-| Admin | 10 | 0 | 10 (CRUD APIs exist) |
-| Customer | 10 | 0 | 10 |
-| **Total** | **47** | **3** | **44** |
+جداول proj_active_shipments و proj_sla_risk و proj_warehouse_load المذكورة في مسودات الشاشة
+القديمة غير موجودة. الجداول الحالية في [قاعدة البيانات](../docs/database.md).
 
-Each remaining screen has a concrete API mapping (existing route or the planned
-endpoints in [`../docs/api-gap-analysis.md`](../docs/api-gap-analysis.md)).
+## الإسناد — Planned
+
+لوحة التخطيط، بناء الحمولة، تخطيط المسار، طابور أهلية السائق والمركبة، جدولة الأرصفة،
+مجموعة السائقين والناقلين، مركز الاتصالات، ومراجعة التسويات. مجالات الرحلة والمسار والأرصفة
+ليست منفذة لمجرد ظهورها هنا.
+
+## الإدارة — Planned
+
+لوحة المؤسسة، المستخدمون، الأدوار والصلاحيات، إعدادات المستأجر، التكاملات، سجل التدقيق،
+السياسات، Feature Flags، الاحتفاظ، والفوترة/الخطة. بعض API موجودة دون واجهات أو سياسات إدارة كاملة.
+
+## العميل — Planned
+
+الملخص، عرض السعر/الحجز، التتبع، تفاصيل الطلب، المستندات، الإشعارات، الفواتير، المطالبات/الدعم،
+دفتر العناوين، والتحليلات. افصل Order التجاري عن Shipment التنفيذي واربط كل فعل بعقد API
+وملكية المورد والصلاحية.
+
+## نطاق المواصفة
+
+47 شاشة:11 للسائق (3 موجودة و 8 مخططة)، و 8 للعمليات و 8 للإسناد و 10 للإدارة و 10 للعميل.
+هذا عدد عناصر المواصفة وليس شهادة جاهزية. راجع [الوصول](../docs/wcag-2.2-aa-checklist.md)
+و[حالة التنفيذ](../docs/status.md).
