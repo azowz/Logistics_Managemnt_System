@@ -1,4 +1,4 @@
-# Phase 6 — Final Consolidated Domain Model (Mesaar Logistics Operations Platform)
+# Phase 6 — Final Consolidated Domain Model (Logistic X Logistics Operations Platform)
 
 > **Status:** Consolidation & validation deliverable — **documentation only** (no code, SQL, ORM, or APIs). Produced 2026-06-22.
 > **Purpose:** Validate every previously-approved artifact, detect cross-document conflicts, and merge all bounded contexts into one authoritative domain model — the gate before the **Phase 7 Final ERD Review**.
@@ -85,12 +85,12 @@ Every previously-approved artifact was read in full by an independent validator 
 |---|---|---|---|---|---|
 | 1 | docs/02-architecture.md | yes | WARNING | 82 | A focused, well-structured Phase 2 architecture overview that is internally coherent and externally consistent with the codebase it claims to extend. It expl... |
 | 2 | README.md | yes | CRITICAL | 5 | The README is effectively empty: it contains a single line — the bare repository title '# Logistics_Managemnt_System' — with no description, no project visio... |
-| 3 | Phase 3 — PostgreSQL Database Architecture (Mesaar) | yes | WARNING | 86 | A thorough, design-only target-state data-tier document (no DDL/ORM, as required) that extends the as-built schema with multi-tenancy (tenant_id + RLS, nil-U... |
+| 3 | Phase 3 — PostgreSQL Database Architecture (Logistic X) | yes | WARNING | 86 | A thorough, design-only target-state data-tier document (no DDL/ORM, as required) that extends the as-built schema with multi-tenancy (tenant_id + RLS, nil-U... |
 | 4 | As-built ERD (erd.mmd) | yes | PASS | 95 | A faithful as-built Entity-Relationship diagram generated from app/models/*.py, declaring (header comment lines 1-2) that every column/constraint shown exist... |
 | 5 | Phase 4 — Event Storming, State Machines & Domain Events | yes | PASS | 88 | A 2370-line, well-structured Phase-4 design document covering 13 bounded contexts, full event-storming inventories (actors, commands, domain events, policies... |
 | 6 | Shipment State Machine (Mermaid) | yes | PASS | 96 | A 36-line Mermaid stateDiagram-v2 explicitly headed as generated from app/services/shipment_service.py::_is_transition_allowed and described as the AUTHORITA... |
 | 7 | Vehicle State Machine (Mermaid) | yes | WARNING | 78 | A 16-line Mermaid stateDiagram-v2 derived from app/models/enums.py::VehicleStatus, modeling active -> maintenance -> active, active -> decommissioned, mainte... |
-| 8 | 05-backend-architecture.md | yes | PASS | 88 | A well-structured, internally coherent Phase 5A backend architecture document for the Mesaar platform. It formalizes a Clean Architecture layering of the as-... |
+| 8 | 05-backend-architecture.md | yes | PASS | 88 | A well-structured, internally coherent Phase 5A backend architecture document for the Logistic X platform. It formalizes a Clean Architecture layering of the as-... |
 | 9 | Phase 4.5 — Architecture Audit, Validation & Phase 5 Readiness | yes | PASS | 92 | A rigorous, evidence-backed audit (Phases A–G) that explicitly separates the enterprise-grade DESIGN corpus (avg design ERS ~4.4) from the early as-built rea... |
 | 10 | Phase 5 — Execution Plan | yes | PASS | 90 | A coherent, well-sequenced execution plan derived directly from the Phase 4.5 audit, with 10 milestones (M0 gate; M1-M2 non-negotiable backbone; M3-M7 domain... |
 | 11 | Phase 5 — Heavy-Equipment Logistics Domain Design | yes | PASS | 92 | The primary design artifact for the Heavy-Equipment domain. It defines three NEW bounded contexts (#15 Equipment & Asset, #16 Compliance & Permits, #17 Insur... |
@@ -105,11 +105,11 @@ Every previously-approved artifact was read in full by an independent validator 
 | 20 | ADR-007 — UUIDv7 keys, unified Event Store, and Transactional Outbox | yes | PASS | 92 | ADR-007 is the strongest of the three: a coherent, well-cross-referenced decision that finalizes Phase 4 by locking three previously-recommended mechanics in... |
 | 21 | Event Catalog | yes | WARNING | 82 | A well-structured canonical event catalog for the implemented Shipment-centric domain. It declares the naming convention `<Aggregate><PastTenseVerb>` (line 9... |
 | 22 | Domain Glossary (Ubiquitous Language) | yes | PASS | 90 | A tight, source-grounded ubiquitous-language glossary that maps each term to a concrete `app/models/*` or `app/services/*` artifact (lines 3, 6-23), includin... |
-| 23 | System Context Diagram (C4) | yes | PASS | 85 | A clear C4-style system-context flowchart naming five actors (Admin, Operations/Manager, Dispatcher/Manager, Driver, Customer/Client; lines 4-9), the Mesaar ... |
+| 23 | System Context Diagram (C4) | yes | PASS | 85 | A clear C4-style system-context flowchart naming five actors (Admin, Operations/Manager, Dispatcher/Manager, Driver, Customer/Client; lines 4-9), the Logistic X ... |
 | 24 | Deployment Topology Diagram | yes | WARNING | 80 | A Phase-4 target deployment topology (Docker Compose locally, orchestrator in staging/prod; lines 1-2) reflecting ADR-002 (Postgres-only) and ADR-003 (Celery... |
 | 25 | Sequence: Assign through Deliver | yes | PASS | 92 | A precise, code-anchored sequence (maps to POST /shipments/{id}/assign, /status, /events in shipment_service.py; lines 1-2) covering dispatch assignment → in... |
 | 26 | Sequence: Driver Login + Nearby Offers | yes | WARNING | 88 | An honest, gap-aware authentication + nearby-offers sequence that explicitly flags starred steps as endpoints the mobile app expects but the backend does NOT... |
-| 27 | OpenAPI Spec (Mesaar Logistics Operations API) | yes | PASS | 88 | A hand-curated OpenAPI 3.1.0 contract draft (version 1.0.0-draft) that, per its own description, reflects the EXISTING routes in app/api/routes/* remounted u... |
+| 27 | OpenAPI Spec (Logistic X Logistics Operations API) | yes | PASS | 88 | A hand-curated OpenAPI 3.1.0 contract draft (version 1.0.0-draft) that, per its own description, reflects the EXISTING routes in app/api/routes/* remounted u... |
 | 28 | API Gap Analysis (Driver App ↔ FastAPI Backend) | yes | PASS | 90 | A concise, well-structured gap-analysis doc comparing endpoints the delivered driver app (mobile/src/api/driverApi.ts) expects against what the backend (app/... |
 
 #### Per-artifact detail
@@ -147,11 +147,11 @@ Path: c:\me\Logistics_Managemnt_System\docs\02-architecture.md
 Path: c:\me\Logistics_Managemnt_System\README.md  
 **Exists:** yes  ·  **Status:** CRITICAL  ·  **Consistency Score:** 5/100
 
-**Summary.** The README is effectively empty: it contains a single line — the bare repository title '# Logistics_Managemnt_System' — with no description, no project vision, no architecture summary, no tech stack, no setup/run instructions, no links to the docs/ set, and no mention of the product name used everywhere else ('Mesaar Logistics Operations Platform'). For the entry-point document of a multi-service platform (FastAPI core API, React web consoles, Expo/React-Native Arabic-RTL driver app, Celery workers, PostgreSQL) this is a critical documentation gap: a newcomer or auditor gains zero orientation from it, and it cannot serve as the de-facto Project Vision artifact the architecture doc implicitly relies on. It also carries a likely typo in the project slug ('Managemnt'). Scored CRITICAL because, while the file technically exists, it provides essentially no content and fails its primary purpose.
+**Summary.** The README is effectively empty: it contains a single line — the bare repository title '# Logistics_Managemnt_System' — with no description, no project vision, no architecture summary, no tech stack, no setup/run instructions, no links to the docs/ set, and no mention of the product name used everywhere else ('Logistic X Logistics Operations Platform'). For the entry-point document of a multi-service platform (FastAPI core API, React web consoles, Expo/React-Native Arabic-RTL driver app, Celery workers, PostgreSQL) this is a critical documentation gap: a newcomer or auditor gains zero orientation from it, and it cannot serve as the de-facto Project Vision artifact the architecture doc implicitly relies on. It also carries a likely typo in the project slug ('Managemnt'). Scored CRITICAL because, while the file technically exists, it provides essentially no content and fails its primary purpose.
 
 ---
 
-##### 1.3  Phase 3 — PostgreSQL Database Architecture (Mesaar)
+##### 1.3  Phase 3 — PostgreSQL Database Architecture (Logistic X)
 Path: c:/me/Logistics_Managemnt_System/docs/03-database-architecture.md  
 **Exists:** yes  ·  **Status:** WARNING  ·  **Consistency Score:** 86/100
 
@@ -285,7 +285,7 @@ Path: c:\me\Logistics_Managemnt_System\docs\diagrams\vehicle-state-machine.mmd
 Path: c:\me\Logistics_Managemnt_System\docs\05-backend-architecture.md  
 **Exists:** yes  ·  **Status:** PASS  ·  **Consistency Score:** 88/100
 
-**Summary.** A well-structured, internally coherent Phase 5A backend architecture document for the Mesaar platform. It formalizes a Clean Architecture layering of the as-built app/ FastAPI package using a numbered-rank dependency model (rank 0 Foundation up to rank 4 Composition root), an explicit allowed-dependency matrix, forbidden-dependency rules, and one documented inward-coupling exception (core/security -> models/repositories for get_current_user/require_roles, sec. 3.4). It scrupulously distinguishes EXISTS modules from PLANNED (P) ones across folder tree, aggregate ownership, repository ownership, service ownership, API ownership, and package responsibilities. The implemented domain matches the ground truth: Shipment is the aggregate root with an 8-state transition map + assignment exclusivity; User/Driver/Vehicle/Warehouse and the append-only ShipmentTrackingEvent EXIST; Tenant/Order/Customer/Route/EventStore/Billing/Notification/AI are all explicitly PLANNED or NOT-YET-DESIGNED. The doc is strong on layering, boundaries, and Alembic-safety constraints. The main weaknesses are citation inconsistencies (event store/outbox attributed to ADR-004 here vs. the repo's ADR-007 filename), a context-count drift (it references '13 bounded contexts' from doc 04 while the Phase 6 instruction claims 17, neither of which is enumerated here), and the fact that nearly all cross-cutting concerns it leans on (events/, projections/, integrations/, tenancy GUC/RLS, event store) are still PLANNED rather than built.
+**Summary.** A well-structured, internally coherent Phase 5A backend architecture document for the Logistic X platform. It formalizes a Clean Architecture layering of the as-built app/ FastAPI package using a numbered-rank dependency model (rank 0 Foundation up to rank 4 Composition root), an explicit allowed-dependency matrix, forbidden-dependency rules, and one documented inward-coupling exception (core/security -> models/repositories for get_current_user/require_roles, sec. 3.4). It scrupulously distinguishes EXISTS modules from PLANNED (P) ones across folder tree, aggregate ownership, repository ownership, service ownership, API ownership, and package responsibilities. The implemented domain matches the ground truth: Shipment is the aggregate root with an 8-state transition map + assignment exclusivity; User/Driver/Vehicle/Warehouse and the append-only ShipmentTrackingEvent EXIST; Tenant/Order/Customer/Route/EventStore/Billing/Notification/AI are all explicitly PLANNED or NOT-YET-DESIGNED. The doc is strong on layering, boundaries, and Alembic-safety constraints. The main weaknesses are citation inconsistencies (event store/outbox attributed to ADR-004 here vs. the repo's ADR-007 filename), a context-count drift (it references '13 bounded contexts' from doc 04 while the Phase 6 instruction claims 17, neither of which is enumerated here), and the fact that nearly all cross-cutting concerns it leans on (events/, projections/, integrations/, tenancy GUC/RLS, event store) are still PLANNED rather than built.
 
 **Risks:**
 - Citation mismatch: event store/outbox is attributed to ADR-004 throughout (lines 11, 103, 246, 275, 358-359, 372) and CQRS-lite to 'ADR-004/006' (line 371), but the repository also contains ADR-007-uuidv7-event-store-outbox.md; per ground-truth rules the append-only event store/outbox is ADR-007. The doc's references stop at 'ADR-001...006' (lines 13, 381) and never mention ADR-007/008/009.
@@ -395,7 +395,7 @@ Path: c:\me\Logistics_Managemnt_System\docs\08-heavy-equipment-domain-design.md
 
 **Risks:**
 - The doc states 'No orphans/unreachable: every state in Part 6 is entered and exited by an event above' but the Equipment lifecycle Mermaid shows transitions (e.g. 'Available --> Maintenance : MaintenanceStarted', 'Delivered --> Available : one-way move, accepted on site', 'Reserved --> Assigned') whose backing events are not all 1:1 present in the Part 7 catalog as distinct rows (e.g. an explicit 'reservation-expire' command vs EquipmentReservationReleased) — the no-orphan claim is asserted, not exhaustively proven
-- Equipment lifecycle has two exits to terminal [*]: 'Delivered --> [*] (one-way ownership transfer)' AND 'OutOfService --> [*]'. A unit that takes the one-way Delivered->[*] path leaves Mesaar custody, which could conflict with the reservation/availability projection if not handled; the doc notes it but does not specify projection cleanup
+- Equipment lifecycle has two exits to terminal [*]: 'Delivered --> [*] (one-way ownership transfer)' AND 'OutOfService --> [*]'. A unit that takes the one-way Delivered->[*] path leaves Logistic X custody, which could conflict with the reservation/availability projection if not handled; the doc notes it but does not specify projection cleanup
 - Cross-aggregate saga (reserve -> shipment -> rental bind) is acknowledged as needing idempotency/outbox but no saga design, timeout, or compensation table is provided here (deferred to build)
 - 'Insurance & Claims (#17)' is described inconsistently in type: header says 'Core/Supporting · NEW' (a dual label) while ADR-008 lists it among Core-deep contexts — minor classification ambiguity
 - Jurisdiction permit/route data sourcing, ACL contracts, and PostGIS promotion are explicitly OPEN/deferred — a real dependency risk for the Hard-rule compliance gating that the design relies on
@@ -713,7 +713,7 @@ Path: c:\me\Logistics_Managemnt_System\docs\domain-glossary.md
 Path: c:\me\Logistics_Managemnt_System\docs\diagrams\context.mmd  
 **Exists:** yes  ·  **Status:** PASS  ·  **Consistency Score:** 85/100
 
-**Summary.** A clear C4-style system-context flowchart naming five actors (Admin, Operations/Manager, Dispatcher/Manager, Driver, Customer/Client; lines 4-9), the Mesaar platform internals (Web Consoles, Driver Mobile App marked DELIVERED, FastAPI Core API /v1 JWT RBAC DDD/Clean, Celery Async Workers for ETA/SLA/settlement, Read Models/Projections, PostgreSQL with append-only events, Domain Event Bus; lines 11-20), and four external systems (Maps/Routing, Nafath National SSO, SMS/Push, ERP/Billing Settlement; lines 22-27). Data flows are coherent: api→db, api→bus→worker/projections, projections→db (lines 35-42). It is internally consistent with the event catalog (bus→workers+projections matches ADR-003/006) and deployment topology. The notable inconsistency dragging the score is a cross-diagram conflict on Nafath SSO: here the mobile app talks to Nafath (`mobile -. SSO .-> nafath`, line 45), but the driver-login sequence shows only email/password JWT auth with OTP merely 'planned' and never mentions Nafath, so the SSO integration appears aspirational/unbuilt yet drawn as a live edge.
+**Summary.** A clear C4-style system-context flowchart naming five actors (Admin, Operations/Manager, Dispatcher/Manager, Driver, Customer/Client; lines 4-9), the Logistic X platform internals (Web Consoles, Driver Mobile App marked DELIVERED, FastAPI Core API /v1 JWT RBAC DDD/Clean, Celery Async Workers for ETA/SLA/settlement, Read Models/Projections, PostgreSQL with append-only events, Domain Event Bus; lines 11-20), and four external systems (Maps/Routing, Nafath National SSO, SMS/Push, ERP/Billing Settlement; lines 22-27). Data flows are coherent: api→db, api→bus→worker/projections, projections→db (lines 35-42). It is internally consistent with the event catalog (bus→workers+projections matches ADR-003/006) and deployment topology. The notable inconsistency dragging the score is a cross-diagram conflict on Nafath SSO: here the mobile app talks to Nafath (`mobile -. SSO .-> nafath`, line 45), but the driver-login sequence shows only email/password JWT auth with OTP merely 'planned' and never mentions Nafath, so the SSO integration appears aspirational/unbuilt yet drawn as a live edge.
 
 **Risks:**
 - Cross-diagram conflict: context shows mobile→Nafath SSO as an active integration (line 45), but sequence-driver-login.mmd uses email/password JWT with OTP only 'planned' and no Nafath; Nafath is not marked planned/dashed-as-future, risking overstated readiness.
@@ -816,7 +816,7 @@ Path: c:\me\Logistics_Managemnt_System\docs\diagrams\sequence-driver-login.mmd
 
 ---
 
-##### 1.27  OpenAPI Spec (Mesaar Logistics Operations API)
+##### 1.27  OpenAPI Spec (Logistic X Logistics Operations API)
 Path: c:\me\Logistics_Managemnt_System\api\openapi.yaml  
 **Exists:** yes  ·  **Status:** PASS  ·  **Consistency Score:** 88/100
 
@@ -2262,7 +2262,7 @@ Source: `docs/08` §6.1. DESIGNED, not built. Complementary to (not replacing) t
 | `Maintenance` | `Available` | `EquipmentMaintenanceCompleted` (`.mmd` label `MaintenanceCompleted`) |
 | `Available` | `OutOfService` | decommission / write-off (`EquipmentDecommissioned`) |
 | `Maintenance` | `OutOfService` | write-off |
-| `Delivered` | `[*]` | one-way ownership transfer (out of Mesaar custody) |
+| `Delivered` | `[*]` | one-way ownership transfer (out of Logistic X custody) |
 | `OutOfService` | `[*]` | terminal |
 
 #### Invalid Transitions

@@ -39,7 +39,7 @@ A second full review against the M2 brief uncovered four gaps in the original de
 | **`register_event` decorator** | `app/events/__init__.py` + `app/events/registry.py` | **G-4 closed**: importable from `app.events` |
 | Pluggable Event Bus | `app/events/bus.py` | `EventBus` ABC + `InProcessEventBus`; Kafka/NATS/RabbitMQ implement the same interface |
 | Dispatcher (internal/retry/DLQ) | `app/events/dispatcher.py` | idempotent; SAVEPOINT-isolated; bounded backoff; dead-letters poison messages |
-| Async relay (outbox→bus) | `app/events/relay.py` + `mesaar.relay_outbox` task | per-event tenant-scoped transaction; transport retry + DLQ; **relay state upserted** |
+| Async relay (outbox→bus) | `app/events/relay.py` + `logistic_x.relay_outbox` task | per-event tenant-scoped transaction; transport retry + DLQ; **relay state upserted** |
 | Projection engine + rebuild | `app/projections/engine.py` | `Projection` base + `ProjectionRebuilder` (replay by tenant/aggregate) |
 | Audit integration | repository `append(write_audit=True)` → `audit_log` (action `E`) | every domain event mirrored to the immutable audit log |
 | Replay | repository `replay_*` + rebuilder | by aggregate / tenant / date / event type |

@@ -1,4 +1,4 @@
-# M2 Readiness Report — Enterprise Event Backbone (Mesaar)
+# M2 Readiness Report — Enterprise Event Backbone (Logistic X)
 
 > **Type:** Pre-implementation gate review (M2). **Documentation only.** Produced 2026-06-22.
 > **Outcome:** ⚠ **CONDITIONALLY READY — STOP for two prerequisite corrections before building the event store.** Two approved-architecture dependencies that M2 *itself* relies on are not yet implemented. Per the M2 brief ("Never continue with known architectural debt"), these must be corrected first. Details in §3–§5.

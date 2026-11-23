@@ -1,4 +1,4 @@
-# Phase 5 — Execution Plan (Mesaar)
+# Phase 5 — Execution Plan (Logistic X)
 
 Status: **Execution planning only.** No implementation code, APIs, or migrations in this document.
 Derived from the Phase 4.5 audit ([`06-architecture-audit-and-readiness.md`](06-architecture-audit-and-readiness.md))

@@ -1,4 +1,4 @@
-# خريطة الشاشات — Mesaar
+# خريطة الشاشات — Logistic X
 
 تفرق الخريطة بين التنفيذ ونطاق المنتج المخطط. الأدوار الفعلية admin/manager/driver/client؛
 العمليات والإسناد كلاهما manager، ولا نظام Permissions مستقل يفرقهما حاليًا.
@@ -23,7 +23,7 @@
 | الأرباح والسجل | /driver/performance | Planned |
 | المستندات | /driver/documents | Planned |
 
-اختُبرت رحلة الويب الحية؛ تبقى حدود المنتج وNative موثقة في [دليل التطبيق](../mesaar-frontend/README.md).
+اختُبرت رحلة الويب الحية؛ تبقى حدود المنتج وNative موثقة في [دليل التطبيق](../logistic-x-frontend/README.md).
 
 ## العمليات وبرج التحكم — Planned
 

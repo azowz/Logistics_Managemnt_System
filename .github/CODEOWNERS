@@ -1,9 +1,9 @@
-# Default owners. Once the mesaar organization has teams, replace these with
-# team handles, e.g. /mesaar-backend/ @mesaar/backend
+# Default owners. Once the logistic_x organization has teams, replace these with
+# team handles, e.g. /logistic-x-backend/ @logistic_x/backend
 *                   @azowz
 
-/mesaar-backend/    @azowz
-/mesaar-frontend/   @azowz
+/logistic-x-backend/    @azowz
+/logistic-x-frontend/   @azowz
 /contracts/         @azowz
 /design-system/     @azowz
 /docs/              @azowz

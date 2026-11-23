@@ -69,11 +69,11 @@ TypeScript 5.3.3. مجموعة SDK51 متوافقة داخليًا؛ يوثق [�
 1. بعد إعادة البناء كان عداد الشحنات 1، ثم أصبح 2 عند معالجة الحدث المعلق نفسه.
 2. دفعة حالتها `pending` أصدرت `PaymentRecorded` بلا حالة، واحتسب الإسقاط مبلغها إيرادًا.
 
-مراجع التنفيذ: [المصادقة](../mesaar-backend/app/core/security.py)، [مسارات الشحنات](../mesaar-backend/app/api/routes/shipments.py)،
-[خدمة الشحنات](../mesaar-backend/app/services/shipment_service.py)، [Relay](../mesaar-backend/app/events/relay.py)،
-[تسليم Webhooks](../mesaar-backend/app/services/integration_service.py)،
-[الإسقاطات](../mesaar-backend/app/services/projection_service.py)، [الدفعات](../mesaar-backend/app/services/billing_service.py)،
-[عميل الجوال](../mesaar-frontend/src/api/client.ts).
+مراجع التنفيذ: [المصادقة](../logistic-x-backend/app/core/security.py)، [مسارات الشحنات](../logistic-x-backend/app/api/routes/shipments.py)،
+[خدمة الشحنات](../logistic-x-backend/app/services/shipment_service.py)، [Relay](../logistic-x-backend/app/events/relay.py)،
+[تسليم Webhooks](../logistic-x-backend/app/services/integration_service.py)،
+[الإسقاطات](../logistic-x-backend/app/services/projection_service.py)، [الدفعات](../logistic-x-backend/app/services/billing_service.py)،
+[عميل الجوال](../logistic-x-frontend/src/api/client.ts).
 
 ## حدود التكليف المستلم
 
@@ -84,4 +84,4 @@ TypeScript 5.3.3. مجموعة SDK51 متوافقة داخليًا؛ يوثق [�
 التحقق والتحليل وتحديث حقيقة حالة الجوال في التوثيق.
 
 نسخة البداية والسجلات في:
-`C:/Users/abdul/AppData/Local/Temp/mesaar-readiness-20261018-ibkzqlgu/`.
+`C:/Users/abdul/AppData/Local/Temp/logistic-x-readiness-20261018-ibkzqlgu/`.

@@ -102,7 +102,7 @@ bookkeeping, not dashboard figures).
   `GET /analytics/projections/health` so operators decide when a rebuild is
   warranted.
 
-The sweep runs on celery-beat every 5 minutes (`mesaar.projection_health_check`,
+The sweep runs on celery-beat every 5 minutes (`logistic_x.projection_health_check`,
 overlap-guarded), mirroring the outbox relay's tenant model: the tenant list is read
 under platform scope, each tenant's rows updated inside that tenant's own RLS-scoped
 transaction, and one tenant's failure is logged and skipped so it cannot stall the rest.

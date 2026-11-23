@@ -1,14 +1,14 @@
 # دليل التطوير
 
-كل أوامر Python وCompose الخلفية أدناه تُنفذ من `mesaar-backend/` بعد الفصل.
-للتطبيق المستقل وأوامر البناء والاختبار راجع [دليل الواجهة](../mesaar-frontend/README.md).
+كل أوامر Python وCompose الخلفية أدناه تُنفذ من `logistic-x-backend/` بعد الفصل.
+للتطبيق المستقل وأوامر البناء والاختبار راجع [دليل الواجهة](../logistic-x-frontend/README.md).
 
 ## 1. المتطلبات
 
 - Python 3.11 في CI وصورة Docker؛ اختُبر التطوير المحلي على Python 3.12.10.
 - PostgreSQL 16 وRedis 7 (عبر `docker compose up -d --wait db redis` أو تثبيت محلي).
 - اعتماديات التطوير والاختبار والجودة في `requirements-dev.txt` وتشمل اعتماديات التشغيل.
-- لتطبيق السائق: Node.js وnpm (انظر [mobile/README.md](../mesaar-frontend/README.md)).
+- لتطبيق السائق: Node.js وnpm (انظر [mobile/README.md](../logistic-x-frontend/README.md)).
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
@@ -39,18 +39,18 @@ $env:DEBUG = "false"
 
 | المتغير | الافتراضي | ملاحظات |
 | --- | --- | --- |
-| `DATABASE_URL` | `postgresql+psycopg2://postgres:postgres@localhost:5432/logistics` | المثال: `mesaar_app:mesaar_app@localhost:5432/mesaar`؛ يحتاج Bootstrap وفق operations.md |
+| `DATABASE_URL` | `postgresql+psycopg2://postgres:postgres@localhost:5432/logistics` | المثال: `logistic_x_app:logistic_x_app@localhost:5432/logistic_x`؛ يحتاج Bootstrap وفق operations.md |
 | `SECRET_KEY` | `change-this-secret-key` | 32 حرفًا على الأقل؛ يوقّع JWT ويشتق مفتاح تشفير أسرار Webhooks. مرفوض في الإنتاج إن بدأ بـ `change-me`/`change-this` |
 | `ENVIRONMENT` | `development` | `development`، `staging`، `production`، `test` |
 | `DEBUG` | `false` | |
-| `APP_NAME` / `APP_VERSION` | `Mesaar Logistics Operations API` / `1.0.0` | |
+| `APP_NAME` / `APP_VERSION` | `Logistic X Logistics Operations API` / `1.0.0` | |
 | `API_V1_PREFIX` | `/v1` | |
 | `CORS_ORIGINS` | أصول localhost و127.0.0.1 على 8081 | JSON array أو قائمة مفصولة بفواصل؛ أصول HTTPS صريحة للنشر و`*` مرفوض في الإنتاج |
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `60` (5–1440) | المثال: 30 |
 | `REFRESH_TOKEN_EXPIRE_MINUTES` | `20160` (14 يومًا) | |
 | `TOKEN_ALGORITHM` | `HS256` | القيمة الوحيدة المسموحة |
 | `BCRYPT_WORK_FACTOR` | `12` (8–16) | |
-| `JWT_ISSUER` / `JWT_AUDIENCE` | `mesaar` / `mesaar-clients` | معرّفة في الإعدادات لكن لا تُضاف ولا يُتحقق منها في التوكنات حاليًا |
+| `JWT_ISSUER` / `JWT_AUDIENCE` | `logistic_x` / `logistic-x-clients` | معرّفة في الإعدادات لكن لا تُضاف ولا يُتحقق منها في التوكنات حاليًا |
 | `LOG_LEVEL` / `LOG_JSON` | `INFO` / `true` | اجعل `LOG_JSON=false` للتطوير المحلي |
 | `REQUEST_ID_HEADER` / `TENANT_HEADER` | `X-Request-ID` / `X-Tenant-ID` | |
 | `PROMETHEUS_ENABLED` | `true` | |
@@ -89,10 +89,10 @@ python -m pytest -q
 
 ```bash
 # مثال: Cluster مؤقت معزول على منفذ مختلف
-initdb -D /tmp/mesaar-pg -U postgres -A trust && pg_ctl -D /tmp/mesaar-pg -o "-p 55432" -w start
-psql -h localhost -p 55432 -U postgres -c "CREATE ROLE mesaar_app LOGIN PASSWORD 'mesaar_app' NOSUPERUSER NOBYPASSRLS;" \
-     -c "CREATE DATABASE mesaar OWNER mesaar_app;"
-export DATABASE_URL=postgresql+psycopg2://mesaar_app:mesaar_app@localhost:55432/mesaar
+initdb -D /tmp/logistic-x-pg -U postgres -A trust && pg_ctl -D /tmp/logistic-x-pg -o "-p 55432" -w start
+psql -h localhost -p 55432 -U postgres -c "CREATE ROLE logistic_x_app LOGIN PASSWORD 'logistic_x_app' NOSUPERUSER NOBYPASSRLS;" \
+     -c "CREATE DATABASE logistic_x OWNER logistic_x_app;"
+export DATABASE_URL=postgresql+psycopg2://logistic_x_app:logistic_x_app@localhost:55432/logistic_x
 export TEST_DATABASE_URL=$DATABASE_URL
 python -m pytest -q
 ```

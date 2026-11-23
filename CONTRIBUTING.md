@@ -1,11 +1,11 @@
-# Contributing to Mesaar
+# Contributing to Logistic X
 
 ## Repository layout
 
 | Path | What lives there |
 | --- | --- |
-| `mesaar-backend` | FastAPI API, Celery workers, Alembic migrations, tests |
-| `mesaar-frontend` | Arabic-first RTL driver app (Expo / React Native) |
+| `logistic-x-backend` | FastAPI API, Celery workers, Alembic migrations, tests |
+| `logistic-x-frontend` | Arabic-first RTL driver app (Expo / React Native) |
 | `contracts` | Published API contract (`openapi.json`) shared by both apps |
 | `design-system`, `ui` | Design tokens, component catalog and screen map |
 | `docs` | Product, architecture and domain specifications, ADRs, diagrams |

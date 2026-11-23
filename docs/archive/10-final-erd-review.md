@@ -1,4 +1,4 @@
-# Final Database Review & Freeze — Mesaar Logistics Operations Platform
+# Final Database Review & Freeze — Logistic X Logistics Operations Platform
 
 > **Document type:** Mandatory production-grade Database Freeze review (banking/enterprise discipline). **Documentation only** — no implementation code, SQLAlchemy models, SQL, or migrations are produced here.
 > **Date:** 2026-06-22. **Supersedes** the Phase-7 freeze; **reflects the as-built reality after milestone M1** (multi-tenancy + RLS is now implemented on disk, migration `0003_multi_tenancy_rls`).
@@ -9,7 +9,7 @@
 
 ## 1. Executive Summary
 
-Mesaar's data architecture is a **design-strong, build-early** system. The design corpus (ERD, tenancy, event store, projections, AI substrate, indexing, audit) is enterprise-grade, internally consistent, and — after the Phase-6.5 closures — free of unresolved **design** conflicts. As of M1, the **multi-tenant foundation is genuinely implemented**: a `tenants` table, `tenant_id` on every aggregate, per-tenant composite uniques, and Row-Level Security policies (migration `0003`) are on disk and pass model/migration verification.
+Logistic X's data architecture is a **design-strong, build-early** system. The design corpus (ERD, tenancy, event store, projections, AI substrate, indexing, audit) is enterprise-grade, internally consistent, and — after the Phase-6.5 closures — free of unresolved **design** conflicts. As of M1, the **multi-tenant foundation is genuinely implemented**: a `tenants` table, `tenant_id` on every aggregate, per-tenant composite uniques, and Row-Level Security policies (migration `0003`) are on disk and pass model/migration verification.
 
 However, a rigorous review surfaces **real as-built gaps and operational risks** that must gate production go-live — most importantly that **Row-Level Security is silently bypassed when the application connects as a PostgreSQL superuser** (which the default configuration does), the **RLS cross-tenant isolation test has not yet been executed against PostgreSQL**, and the **`docs/03` §0 lifecycle columns (`version`, `created_by`, `updated_by`, `deleted_at`, `currency_code`) were not delivered by M1** — leaving the aggregates without optimistic-concurrency control, soft-delete, or actor-audit columns that the design (and the event-store concurrency model) depend on.
 

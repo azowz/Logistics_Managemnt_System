@@ -1,4 +1,4 @@
-# Phase 4 — Event Storming, State Machines & Domain Events (Mesaar)
+# Phase 4 — Event Storming, State Machines & Domain Events (Logistic X)
 
 Status: **Draft for approval.** Models the business behavior of the platform before backend implementation. Extends — and never contradicts — Phases 1–3 and ADR-001…006. Architecture documentation only (no code, SQL, or ORM).
 
@@ -31,7 +31,7 @@ Status: **Draft for approval.** Models the business behavior of the platform bef
 
 ## Part 1 — Bounded Contexts & Context Map
 
-Status: **Draft for approval (Phase 4).** This section formalizes the Mesaar domain into 13 bounded contexts, classifies each as a subdomain, and pins the integration relationships between them. It does not redesign any approved Phase 1–3 decision: the Shipment state machine, exclusivity/capacity/eligibility invariants, tenancy (ADR-001), the event model (ADR-004), projections (ADR-006), and the event store/outbox in `docs/03-database-architecture.md` (§6–7) are authoritative and merely elaborated here behaviorally. Contexts are marked **EXISTS** (already in `app/models` + `app/services`) or **NEW** (target design, consistent with `docs/02-architecture.md`).
+Status: **Draft for approval (Phase 4).** This section formalizes the Logistic X domain into 13 bounded contexts, classifies each as a subdomain, and pins the integration relationships between them. It does not redesign any approved Phase 1–3 decision: the Shipment state machine, exclusivity/capacity/eligibility invariants, tenancy (ADR-001), the event model (ADR-004), projections (ADR-006), and the event store/outbox in `docs/03-database-architecture.md` (§6–7) are authoritative and merely elaborated here behaviorally. Contexts are marked **EXISTS** (already in `app/models` + `app/services`) or **NEW** (target design, consistent with `docs/02-architecture.md`).
 
 ## 1. Bounded contexts (canonical inventory)
 
@@ -410,7 +410,7 @@ Event names are canonical (`<Aggregate><PastTenseVerb>`; integration events `*In
 
 ## Part 2 — Event Storming
 
-Status: **Draft for approval.** This section reconstructs the Mesaar domain as a Big-Picture / Process-Level Event Storming board. It is behavioral elaboration of the authoritative model — the shipment 8-state machine (`shipment_service.py`), exclusivity/capacity/eligibility guards, tenancy (ADR-001), the event model (ADR-004), and the event store (docs/03 §7) are **not redesigned here**. Existing contexts are marked **EXISTS**; target contexts are marked **NEW**. Reconciliation rules are applied throughout: `ShipmentPickedUp` is the `assigned → in_transit` transition (no separate "PickedUp" node), `ShipmentDelayed` is an SLA **overlay** policy (never a core state node), and a declined offer leaves the shipment **READY** with no state mutation.
+Status: **Draft for approval.** This section reconstructs the Logistic X domain as a Big-Picture / Process-Level Event Storming board. It is behavioral elaboration of the authoritative model — the shipment 8-state machine (`shipment_service.py`), exclusivity/capacity/eligibility guards, tenancy (ADR-001), the event model (ADR-004), and the event store (docs/03 §7) are **not redesigned here**. Existing contexts are marked **EXISTS**; target contexts are marked **NEW**. Reconciliation rules are applied throughout: `ShipmentPickedUp` is the `assigned → in_transit` transition (no separate "PickedUp" node), `ShipmentDelayed` is an SLA **overlay** policy (never a core state node), and a declined offer leaves the shipment **READY** with no state mutation.
 
 ### 2.1 Legend (Event Storming notation)
 
@@ -787,7 +787,7 @@ stateDiagram-v2
 
 ## Part 3 — Domain Event Catalog
 
-This catalog enumerates **every** canonical domain and integration event across the 13 bounded contexts of Mesaar. It is authoritative for Phase 4 and is consistent with `docs/event-catalog.md` (Shipment producer/consumer mappings), ADR-004 (CQRS-lite event model), ADR-006 (projection read-models), and the event store / transactional outbox designed in `docs/03-database-architecture.md` sections 6 (Audit) and 7 (Event Store). It does **not** redesign those decisions; it elaborates them behaviorally.
+This catalog enumerates **every** canonical domain and integration event across the 13 bounded contexts of Logistic X. It is authoritative for Phase 4 and is consistent with `docs/event-catalog.md` (Shipment producer/consumer mappings), ADR-004 (CQRS-lite event model), ADR-006 (projection read-models), and the event store / transactional outbox designed in `docs/03-database-architecture.md` sections 6 (Audit) and 7 (Event Store). It does **not** redesign those decisions; it elaborates them behaviorally.
 
 ### 3.0 Event envelope and conventions (stated once)
 
@@ -1107,7 +1107,7 @@ All other events listed in sections 3.1–3.13 are **internal domain events** co
 
 ## Part 4 — State Machines
 
-This section specifies the lifecycle state machines for the five lifecycle-bearing aggregates in Mesaar: **Order**, **Shipment**, **Driver**, **Vehicle**, and **Route**. For each entity we give (1) a States table, (2) an Allowed Transitions table, (3) explicit Invalid Transitions with the invariant that forbids them, (4) Business Rules / guards, (5) Exceptions & compensations, and (6) a Mermaid `stateDiagram-v2`.
+This section specifies the lifecycle state machines for the five lifecycle-bearing aggregates in Logistic X: **Order**, **Shipment**, **Driver**, **Vehicle**, and **Route**. For each entity we give (1) a States table, (2) an Allowed Transitions table, (3) explicit Invalid Transitions with the invariant that forbids them, (4) Business Rules / guards, (5) Exceptions & compensations, and (6) a Mermaid `stateDiagram-v2`.
 
 Authority and drift policy:
 
@@ -1746,7 +1746,7 @@ flowchart TB
 
 ## Part 6 — Event Store Design
 
-This section **elaborates** — never redesigns — the event store and transactional outbox already specified in [`docs/03-database-architecture.md`](../03-database-architecture.md) §6–§7 and ADR-001/002/003/004/005/006. It is the behavioral companion to that schema: it explains *how the structures defined there are written, read, replayed, and projected* in the Mesaar platform. Everything here is **CQRS-lite (ADR-004), not full event sourcing** — the relational aggregate row is the source of truth for current state; `event_store` is the durable, append-only record of *what happened* and the **transactional outbox** that feeds Celery consumers and projection builders. (Tenant isolation leans on ADR-001 in §6.1; additive payload evolution leans on ADR-005 in §6.3.)
+This section **elaborates** — never redesigns — the event store and transactional outbox already specified in [`docs/03-database-architecture.md`](../03-database-architecture.md) §6–§7 and ADR-001/002/003/004/005/006. It is the behavioral companion to that schema: it explains *how the structures defined there are written, read, replayed, and projected* in the Logistic X platform. Everything here is **CQRS-lite (ADR-004), not full event sourcing** — the relational aggregate row is the source of truth for current state; `event_store` is the durable, append-only record of *what happened* and the **transactional outbox** that feeds Celery consumers and projection builders. (Tenant isolation leans on ADR-001 in §6.1; additive payload evolution leans on ADR-005 in §6.3.)
 
 > **One sentence to anchor the whole section:** the state change *and* its event row are written in **one local transaction**; a relay then publishes asynchronously; consumers dedupe by `event_id`; projections are disposable folds of the log. The aggregate is never reconstructed from events — only **projections** are.
 
@@ -1754,7 +1754,7 @@ This section **elaborates** — never redesigns — the event store and transact
 
 ## 6.1 Event Store Structure — the envelope
 
-Every domain event in Mesaar is a row in `event_store` (partitioned monthly by `occurred_at`, ADR-002). The **envelope** is the fixed set of columns wrapping the variable `payload` JSONB. These fields are canonical (per CANONICAL SPEC and `docs/03` §7.2) and identical for every aggregate type.
+Every domain event in Logistic X is a row in `event_store` (partitioned monthly by `occurred_at`, ADR-002). The **envelope** is the fixed set of columns wrapping the variable `payload` JSONB. These fields are canonical (per CANONICAL SPEC and `docs/03` §7.2) and identical for every aggregate type.
 
 | Envelope field | Type | Role | Notes |
 |---|---|---|---|
@@ -1777,7 +1777,7 @@ Every domain event in Mesaar is a row in `event_store` (partitioned monthly by `
 
 ## 6.2 Aggregate Streams — the stream is the aggregate
 
-A **stream** is the totally-ordered sequence of events sharing one `aggregate_id`. There is no global order across streams, and Mesaar deliberately does not need one (`docs/03` §7.3) — every consumer reasons **per aggregate**.
+A **stream** is the totally-ordered sequence of events sharing one `aggregate_id`. There is no global order across streams, and Logistic X deliberately does not need one (`docs/03` §7.3) — every consumer reasons **per aggregate**.
 
 | Property | Mechanism | Consequence |
 |---|---|---|
@@ -1840,7 +1840,7 @@ Replay is **bounded and cheap** (`docs/03` §7.4): it is how a *new* read model 
 
 ## 6.6 Snapshot Strategy — the aggregate row *is* the snapshot
 
-In full event sourcing, snapshots avoid re-folding huge streams to get current state. **Mesaar is CQRS-lite, so the relational aggregate row already is the live, always-current snapshot** — no aggregate fold, no snapshot cadence needed for state.
+In full event sourcing, snapshots avoid re-folding huge streams to get current state. **Logistic X is CQRS-lite, so the relational aggregate row already is the live, always-current snapshot** — no aggregate fold, no snapshot cadence needed for state.
 
 | Concern | CQRS-lite answer |
 |---|---|
@@ -2346,7 +2346,7 @@ flowchart TD
 
 ## 8.9 Summary
 
-The Mesaar event store is, by design, a **training stream**; the projections are a **feature surface**; and `ml_predictions.actual_outcome` is the **feedback loop**. The AI Operations context (13) is a Core differentiator that consumes all of this **read-only and tenant-scoped**, emits its canonical events (`PredictionRequested`, `PredictionGenerated`, `ModelFeedbackRecorded`, `AnomalyDetected`), and writes predictions as **overlays and Soft constraints only** — the authoritative 8-state shipment machine, the Hard exclusivity/capacity/eligibility invariants, and the immutable-log guarantees of §6/§7 remain untouched.
+The Logistic X event store is, by design, a **training stream**; the projections are a **feature surface**; and `ml_predictions.actual_outcome` is the **feedback loop**. The AI Operations context (13) is a Core differentiator that consumes all of this **read-only and tenant-scoped**, emits its canonical events (`PredictionRequested`, `PredictionGenerated`, `ModelFeedbackRecorded`, `AnomalyDetected`), and writes predictions as **overlays and Soft constraints only** — the authoritative 8-state shipment machine, the Hard exclusivity/capacity/eligibility invariants, and the immutable-log guarantees of §6/§7 remain untouched.
 
 ---
 

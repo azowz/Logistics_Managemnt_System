@@ -48,8 +48,8 @@
 ```http
 POST /v1/integrations/inbound/events
 Authorization: Bearer <partner_api_key>
-X-Mesaar-Timestamp: <unix seconds>
-X-Mesaar-Signature: sha256=<hex HMAC-SHA256(key=api_key, msg="{timestamp}.{raw_body}")>
+X-Logistic-X-Timestamp: <unix seconds>
+X-Logistic-X-Signature: sha256=<hex HMAC-SHA256(key=api_key, msg="{timestamp}.{raw_body}")>
 Content-Type: application/json
 
 {"idempotency_key": "...", "event_type": "order.updated", "payload": {...}}
@@ -61,7 +61,7 @@ Content-Type: application/json
   `signature_valid=false` (سلوك حالي موثق في [status.md](status.md)).
 - `idempotency_key` يمنع التكرار ضمن مفتاح API نفسه والمستأجر؛ تدوير المفتاح يغير النطاق.
 
-**Webhooks الصادرة** تُرسل بترويسة `X-Mesaar-Signature: sha256=<HMAC(secret, body)>` (بدون طابع زمني).
+**Webhooks الصادرة** تُرسل بترويسة `X-Logistic-X-Signature: sha256=<HMAC(secret, body)>` (بدون طابع زمني).
 
 ## 3. الأدوار والصلاحيات
 

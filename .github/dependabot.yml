@@ -1,13 +1,13 @@
 version: 2
 updates:
   - package-ecosystem: pip
-    directory: /mesaar-backend
+    directory: /logistic-x-backend
     schedule:
       interval: weekly
     labels: ["dependencies", "backend"]
 
   - package-ecosystem: npm
-    directory: /mesaar-frontend
+    directory: /logistic-x-frontend
     schedule:
       interval: weekly
     labels: ["dependencies", "frontend"]

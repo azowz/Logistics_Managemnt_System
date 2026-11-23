@@ -1,4 +1,4 @@
-# Phase 5 — Heavy-Equipment Logistics Domain Design (Mesaar)
+# Phase 5 — Heavy-Equipment Logistics Domain Design (Logistic X)
 
 Status: **Architecture documentation only.** No code, SQL, ORM, or migrations. Extends the
 approved platform (Phases 1–5A + audit `docs/06`) into a **world-class heavy-equipment logistics
@@ -293,7 +293,7 @@ stateDiagram-v2
     Available --> OutOfService : decommission / write-off (EquipmentDecommissioned)
     Maintenance --> OutOfService : write-off
 
-    Delivered --> [*]  : %% one-way ownership transfer (out of Mesaar custody)
+    Delivered --> [*]  : %% one-way ownership transfer (out of Logistic X custody)
     OutOfService --> [*]
 
     note right of InTransit

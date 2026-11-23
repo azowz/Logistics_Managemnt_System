@@ -1,4 +1,4 @@
-# Mesaar Logistics Operations API — continuous integration.
+# Logistic X Logistics Operations API — continuous integration.
 #
 # Runs on every push and pull request: installs the pinned dependencies, checks
 # formatting/lint, runs an advisory type check, and executes the test suite.
@@ -26,20 +26,20 @@ jobs:
 
     defaults:
       run:
-        working-directory: mesaar-backend
+        working-directory: logistic-x-backend
 
     # A real PostgreSQL and Redis available for tests that need them.
     services:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_USER: mesaar
-          POSTGRES_PASSWORD: mesaar
-          POSTGRES_DB: mesaar
+          POSTGRES_USER: logistic_x
+          POSTGRES_PASSWORD: logistic_x
+          POSTGRES_DB: logistic_x
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U mesaar -d mesaar"
+          --health-cmd "pg_isready -U logistic_x -d logistic_x"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -57,13 +57,13 @@ jobs:
       # Tests connect as a NON-superuser role (created below): the postgres image's
       # POSTGRES_USER is always a superuser, and superusers bypass row-level
       # security even with FORCE — which would make every RLS assertion vacuous.
-      DATABASE_URL: postgresql+psycopg2://mesaar_app:mesaar_app@localhost:5432/mesaar
+      DATABASE_URL: postgresql+psycopg2://logistic_x_app:logistic_x_app@localhost:5432/logistic_x
       # TEST_DATABASE_URL enables the tests/test_tenant_isolation_pg.py gate. It
       # points at the same NON-superuser app role so the RLS assertions are
       # meaningful. Enabled in Sprint 15A: migration 0018 makes the tenant
       # policies fail closed on an empty GUC (NULLIF), fixing the empty-`''::uuid`
       # cast error that previously blocked this gate.
-      TEST_DATABASE_URL: postgresql+psycopg2://mesaar_app:mesaar_app@localhost:5432/mesaar
+      TEST_DATABASE_URL: postgresql+psycopg2://logistic_x_app:logistic_x_app@localhost:5432/logistic_x
       SECRET_KEY: ci-test-secret-not-for-production
       REDIS_URL: redis://localhost:6379/0
       CELERY_BROKER_URL: redis://localhost:6379/1
@@ -80,7 +80,7 @@ jobs:
         with:
           python-version: "3.11"
           cache: pip
-          cache-dependency-path: mesaar-backend/requirements*.txt
+          cache-dependency-path: logistic-x-backend/requirements*.txt
 
       - name: Install dependencies
         run: |
@@ -92,12 +92,12 @@ jobs:
         # image's POSTGRES_USER is a superuser. Tests must run as this role for
         # the RLS isolation assertions to prove anything.
         env:
-          PGPASSWORD: mesaar
+          PGPASSWORD: logistic_x
         run: |
-          psql -h localhost -U mesaar -d mesaar -v ON_ERROR_STOP=1 <<'SQL'
-          CREATE ROLE mesaar_app LOGIN PASSWORD 'mesaar_app'
+          psql -h localhost -U logistic_x -d logistic_x -v ON_ERROR_STOP=1 <<'SQL'
+          CREATE ROLE logistic_x_app LOGIN PASSWORD 'logistic_x_app'
             NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
-          GRANT USAGE, CREATE ON SCHEMA public TO mesaar_app;
+          GRANT USAGE, CREATE ON SCHEMA public TO logistic_x_app;
           SQL
 
       - name: Ruff (lint)
@@ -128,14 +128,14 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: mesaar-frontend
+        working-directory: logistic-x-frontend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: mesaar-frontend/package-lock.json
+          cache-dependency-path: logistic-x-frontend/package-lock.json
       - run: npm ci
       - run: npm run api:check
       - run: npm run typecheck
@@ -150,8 +150,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: |
-          cmp mesaar-backend/api/openapi.json contracts/openapi.json
-          cmp mesaar-backend/api/openapi.json mesaar-frontend/api/openapi.json
+          cmp logistic-x-backend/api/openapi.json contracts/openapi.json
+          cmp logistic-x-backend/api/openapi.json logistic-x-frontend/api/openapi.json
 
   integration:
     name: Disposable Docker stack and real browser workflow
@@ -162,27 +162,27 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-          cache-dependency-path: mesaar-frontend/package-lock.json
+          cache-dependency-path: logistic-x-frontend/package-lock.json
       - name: Build isolated applications
         run: |
-          cp mesaar-backend/.env.example mesaar-backend/.env
-          docker compose -p mesaar-separation-verify -f docker-compose.yml -f compose.verify.yml build api frontend
-          docker compose -p mesaar-separation-verify -f docker-compose.yml -f compose.verify.yml up -d --wait db redis
-          docker compose -p mesaar-separation-verify -f docker-compose.yml -f compose.verify.yml run --rm --no-deps api python -m alembic upgrade head
-          docker compose -p mesaar-separation-verify -f docker-compose.yml -f compose.verify.yml up -d --no-build --wait api worker beat frontend
+          cp logistic-x-backend/.env.example logistic-x-backend/.env
+          docker compose -p logistic-x-separation-verify -f docker-compose.yml -f compose.verify.yml build api frontend
+          docker compose -p logistic-x-separation-verify -f docker-compose.yml -f compose.verify.yml up -d --wait db redis
+          docker compose -p logistic-x-separation-verify -f docker-compose.yml -f compose.verify.yml run --rm --no-deps api python -m alembic upgrade head
+          docker compose -p logistic-x-separation-verify -f docker-compose.yml -f compose.verify.yml up -d --no-build --wait api worker beat frontend
       - name: Install browser tests
-        working-directory: mesaar-frontend
+        working-directory: logistic-x-frontend
         run: |
           npm ci
           npx playwright install --with-deps chromium
       - name: Live authenticated workflow
-        working-directory: mesaar-frontend
+        working-directory: logistic-x-frontend
         env:
           FRONTEND_TEST_URL: http://127.0.0.1:18081
-          MESAAR_TEST_API_URL: http://127.0.0.1:18000/v1
+          LOGISTIC_X_TEST_API_URL: http://127.0.0.1:18000/v1
         run: npm run test:integration
       - name: Independent restart verification
         run: node scripts/verify-lifecycle.mjs
       - name: Stop verification services
         if: always()
-        run: docker compose -p mesaar-separation-verify -f docker-compose.yml -f compose.verify.yml down
+        run: docker compose -p logistic-x-separation-verify -f docker-compose.yml -f compose.verify.yml down

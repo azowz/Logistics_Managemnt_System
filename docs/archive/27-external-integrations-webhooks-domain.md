@@ -36,7 +36,7 @@ Enums: `IntegrationPartnerType` (customer/carrier/vendor/government/internal/oth
 
 ## 3. Partner + API-key model
 
-- API key format `mesaar_<prefix>_<secret>`; only a **bcrypt hash** is stored, plus the
+- API key format `logistic_x_<prefix>_<secret>`; only a **bcrypt hash** is stored, plus the
   non-secret `key_prefix` for display + O(1) lookup. Plaintext is returned **once**
   (create/rotate). `key_hash` is never returned by any read API.
 - Authentication (`get_current_api_key_partner`): reads `Authorization: Bearer`, resolves
@@ -83,7 +83,7 @@ append-only `webhook_delivery_attempts` row.
 ## 6. Inbound integration flow
 
 `POST /integrations/inbound/events` (API-key auth). The partner sends
-`Authorization: Bearer <api_key>`, `X-Mesaar-Signature`, optional `X-Mesaar-Timestamp`,
+`Authorization: Bearer <api_key>`, `X-Logistic-X-Signature`, optional `X-Logistic-X-Timestamp`,
 and a JSON body with `idempotency_key`, `event_type`, `payload`. The service:
 authenticates the key, verifies the signature (see §7), and persists an
 `inbound_integration_events` row — `accepted` for a valid signature, `rejected` for an
@@ -96,7 +96,7 @@ lifecycle.
 
 `app/integrations/crypto.py`. Algorithm **HMAC-SHA256**. `compute_signature` →
 `sha256=<hex>` over `[timestamp.]body`; `verify_signature` uses `hmac.compare_digest`
-(constant-time). Headers: `X-Mesaar-Signature`, `X-Mesaar-Timestamp` (binds send time so
+(constant-time). Headers: `X-Logistic-X-Signature`, `X-Logistic-X-Timestamp` (binds send time so
 a replay window can be enforced by the receiver).
 
 - **Outbound** payloads are signed with the per-subscription secret, stored **encrypted
@@ -194,7 +194,7 @@ alembic single head `0016`.
 | --- | --- | --- |
 | Webhook secret encrypted at rest with a key **derived from `SECRET_KEY`** (not a dedicated KMS key). | MEDIUM | Reversible encryption is required to sign; a KMS/envelope-encryption key is the recommended hardening follow-up. Secret is never returned by reads. **If a secret becomes undecryptable (e.g. key rotation), the consumer never signs with an empty secret** — it records a `FAILED`, unsigned delivery + a `skipped` attempt (`secret_undecryptable`), and a manual retry re-signs only if the secret is recoverable, otherwise stays failed. |
 | `scopes` and `allowed_ips` are persisted but **not yet enforced** (enforcement deferred to Sprint 14). | LOW | Reserved for a follow-up; documented here and in the schema. |
-| Inbound **replay-window** enforcement (rejecting stale `X-Mesaar-Timestamp`) is **deferred to Sprint 14**. | LOW | The timestamp is bound into the signature today; time-based rejection is the follow-up. |
+| Inbound **replay-window** enforcement (rejecting stale `X-Logistic-X-Timestamp`) is **deferred to Sprint 14**. | LOW | The timestamp is bound into the signature today; time-based rejection is the follow-up. |
 | Rate limiting is **enforced on inbound** with a **process-local** default backend. | LOW | Correct for single-process/tests; distributed enforcement (Redis backend, same interface) is deferred to Sprint 14. |
 | `list_active_for_event` loads active subs per tenant and filters JSONB membership in Python. | LOW | Fine at current scale; a JSONB containment index / GIN query is the follow-up for very large subscription sets. |
 | API-key prefix lookup takes the first match (per-tenant unique; ~2^48 cross-tenant collision). | LOW | On the astronomically-unlikely collision the hash simply fails to verify → key rejected; no cross-tenant leak. |
@@ -204,4 +204,4 @@ alembic single head `0016`.
 
 ## Sprint 14 — delivery worker & hardening
 
-The deferred production-hardening items in this doc's known-risks are addressed in Sprint 14 (docs/28): a real `HttpWebhookProvider` behind the delivery port, a celery-beat delivery-retry **sweep** with bounded exponential backoff, a KMS-ready `SecretEncryptionProvider` boundary (default `LocalFernetSecretProvider`), enforced API-key **scopes** + **allowed_ips**, inbound **replay-window** validation (mandatory `X-Mesaar-Timestamp`, ±300 s), and a `RedisRateLimitBackend`. Real HTTP delivery, distributed rate limiting, and KMS remain opt-in at deployment (defaults stay no-network / in-memory / local-Fernet) — see docs/28 runbook.
+The deferred production-hardening items in this doc's known-risks are addressed in Sprint 14 (docs/28): a real `HttpWebhookProvider` behind the delivery port, a celery-beat delivery-retry **sweep** with bounded exponential backoff, a KMS-ready `SecretEncryptionProvider` boundary (default `LocalFernetSecretProvider`), enforced API-key **scopes** + **allowed_ips**, inbound **replay-window** validation (mandatory `X-Logistic-X-Timestamp`, ±300 s), and a `RedisRateLimitBackend`. Real HTTP delivery, distributed rate limiting, and KMS remain opt-in at deployment (defaults stay no-network / in-memory / local-Fernet) — see docs/28 runbook.

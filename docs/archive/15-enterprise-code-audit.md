@@ -1,4 +1,4 @@
-# Mesaar — Enterprise Code Audit
+# Logistic X — Enterprise Code Audit
 
 **Document:** `docs/15-enterprise-code-audit.md`
 **Audit Date:** 2026-06-27
@@ -391,7 +391,7 @@ Full M2 implementation: `domain_event.py`, `envelope.py` (UUIDv7, frozen datacla
 | Security issues | Celery serializer set to JSON (secure; no pickle) ✅ |
 | Performance | `task_acks_late=True`, `worker_prefetch_multiplier=1` (correct for at-least-once) ✅ |
 
-**`celery_app.py`**: Celery "mesaar" instance. `task_acks_late=True`, `worker_prefetch_multiplier=1`, JSON serialization, result backend Redis. ✅  
+**`celery_app.py`**: Celery "logistic_x" instance. `task_acks_late=True`, `worker_prefetch_multiplier=1`, JSON serialization, result backend Redis. ✅  
 **`tasks.py`**: `ping` (health), `relay_outbox` (thin wrapper around `run_outbox_relay()`). ✅
 
 #### `app/observability/` — Observability

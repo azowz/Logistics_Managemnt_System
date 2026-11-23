@@ -1,17 +1,31 @@
-# مسار · Mesaar
+# Logistic X · لوجستك إكس
 
 منصة الخدمات اللوجستية متعددة المستأجرين، مع تطبيق سائق عربي RTL.
 The backend and frontend are now independent applications; this root directory
 provides optional development orchestration and architecture documentation.
 
+[![CI](https://github.com/logistic-x/logistic-x/actions/workflows/ci.yml/badge.svg)](https://github.com/logistic-x/logistic-x/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+## Repositories
+
+Each application also lives in its own repository under the [logistic-x](https://github.com/logistic-x) organization, with its own history, CI and releases:
+
+| Repository | Purpose |
+| --- | --- |
+| [logistic-x/backend](https://github.com/logistic-x/backend) | Operations API (FastAPI, PostgreSQL, Celery) |
+| [logistic-x/frontend](https://github.com/logistic-x/frontend) | Arabic RTL driver app (Expo / React Native) |
+| [logistic-x/logistic-x](https://github.com/logistic-x/logistic-x) | This repository: docs, design system, contract and full-stack verification |
+
+## Workspace layout
+
 | Application | Technology | Instructions |
 | --- | --- | --- |
-| [mesaar-backend](mesaar-backend/) | FastAPI / SQLAlchemy / Alembic / PostgreSQL / Redis / Celery | [Backend README](mesaar-backend/README.md) |
-| [mesaar-frontend](mesaar-frontend/) | Existing Expo / React Native / TypeScript, with a standalone web build | [Frontend README](mesaar-frontend/README.md) |
+| [logistic-x-backend](logistic-x-backend/) | FastAPI / SQLAlchemy / Alembic / PostgreSQL / Redis / Celery | [Backend README](logistic-x-backend/README.md) |
+| [logistic-x-frontend](logistic-x-frontend/) | Existing Expo / React Native / TypeScript, with a standalone web build | [Frontend README](logistic-x-frontend/README.md) |
 
 ## Run independently
 
-Backend: work in `mesaar-backend`, install `requirements-dev.txt` into its own Python
+Backend: work in `logistic-x-backend`, install `requirements-dev.txt` into its own Python
 3.11/3.12 environment, configure its `.env`, then run:
 
 ```bash
@@ -25,7 +39,7 @@ backend-only Docker Compose file and exact worker, test, build and deployment co
 Frontend (Node 22):
 
 ```bash
-cd mesaar-frontend
+cd logistic-x-frontend
 npm ci
 # First setup only: copy .env.example to .env (PowerShell: Copy-Item .env.example .env)
 npm run dev
@@ -38,7 +52,7 @@ Demo fixtures require explicit development opt-in and are visibly labelled.
 
 ## Integrated Docker development
 
-First setup only: copy `mesaar-backend/.env.example` to `mesaar-backend/.env` and set
+First setup only: copy `logistic-x-backend/.env.example` to `logistic-x-backend/.env` and set
 a random `SECRET_KEY` of at least 32 characters. Preserve an existing environment.
 From this root directory:
 
@@ -64,16 +78,16 @@ These Compose settings are local development examples, not production secrets.
 The exported [OpenAPI contract](contracts/openapi.json) is the release interface.
 Existing business endpoints retain `/v1`; `/health/live`, `/health/ready`, `/docs`,
 and `/openapi.json` remain backend-owned. The old YAML design is kept under
-`mesaar-backend/api/` and is not the live contract.
+`logistic-x-backend/api/` and is not the live contract.
 
 ```bash
-cd mesaar-backend
+cd logistic-x-backend
 python -m pytest -q
 python -m scripts.check_contract
 ```
 
 ```bash
-cd mesaar-frontend
+cd logistic-x-frontend
 npm test
 npm run typecheck
 npm run api:check
@@ -89,8 +103,8 @@ include its exact commands and rollback procedure.
 ## Structure and results
 
 ```text
-mesaar-backend/    app/, migrations/, tests/, api/, Dockerfile, Python dependencies
-mesaar-frontend/   app/, src/, assets/, tests/, api/, Dockerfile, npm dependencies
+logistic-x-backend/    app/, migrations/, tests/, api/, Dockerfile, Python dependencies
+logistic-x-frontend/   app/, src/, assets/, tests/, api/, Dockerfile, npm dependencies
 contracts/        released OpenAPI JSON (distribution artifact)
 docs/             current references, ADRs, diagrams, historical archive
 design-system/    design specifications (no runtime dependency)
@@ -105,3 +119,7 @@ and product debts remain documented; this migration does not assert overall
 production readiness or implement planned web dashboards, AI, or production OTP.
 
 [Documentation index](docs/README.md) ? [Implementation status](docs/status.md) ? [MIT](LICENSE)
+
+## License
+
+Released under the [MIT License](LICENSE).

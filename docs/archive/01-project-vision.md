@@ -1,9 +1,9 @@
-# Phase 1 — Project Vision (Mesaar Logistics Operations Platform)
+# Phase 1 — Project Vision (Logistic X Logistics Operations Platform)
 
 > **Status:** Approved baseline (authored 2026-06-22, Phase 6.5 closure — fills the gap flagged in `docs/06` A.1 #1 and the Phase 6 ABSENT ledger). **Documentation only.**
 > **Purpose:** The single consolidated product/vision anchor that every later phase (`docs/02`…`docs/09a`, ADR-001…009) builds on. Where this document and an earlier doc disagree on scope wording, this vision is the intent; the technical phases remain authoritative for *design*.
 
-`Mesaar` (مسار, "route/path") is a multi-tenant SaaS platform for **heavy and specialized logistics operations** in Saudi Arabia and the wider GCC. It pairs an operations-grade core (shipment lifecycle, dispatch, tracking, control tower) with a **heavy-equipment specialization** (oversize/overweight permits, escorts, axle/route compliance, equipment rental, operator certification) that general freight platforms do not model.
+`Logistic X` (لوجستك إكس) is a multi-tenant SaaS platform for **heavy and specialized logistics operations** in Saudi Arabia and the wider GCC. It pairs an operations-grade core (shipment lifecycle, dispatch, tracking, control tower) with a **heavy-equipment specialization** (oversize/overweight permits, escorts, axle/route compliance, equipment rental, operator certification) that general freight platforms do not model.
 
 ---
 
@@ -47,13 +47,13 @@ Three-horizon view:
 
 ## 5. Competitive Positioning
 
-| Versus | Their strength | Mesaar's differentiation |
+| Versus | Their strength | Logistic X's differentiation |
 |---|---|---|
 | **Uber Freight / Convoy** | Carrier marketplace, spot matching, slick UX | **Heavy-equipment specialization** (permits, escorts, axle/route compliance, rental, operator certs) + KSA/Arabic-first + compliance-as-dispatch-gate, which they do not model. |
 | **Flexport** | Global forwarding, customs, multimodal | Deep **domestic heavy/oversize project logistics** and equipment lifecycle rather than international forwarding. |
 | **SAP TM / Oracle OTM** | Enterprise breadth, ERP integration | A **focused, event-sourced, AI-ready** platform that is faster to adopt, multi-tenant SaaS, and purpose-built for heavy/specialized moves and GCC regulation. |
 
-**Positioning statement.** *For industrial operators and heavy-haul carriers in the GCC who must move oversize, high-value, and project cargo under strict regulatory and SLA constraints, Mesaar is a multi-tenant logistics operations platform that makes compliance, visibility, and settlement automatic — combining an operations-grade core with heavy-equipment, permit, and claims domains that general freight platforms lack.*
+**Positioning statement.** *For industrial operators and heavy-haul carriers in the GCC who must move oversize, high-value, and project cargo under strict regulatory and SLA constraints, Logistic X is a multi-tenant logistics operations platform that makes compliance, visibility, and settlement automatic — combining an operations-grade core with heavy-equipment, permit, and claims domains that general freight platforms lack.*
 
 **Defensible moats:** (1) the heavy-equipment + compliance domain model and rule engine; (2) an immutable, multi-tenant event log that doubles as an AI training substrate; (3) KSA-regulatory and Arabic-RTL fluency; (4) compliance enforced as code-level dispatch gates, not advisory checklists.
 
@@ -83,7 +83,7 @@ Three-horizon view:
 
 ---
 
-## 7. Scope guardrails (what Mesaar is and is not — H1/H2)
+## 7. Scope guardrails (what Logistic X is and is not — H1/H2)
 
 - **Is:** multi-tenant SaaS; road heavy/oversize + general freight; equipment rental & mobilization; KSA-regulatory compliance; Arabic-RTL operations; event-sourced + auditable; AI-ready.
 - **Is not (yet):** a public carrier spot marketplace (H3), full customs/cross-border forwarding (P2, Flexport territory), or multimodal ocean/air/rail (P2). These are tracked in the `docs/06` Phase F gap analysis with priorities, not promised here.

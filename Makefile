@@ -2,9 +2,9 @@
 PYTHON ?= python
 .PHONY: install run worker beat migrate test lint typecheck frontend up down logs
 install run worker beat migrate test lint typecheck:
-	$(MAKE) -C mesaar-backend $@ PYTHON=$(PYTHON)
+	$(MAKE) -C logistic-x-backend $@ PYTHON=$(PYTHON)
 frontend:
-	cd mesaar-frontend && npm run dev
+	cd logistic-x-frontend && npm run dev
 up:
 	docker compose up --build -d
 down:

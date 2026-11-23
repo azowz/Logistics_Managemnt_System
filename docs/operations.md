@@ -1,8 +1,8 @@
 # التشغيل والنشر والمراقبة
 
-بعد الفصل، تُنفذ أوامر الخلفية التالية من `mesaar-backend/` بملف بيئته الخاص.
+بعد الفصل، تُنفذ أوامر الخلفية التالية من `logistic-x-backend/` بملف بيئته الخاص.
 للتشغيل المتكامل من الجذر وبناء الواجهة المستقلة راجع [README](../README.md)
-و[دليل الواجهة](../mesaar-frontend/README.md). تبقى مسارات `app/` نسبية لمجلد الخلفية.
+و[دليل الواجهة](../logistic-x-frontend/README.md). تبقى مسارات `app/` نسبية لمجلد الخلفية.
 
 يوفر المستودع Dockerfile و Compose للتطوير و Celery. لا توجد Kubernetes أو Terraform أو
 خدمة TLS أو نسخ احتياطي أو Prometheus Server مضمنة. راجع [المخطط](diagrams/deployment.mmd).
@@ -33,30 +33,30 @@ docker compose down
 
 ## دور PostgreSQL و Volumes القائمة
 
-حساب POSTGRES_USER=mesaar حساب إدارة Superuser. تتصل api/worker/beat بـ**mesaar_app**
+حساب POSTGRES_USER=logistic_x حساب إدارة Superuser. تتصل api/worker/beat بـ**logistic_x_app**
 ذي NOSUPERUSER NOBYPASSRLS لفرض RLS. ينشئه
-[init-app-role.sql](../mesaar-backend/docker/postgres/init-app-role.sql) تلقائيًا عند تهيئة Volume جديد؛
+[init-app-role.sql](../logistic-x-backend/docker/postgres/init-app-role.sql) تلقائيًا عند تهيئة Volume جديد؛
 التهيئة لا تعاد عند استخدام Volume قائم.
 
 لـ Volume تطوير قائم شغّل السكربت نفسه دون حذف البيانات. PowerShell:
 
 ```powershell
-Get-Content docker/postgres/init-app-role.sql | docker compose exec -T db psql -U mesaar -d mesaar -v ON_ERROR_STOP=1
+Get-Content docker/postgres/init-app-role.sql | docker compose exec -T db psql -U logistic_x -d logistic_x -v ON_ERROR_STOP=1
 ```
 
 Bash:
 
 ```bash
-docker compose exec -T db psql -U mesaar -d mesaar -v ON_ERROR_STOP=1 < docker/postgres/init-app-role.sql
+docker compose exec -T db psql -U logistic_x -d logistic_x -v ON_ERROR_STOP=1 < docker/postgres/init-app-role.sql
 ```
 
 السكربت يهيئ الدور والصلاحيات الحالية والافتراضية ويمكن إعادة تشغيله؛ **لا ينقل ملكية
-الجداول القديمة**. إذا كانت مملوكة لـ mesaar فقد تحتاج الترحيلات المستقبلية التي تنفذ
+الجداول القديمة**. إذا كانت مملوكة لـ logistic_x فقد تحتاج الترحيلات المستقبلية التي تنفذ
 DDL إلى مالكها. استخدم حساب المالك للترحيل فقط أو خطة مستقلة لنقل الملكية، وأبق اتصال
-التطبيق محدودًا. مثال محلي لقاعدة يملك جداولها mesaar:
+التطبيق محدودًا. مثال محلي لقاعدة يملك جداولها logistic_x:
 
 ```bash
-docker compose run --rm --no-deps -e DATABASE_URL=postgresql+psycopg2://mesaar:mesaar@db:5432/mesaar api python -m alembic upgrade head
+docker compose run --rm --no-deps -e DATABASE_URL=postgresql+psycopg2://logistic_x:logistic_x@db:5432/logistic_x api python -m alembic upgrade head
 ```
 
 لا تستخدم حذف Volume علاجًا للصلاحيات. تحقق من دور التطبيق:
@@ -92,7 +92,7 @@ docker compose run --rm --no-deps -e DATABASE_URL=postgresql+psycopg2://mesaar:m
 | No module named loguru/redis/... | فعّل البيئة الصحيحة وثبت requirements.txt كاملًا، أو requirements-dev.txt للتطوير، ثم python -m pip check |
 | DEBUG=release | متغيرات النظام تتقدم على.env؛ صححها مثل $env:DEBUG="false" في PowerShell |
 | خطأ SECRET_KEY أو CORS | تحقق من طول السر والبيئة و Placeholder والأصول الصريحة |
-| role mesaar_app does not exist | أعد Bootstrap أعلاه للـ Volume القديم؛ لا تحذف البيانات |
+| role logistic_x_app does not exist | أعد Bootstrap أعلاه للـ Volume القديم؛ لا تحذف البيانات |
 | must be owner أثناء الترحيل | استخدم مالك الجداول للترحيل أو خطط لنقل الملكية؛ التطبيق يبقى محدودًا |
 | بيانات مستأجر آخر | افحص دور الاتصال وسياق المستأجر؛ Superuser و BYPASSRLS يتجاوزان العزل |
 |409 تزامن | أعد تحميل الكيان قبل إعادة المحاولة |

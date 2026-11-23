@@ -1,4 +1,4 @@
-# Phase 3 — PostgreSQL Database Architecture (Mesaar)
+# Phase 3 — PostgreSQL Database Architecture (Logistic X)
 
 Status: **Draft for approval.** Extends the existing FastAPI/SQLAlchemy backend and the
 accepted ADRs; nothing here contradicts the current code or migrations — it is the

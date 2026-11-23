@@ -1,4 +1,4 @@
-# Phase 8 — Backend Architecture & Implementation Blueprint (Mesaar)
+# Phase 8 — Backend Architecture & Implementation Blueprint (Logistic X)
 
 > **Status:** Backend architecture & implementation blueprint — **documentation only** (no code, SQL, ORM, DDL, or implementation). Produced 2026-06-22.
 > **Purpose:** Turn the frozen domain + database design into a build-ready backend blueprint: column-spec the `[STRUCTURAL]` tables, then define context architecture, layering, CQRS, API, eventing, tenancy, security, consistency, AI, observability, and the readiness gate.

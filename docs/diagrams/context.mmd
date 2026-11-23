@@ -1,8 +1,8 @@
 ﻿%% السياق الحالي؛ الأسهم المتقطعة تمثل أجزاء مخططة أو غير موصولة.
 flowchart TB
-    driver[السائق] --> mobile[mesaar-frontend؛ Expo عربي RTL؛ بيانات حية]
+    driver[السائق] --> mobile[logistic-x-frontend؛ Expo عربي RTL؛ بيانات حية]
     staff[الإدارة والعمليات والعميل] -.-> web[لوحات Web مخططة]
-    mobile -- HTTP / JWT --> api[mesaar-backend؛ FastAPI /v1]
+    mobile -- HTTP / JWT --> api[logistic-x-backend؛ FastAPI /v1]
     web -.-> api
     partner[شريك API] --> api
     api --> services[خدمات المجالات]

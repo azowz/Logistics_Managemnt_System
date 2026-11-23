@@ -14,4 +14,4 @@ flowchart TB
     api -. stdout .-> logs[تجميع سجلات خارجي]
     pg --> pgdata[Named Volume]
     redis --> redisdata[Named Volume؛ AOF]
-    role[mesaar_app؛ NOSUPERUSER NOBYPASSRLS] -. اتصال التطبيق .-> pg
+    role[logistic_x_app؛ NOSUPERUSER NOBYPASSRLS] -. اتصال التطبيق .-> pg

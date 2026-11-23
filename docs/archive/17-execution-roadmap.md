@@ -1,4 +1,4 @@
-# Mesaar — Execution Roadmap
+# Logistic X — Execution Roadmap
 
 **Document:** `docs/17-execution-roadmap.md`
 **Date:** 2026-06-27
@@ -149,29 +149,29 @@ jobs:
     services:
       postgres:
         image: postgres:16
-        env: { POSTGRES_PASSWORD: test, POSTGRES_DB: mesaar_test }
+        env: { POSTGRES_PASSWORD: test, POSTGRES_DB: logistic_x_test }
     steps:
       - run: pip install -r requirements.txt
       - run: alembic upgrade head
-        env: { DATABASE_URL: postgresql://postgres:test@localhost/mesaar_test }
+        env: { DATABASE_URL: postgresql://postgres:test@localhost/logistic_x_test }
       - run: pytest --cov=app --cov-fail-under=30
-        env: { DATABASE_URL: postgresql://postgres:test@localhost/mesaar_test }
+        env: { DATABASE_URL: postgresql://postgres:test@localhost/logistic_x_test }
   lint:
     steps:
       - run: ruff check app/ tests/
       - run: mypy app/
 ```
 
-**Critical:** PostgreSQL service must use a non-superuser application role. Create a `mesaar_app` role without superuser in CI:
+**Critical:** PostgreSQL service must use a non-superuser application role. Create a `logistic_x_app` role without superuser in CI:
 
 ```sql
-CREATE ROLE mesaar_app LOGIN PASSWORD 'test';
-GRANT CONNECT ON DATABASE mesaar_test TO mesaar_app;
+CREATE ROLE logistic_x_app LOGIN PASSWORD 'test';
+GRANT CONNECT ON DATABASE logistic_x_test TO logistic_x_app;
 -- After alembic upgrade:
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO mesaar_app;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO logistic_x_app;
 ```
 
-The integration tests must connect as `mesaar_app` to validate RLS is enforced.
+The integration tests must connect as `logistic_x_app` to validate RLS is enforced.
 
 #### Task 1.B.2 — Coverage Gate
 

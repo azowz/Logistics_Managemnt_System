@@ -1,4 +1,4 @@
-# Phase 5A — Backend Architecture (Mesaar)
+# Phase 5A — Backend Architecture (Logistic X)
 
 Status: **Draft for approval.** Formalizes the backend package structure, boundaries, and
 ownership for the existing `app/` package — including the Phase 5 foundation modules —

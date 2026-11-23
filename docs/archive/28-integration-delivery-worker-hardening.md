@@ -14,8 +14,8 @@
 
 `HttpWebhookProvider` (`app/integrations/delivery.py`, httpx) sits behind the existing
 `WebhookDeliveryProvider` port. It POSTs the signed JSON body to the subscription's
-`target_url` with headers `X-Mesaar-Event`, `X-Mesaar-Delivery-Id`, `X-Mesaar-Signature`,
-`X-Mesaar-Idempotency-Key` (= source event id), and a configurable `User-Agent`. It maps
+`target_url` with headers `X-Logistic-X-Event`, `X-Logistic-X-Delivery-Id`, `X-Logistic-X-Signature`,
+`X-Logistic-X-Idempotency-Key` (= source event id), and a configurable `User-Agent`. It maps
 **2xx → success**, **4xx/5xx → failure**, **timeout → `timeout`**, **connection error →
 `connection_error`**; response bodies are **truncated to 2 KB**; it performs **no internal
 retry** (retry is the worker's job) and never logs or returns the signing secret. An httpx
@@ -28,7 +28,7 @@ A deployment activates real delivery by calling
 ## 2. Delivery retry sweep
 
 `app/integrations/sweep.py::run_webhook_delivery_sweep` + celery task
-`mesaar.webhook_delivery_sweep` on celery-beat every **60 s** (`expires=55`, overlap-
+`logistic_x.webhook_delivery_sweep` on celery-beat every **60 s** (`expires=55`, overlap-
 guarded). It mirrors the relay/health sweeps: the tenant list is read under platform
 scope, each delivery is attempted inside that tenant's own RLS-scoped transaction (short
 transactions — no DB txn held across the HTTP call), and each delivery is isolated in its
@@ -79,7 +79,7 @@ authorization decision, not existence disclosure).
 
 ## 7. Inbound replay-window enforcement
 
-The inbound endpoint now **requires** `X-Mesaar-Timestamp` (integer Unix seconds), which is
+The inbound endpoint now **requires** `X-Logistic-X-Timestamp` (integer Unix seconds), which is
 bound into the HMAC signing input. Requests outside ±**300 s** are rejected (**401**);
 missing/malformed timestamps are 4xx. The idempotency key still prevents duplicate
 processing. This is a **behavior change** from Sprint 13 (timestamp was optional).
@@ -115,7 +115,7 @@ linear head.
 - **Enable real delivery:** at worker/app startup call `set_webhook_provider(HttpWebhookProvider())`.
 - **Enable distributed rate limiting:** `set_inbound_rate_limiter(RateLimitPolicy(limit=..., window_seconds=..., backend=RedisRateLimitBackend(window_seconds=...)))`.
 - **KMS secrets:** implement `KmsSecretProvider(SecretEncryptionProvider)` and `set_secret_provider(...)`; rotate by re-issuing subscription secrets (rotate-secret) under the new provider.
-- **Sweep:** celery-beat runs `mesaar.webhook_delivery_sweep` every 60 s; monitor its `{attempted, delivered, failed, errors}` summary and `GET .../deliveries/due`.
+- **Sweep:** celery-beat runs `logistic_x.webhook_delivery_sweep` every 60 s; monitor its `{attempted, delivered, failed, errors}` summary and `GET .../deliveries/due`.
 - **Stuck deliveries:** `secret_undecryptable` deliveries are `failed` with `next_attempt_at = NULL` — fix the key (rotate-secret) then manual `retry`.
 
 ## 12. Test summary

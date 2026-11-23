@@ -1,9 +1,9 @@
-# Mesaar frontend/backend separation report
+# Logistic X frontend/backend separation report
 
 Completed and verified: **2026-11-11** (Asia/Riyadh).
 
 The repository now contains independently runnable, buildable and deployable
-`mesaar-backend/` and `mesaar-frontend/` applications. The existing backend and Expo
+`logistic-x-backend/` and `logistic-x-frontend/` applications. The existing backend and Expo
 frontend were preserved. No business rule, database schema, historical migration,
 or existing HTTP API contract was changed to accomplish the separation.
 
@@ -40,14 +40,14 @@ cover domain/services/workers/integrations and original/final dependency maps.
 
 | Deliverable | Location / behavior |
 | --- | --- |
-| Backend application | [mesaar-backend](mesaar-backend/): same `app` package, migrations, tests, requirements, pyproject, Dockerfile, own Compose and environment |
-| Frontend application | [mesaar-frontend](mesaar-frontend/): existing Expo routes/components, own package/lock/environment/tests/Dockerfile/static server |
-| Backend startup/tests/build/deployment | [Backend README](mesaar-backend/README.md) |
-| Frontend startup/tests/build/deployment | [Frontend README](mesaar-frontend/README.md) |
+| Backend application | [logistic-x-backend](logistic-x-backend/): same `app` package, migrations, tests, requirements, pyproject, Dockerfile, own Compose and environment |
+| Frontend application | [logistic-x-frontend](logistic-x-frontend/): existing Expo routes/components, own package/lock/environment/tests/Dockerfile/static server |
+| Backend startup/tests/build/deployment | [Backend README](logistic-x-backend/README.md) |
+| Frontend startup/tests/build/deployment | [Frontend README](logistic-x-frontend/README.md) |
 | Workspace orchestration | [docker-compose.yml](docker-compose.yml), independent service startup; frontend has no API `depends_on` |
 | Disposable verification orchestration | [compose.verify.yml](compose.verify.yml), explicit separate project, images, ports, and volumes |
 | API release artifact | [contracts/openapi.json](contracts/openapi.json); backend export and frontend-owned vendored copy |
-| Generated frontend API types/client | [generated.ts](mesaar-frontend/src/api/generated.ts), [client.ts](mesaar-frontend/src/api/client.ts), [driverApi.ts](mesaar-frontend/src/api/driverApi.ts) |
+| Generated frontend API types/client | [generated.ts](logistic-x-frontend/src/api/generated.ts), [client.ts](logistic-x-frontend/src/api/client.ts), [driverApi.ts](logistic-x-frontend/src/api/driverApi.ts) |
 | Contract gate | Backend snapshot/baseline compatibility tests and command; frontend generated-type check; CI distribution comparison |
 | Independent CI jobs | Backend, frontend, contract distribution and disposable live integration in [.github/workflows/ci.yml](.github/workflows/ci.yml) |
 | Migration and rollback | [Instructions](docs/separation-migration.md) |
@@ -84,7 +84,7 @@ remain byte-identical. The manifest lists every original/replacement hash.
 
 Original source, including the old mobile dependency/cache directory, is retained
 outside the checkout at
-`C:/Users/abdul/AppData/Local/Temp/mesaar-separation-praqicln/legacy/`.
+`C:/Users/abdul/AppData/Local/Temp/logistic-x-separation-praqicln/legacy/`.
 The pre-change source ZIP and OpenAPI are in that same backup directory. This keeps
 one authoritative source tree per application while retaining local rollback material.
 
@@ -123,7 +123,7 @@ successfully start and process tasks. No Redis/Celery major-version migration wa
 | Control | Evidence / outcome |
 | --- | --- |
 | RLS and transaction tenant context | Existing PostgreSQL isolation/GUC tests pass; test role verified `NOSUPERUSER NOBYPASSRLS` |
-| Docker application role | Actual PostgreSQL16 role query: `mesaar_app`, `rolsuper=false`, `rolbypassrls=false` |
+| Docker application role | Actual PostgreSQL16 role query: `logistic_x_app`, `rolsuper=false`, `rolbypassrls=false` |
 | Auth/RBAC/tenant claims | Existing full backend auth/context/security tests pass; live browser uses issued JWTs, with no dependency overrides |
 | API authentication compatibility | Existing email/password/tenant_slug, refresh and logout backend contracts unchanged; frontend uses these contracts |
 | Phone login | Production 501 gate preserved; OTP was not bypassed or replaced |
@@ -168,7 +168,7 @@ Existing application database contents were not used for destructive tests.
 | Health endpoints | API liveness/readiness succeed with DB/Redis; frontend health succeeds |
 | Live browser integration | **1 passed**, repeated successfully after dependency fix: real registration/JWT login, tenant_slug, CORS, offers, detail, decline204, accept/server state, logout |
 | Offer timer | Live detail remains open beyond16 seconds; no invented live expiry |
-| Worker execution | Queued `mesaar.ping` returns `pong`; relay task completes; first workflow's **8/8 events published**, consumer processing records present |
+| Worker execution | Queued `logistic_x.ping` returns `pong`; relay task completes; first workflow's **8/8 events published**, consumer processing records present |
 | Lifecycle independence | Browser remains usable while API is stopped and recovers after restart; frontend stop/start leaves API healthy with unchanged process start time |
 
 One intermediate backend run failed `test_default_log_level_is_info` because the

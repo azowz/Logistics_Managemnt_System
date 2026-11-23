@@ -1,4 +1,4 @@
-# قاعدة البيانات — Mesaar Backend
+# قاعدة البيانات — Logistic X Backend
 
 يصف هذا المستند طبقة البيانات **كما هي في الشيفرة الحالية**: النماذج في `app/models/`، والبنية التحتية في `app/db/`، وسلسلة الترحيلات في `migrations/versions/` (من `0001` حتى `0019`). أما المستندات في `docs/archive/` (ومنها `03-database-architecture.md` و`10-final-erd-review.md`) فهي سجل تاريخي لمراحل التصميم، وحيثما تعارضت مع هذا المستند فالمرجع هو الشيفرة.
 
@@ -157,12 +157,12 @@ SELECT set_config('app.current_user_id', :user,   true);  -- '' عند غياب 
 > **⚠ المستخدمون الخارقون (Superusers) وأدوار `BYPASSRLS` يتجاوزون RLS حتى مع `FORCE`.** `FORCE` لا يُخضع للسياسة إلا **مالك الجدول**. لذا يجب أن يتصل التطبيق بدور لا يملك `SUPERUSER` ولا `BYPASSRLS`. ينشئ CI الدور:
 >
 > ```sql
-> CREATE ROLE mesaar_app LOGIN PASSWORD 'mesaar_app'
+> CREATE ROLE logistic_x_app LOGIN PASSWORD 'logistic_x_app'
 >   NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
-> GRANT USAGE, CREATE ON SCHEMA public TO mesaar_app;
+> GRANT USAGE, CREATE ON SCHEMA public TO logistic_x_app;
 > ```
 
-> **دور Compose:** يبقى `mesaar` حساب إدارة Superuser، لكن الخدمات تتصل الآن بـ`mesaar_app`
+> **دور Compose:** يبقى `logistic_x` حساب إدارة Superuser، لكن الخدمات تتصل الآن بـ`logistic_x_app`
 > غير الخارق الذي يهيئه `docker/postgres/init-app-role.sql`. Volumes القائمة تحتاج تشغيل
 > السكربت يدويًا؛ الصلاحيات لا تنقل ملكية الجداول. راجع [التشغيل](operations.md).
 
@@ -569,11 +569,11 @@ pytest -q                                   # أو: make test
 # 2) جهّز قاعدة اختبار مؤقتة منفصلة ودورًا غير خارق وفق development.md
 
 # 3) ترحيل + كشف الانحراف + اختبارات PG بالدور غير الخارق
-export DATABASE_URL=postgresql+psycopg2://mesaar_test_app:mesaar_test_app@localhost:55432/mesaar_test
+export DATABASE_URL=postgresql+psycopg2://logistic_x_test_app:logistic_x_test_app@localhost:55432/logistic_x_test
 export TEST_DATABASE_URL=$DATABASE_URL
 alembic upgrade head && alembic check
 pytest -q tests/test_tenant_isolation_pg.py tests/test_event_backbone_pg.py
 ```
 
-في CI (`.github/workflows/ci.yml`) ينشأ الدور `mesaar_app`، ثم تنفذ فحوص Ruff وBlack وMypy
+في CI (`.github/workflows/ci.yml`) ينشأ الدور `logistic_x_app`، ثم تنفذ فحوص Ruff وBlack وMypy
 الإلزامية، ثم الترحيلات وفحص الانحراف وPytest. تضبط متغيرات قاعدة الاختبار على الدور غير الخارق.

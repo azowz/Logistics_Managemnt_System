@@ -1,6 +1,6 @@
 # حالة التنفيذ والقيود المعروفة
 
-آخر مراجعة للفصل: **2026-11-11**. التطبيقان في `mesaar-backend/` و`mesaar-frontend/`.
+آخر مراجعة للفصل: **2026-11-11**. التطبيقان في `logistic-x-backend/` و`logistic-x-frontend/`.
 نتائج الفصل الحالية في [SEPARATION_REPORT](../SEPARATION_REPORT.md)؛ جدول المراجعة القديمة
 أدناه محفوظ بتاريخ 2026-10-18. لا تثبت هذه النتائج جاهزية إنتاجية شاملة.
 
@@ -82,5 +82,5 @@ Black بطول 100 هو Formatter المعتمد في pyproject.toml؛ Ruff لل
 **بلغتها الإنجليزية الأصلية** لحفظ السياق والقرارات؛ لا تؤخذ أرقامها ودرجاتها كحالة حالية.
 لم تترجم الأصول التاريخية كاملة، وهذه حدود معلنة للتعريب؛ المراجع العربية الحالية تغطي
 تشغيل المشروع ومعماريته وقواعده المنفذة. حُذف ملفا DOCX صفريان ثبت عدم الإحالة إليهما.
-المسودة mesaar-backend/api/openapi.yaml متقادمة؛ العقد المولد /openapi.json والموزع في contracts/openapi.json. قائمة التنظيف النهائية
+المسودة logistic-x-backend/api/openapi.yaml متقادمة؛ العقد المولد /openapi.json والموزع في contracts/openapi.json. قائمة التنظيف النهائية
 وتصنيفات KEEP/REFACTOR/MERGE/ARCHIVE/DELETE في [تقرير المراجعة](review-report.md).

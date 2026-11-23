@@ -4,10 +4,10 @@ import { fileURLToPath } from 'node:url';
 import { resolve, dirname } from 'node:path';
 import { mkdir } from 'node:fs/promises';
 import assert from 'node:assert/strict';
-import { chromium } from '../mesaar-frontend/node_modules/playwright/index.mjs';
+import { chromium } from '../logistic-x-frontend/node_modules/playwright/index.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const compose = ['compose', '-p', 'mesaar-separation-verify', '-f', resolve(root, 'docker-compose.yml'), '-f', resolve(root, 'compose.verify.yml')];
+const compose = ['compose', '-p', 'logistic-x-separation-verify', '-f', resolve(root, 'docker-compose.yml'), '-f', resolve(root, 'compose.verify.yml')];
 const docker = (...args) => execFileSync('docker', [...compose, ...args], { encoding: 'utf8' }).trim();
 const backend = 'http://127.0.0.1:18000';
 const frontend = 'http://127.0.0.1:18081';

@@ -95,7 +95,7 @@ Redis يخدم ثلاثة أغراض بقواعد منفصلة: التوكنات
 | `DomainEvent` + `@register_event` | `events/domain_event.py`، `events/registry.py`، `events/*_events.py` | تعريف الأحداث وتسجيلها بالاسم والإصدار؛ يدعم Upcasters (لا يوجد أي منها حاليًا، كل الأحداث v1) |
 | `EventEnvelope` | `events/envelope.py` | `event_id` (UUIDv7 = مفتاح Idempotency)، `tenant_id`، `aggregate_type/id/version`، `event_type/version`، `payload`، `occurred_at`، `correlation_id`، `causation_id`، `user_id`، `metadata` |
 | `event_store` | `models/event_store.py` | جدول Outbox؛ قيد فريد على `(aggregate_id, aggregate_version)` يمنع الكتابة المتزامنة لنفس الإصدار (`ConcurrencyConflictError` → HTTP 409) |
-| Relay | `events/relay.py` | مهمة `mesaar.relay_outbox` كل 30 ثانية: يقرأ الدفعة تحت نطاق المنصة، وينشر كل حدث في **معاملة مستقلة بنطاق مستأجره**، ثم يختمه `published_at`. بعد 5 محاولات نقل فاشلة يُنقل إلى `dead_letter_events` |
+| Relay | `events/relay.py` | مهمة `logistic_x.relay_outbox` كل 30 ثانية: يقرأ الدفعة تحت نطاق المنصة، وينشر كل حدث في **معاملة مستقلة بنطاق مستأجره**، ثم يختمه `published_at`. بعد 5 محاولات نقل فاشلة يُنقل إلى `dead_letter_events` |
 | `EventBus` | `events/bus.py` | يوزّع الحدث على المعالجات المسجلة (notifications, analytics, webhooks) |
 | `EventDispatcher` | `events/dispatcher.py` | Idempotency عبر `processed_events (consumer, event_id)`، إعادة المحاولة 3 مرات بتراجع أسي (0.2s، حد أقصى 5s)، ثم Dead Letter دون إيقاف بقية الأحداث |
 
@@ -126,10 +126,10 @@ Redis يخدم ثلاثة أغراض بقواعد منفصلة: التوكنات
 
 | المهمة | الجدولة | الوظيفة |
 | --- | --- | --- |
-| `mesaar.relay_outbox` | كل 30s (`batch_size=100`) | نشر أحداث Outbox |
-| `mesaar.projection_health_check` | كل 5 دقائق | تصنيف حالة الإسقاطات |
-| `mesaar.webhook_delivery_sweep` | كل 60s (`batch_per_tenant=100`) | إعادة محاولة تسليم Webhooks المستحقة |
-| `mesaar.ping` | عند الطلب | فحص تشخيصي |
+| `logistic_x.relay_outbox` | كل 30s (`batch_size=100`) | نشر أحداث Outbox |
+| `logistic_x.projection_health_check` | كل 5 دقائق | تصنيف حالة الإسقاطات |
+| `logistic_x.webhook_delivery_sweep` | كل 60s (`batch_per_tenant=100`) | إعادة محاولة تسليم Webhooks المستحقة |
+| `logistic_x.ping` | عند الطلب | فحص تشخيصي |
 
 خيار `expires` في الجدولة يسقط المهمة إن لم **تبدأ** خلال المهلة فقط؛ وهو ليس حماية من التداخل.
 

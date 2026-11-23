@@ -1,4 +1,4 @@
-# فهرس المكونات — Mesaar
+# فهرس المكونات — Logistic X
 
 يفصل الفهرس بين Implemented في mobile/src/components/ و Planned للواجهات المستقبلية.
 ظهور جزء داخل بطاقة لا يعني وجود مكون مستقل أوفحص كل حالاته. راجع [المواصفة](design-spec.md).

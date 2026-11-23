@@ -1,4 +1,4 @@
-# Phase 9 — Implementation Plan & Build Sequencing (Mesaar)
+# Phase 9 — Implementation Plan & Build Sequencing (Logistic X)
 
 > **Status:** Implementation planning — **documentation only** (no code, SQL, ORM, or migrations *in this document*). Produced 2026-06-22. This is the bridge from the now-complete architecture corpus (`docs/01`–`docs/11`, ADR-001…009) to the actual build.
 > **Relationship to `docs/07`:** **refreshes and extends** the Phase-5 Execution Plan. `docs/07` defined the milestones (M0–M9), dependency graph, risks, and timeline — all still authoritative. This plan **updates milestone status** (M0 is now closed), and adds the **build-ready detail** `docs/07` lacks: per-milestone task breakdown mapped to the `docs/05` package structure and `docs/11` blueprint, additive migration ordering, Definition of Done, CI/test exit gates, and the ADR schedule. It **does not** change frozen aggregates, relationships, tenancy, the event-store model, or the ERD.

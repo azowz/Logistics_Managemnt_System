@@ -1,4 +1,4 @@
-# Phase 4.5 — Architecture Audit, Validation & Phase 5 Readiness (Mesaar)
+# Phase 4.5 — Architecture Audit, Validation & Phase 5 Readiness (Logistic X)
 
 Status: **Audit / validation deliverable.** This document does **not** redesign any approved
 artifact, generate code, APIs, or migrations. It reviews Phases 1–5A, validates internal
@@ -487,7 +487,7 @@ Benchmarked against **Uber Freight, Convoy, Flexport, SAP TM, Oracle OTM.** Prio
 to credibly "exceed Uber Freight" / serve enterprise; **P1** = strong differentiator; **P2** =
 later-stage.
 
-| Category | Current State (Mesaar) | Target State (best-in-class) | Priority |
+| Category | Current State (Logistic X) | Target State (best-in-class) | Priority |
 |---|---|---|---|
 | **Carrier Marketplace** | None — internal drivers/fleet only | Multi-carrier sourcing, capacity matching, spot tendering, carrier scorecards (Uber Freight/Convoy core) | **P0** |
 | **Financial Settlement** | Billing context NEW; quote/settle/payout designed, unbuilt | Automated settlement, quick-pay/factoring, multi-currency, GL/ERP posting, reconciliation | **P0** |

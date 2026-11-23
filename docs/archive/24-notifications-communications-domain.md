@@ -121,7 +121,7 @@ Templates: `POST/GET /notifications/templates`, `GET .../search`,
 ## 11. Worker integration
 
 The platform runs the outbox relay (`run_outbox_relay`, scheduled by celery-beat
-every 30s via the `mesaar.relay_outbox` task) which publishes each stored event
+every 30s via the `logistic_x.relay_outbox` task) which publishes each stored event
 through `default_bus` to registered handlers; the `Dispatcher` provides
 idempotency + SAVEPOINT isolation + retry + dead-lettering and commits the
 handler's writes with the `processed_events` record.

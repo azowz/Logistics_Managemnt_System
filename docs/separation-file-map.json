@@ -1,2583 +1,2583 @@
 [
   {
     "from": ".dockerignore",
-    "to": "mesaar-backend/.dockerignore",
+    "to": "logistic-x-backend/.dockerignore",
     "original_sha256": "43d1a88f5d2819683bb176db04d94ab151d1ef9ea71f9e8ac74292ea7d795dfb",
     "final_sha256": "87f22aa31fdc1eea3e17d4510cffb5552af9bb0d9fe82f7c957f9554ad4954e2",
     "changed": true
   },
   {
     "from": "alembic.ini",
-    "to": "mesaar-backend/alembic.ini",
+    "to": "logistic-x-backend/alembic.ini",
     "original_sha256": "62f46356deb413c9809bf61e736183060b1347fe834d38ed46e98bcb22644c79",
     "final_sha256": "62f46356deb413c9809bf61e736183060b1347fe834d38ed46e98bcb22644c79",
     "changed": false
   },
   {
     "from": "Dockerfile",
-    "to": "mesaar-backend/Dockerfile",
+    "to": "logistic-x-backend/Dockerfile",
     "original_sha256": "77d0232de4c57fe0d81f080ca2c98ff48556e1d920b902a1f70b4abd98d485cd",
     "final_sha256": "77d0232de4c57fe0d81f080ca2c98ff48556e1d920b902a1f70b4abd98d485cd",
     "changed": false
   },
   {
     "from": "pyproject.toml",
-    "to": "mesaar-backend/pyproject.toml",
+    "to": "logistic-x-backend/pyproject.toml",
     "original_sha256": "1395570e386d0feb0fb8afe65b455d2e452ebd16330640deb05e708655b68e7a",
     "final_sha256": "2cb68a16d38a9f6b30bef2c7147fe73c2b3d02467049271e4a096cd9dc2c6415",
     "changed": true
   },
   {
     "from": "pytest.ini",
-    "to": "mesaar-backend/pytest.ini",
+    "to": "logistic-x-backend/pytest.ini",
     "original_sha256": "1c9b7ddec6a047c3ff36738ce13f8fbce1fa1a035775576aa920174a39d366b9",
     "final_sha256": "1c9b7ddec6a047c3ff36738ce13f8fbce1fa1a035775576aa920174a39d366b9",
     "changed": false
   },
   {
     "from": "requirements-dev.txt",
-    "to": "mesaar-backend/requirements-dev.txt",
+    "to": "logistic-x-backend/requirements-dev.txt",
     "original_sha256": "b557b3c3bcb529b0bec3826553fe41d0dabb3033725668478ebd74d225669492",
     "final_sha256": "b557b3c3bcb529b0bec3826553fe41d0dabb3033725668478ebd74d225669492",
     "changed": false
   },
   {
     "from": "requirements.txt",
-    "to": "mesaar-backend/requirements.txt",
+    "to": "logistic-x-backend/requirements.txt",
     "original_sha256": "9976d2ad3ad0067f86efcb3a25efeaa23e47d38280da4c5d0130ac91b4adeac5",
     "final_sha256": "7338e052bbd2ea15432fa9a3c26f98cb623d07d10d3fee2b8bb64aa466a2a942",
     "changed": true
   },
   {
     "from": "api/openapi.yaml",
-    "to": "mesaar-backend/api/openapi.yaml",
+    "to": "logistic-x-backend/api/openapi.yaml",
     "original_sha256": "f6e86aadc5eaf99eebff29ff43b1430c2c1849e62e5b3f04405cafef93a22b11",
     "final_sha256": "f6e86aadc5eaf99eebff29ff43b1430c2c1849e62e5b3f04405cafef93a22b11",
     "changed": false
   },
   {
     "from": "app/main.py",
-    "to": "mesaar-backend/app/main.py",
+    "to": "logistic-x-backend/app/main.py",
     "original_sha256": "cab11d2f2b15d1221578713c054d3169a6a23e16de7c5e2b3fc4c4a1a7980288",
     "final_sha256": "bb49810ebe6a5df2a61be0a506da4d9e98d41d3cdb4b80fafc4afc509fea2be0",
     "changed": true
   },
   {
     "from": "app/__init__.py",
-    "to": "mesaar-backend/app/__init__.py",
+    "to": "logistic-x-backend/app/__init__.py",
     "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "final_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "changed": false
   },
   {
     "from": "app/analytics/handlers.py",
-    "to": "mesaar-backend/app/analytics/handlers.py",
+    "to": "logistic-x-backend/app/analytics/handlers.py",
     "original_sha256": "3bf687386b28b04e28edcd398370842c8536af5f4f707215e7943b959b5c4c8f",
     "final_sha256": "3bf687386b28b04e28edcd398370842c8536af5f4f707215e7943b959b5c4c8f",
     "changed": false
   },
   {
     "from": "app/analytics/health.py",
-    "to": "mesaar-backend/app/analytics/health.py",
+    "to": "logistic-x-backend/app/analytics/health.py",
     "original_sha256": "d4d31498102dd0917cb729609c9dcdc325b2bf9c4be284512faef56efe9bdb2e",
     "final_sha256": "d4d31498102dd0917cb729609c9dcdc325b2bf9c4be284512faef56efe9bdb2e",
     "changed": false
   },
   {
     "from": "app/analytics/__init__.py",
-    "to": "mesaar-backend/app/analytics/__init__.py",
+    "to": "logistic-x-backend/app/analytics/__init__.py",
     "original_sha256": "897d9eea7a89c4318247d5e2c8413436c3d962088f412799b8e63a9c85b80609",
     "final_sha256": "897d9eea7a89c4318247d5e2c8413436c3d962088f412799b8e63a9c85b80609",
     "changed": false
   },
   {
     "from": "app/api/deps.py",
-    "to": "mesaar-backend/app/api/deps.py",
+    "to": "logistic-x-backend/app/api/deps.py",
     "original_sha256": "6dc43ab08c808dde4ab061d43ce9e1e736a71083eb643ae1fc211fabb740dc43",
     "final_sha256": "6dc43ab08c808dde4ab061d43ce9e1e736a71083eb643ae1fc211fabb740dc43",
     "changed": false
   },
   {
     "from": "app/api/health.py",
-    "to": "mesaar-backend/app/api/health.py",
+    "to": "logistic-x-backend/app/api/health.py",
     "original_sha256": "0080a2163af4f3bd00aefea0f3abc65527c680a805e63968332713531f4ccb96",
     "final_sha256": "0080a2163af4f3bd00aefea0f3abc65527c680a805e63968332713531f4ccb96",
     "changed": false
   },
   {
     "from": "app/api/__init__.py",
-    "to": "mesaar-backend/app/api/__init__.py",
+    "to": "logistic-x-backend/app/api/__init__.py",
     "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "final_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "changed": false
   },
   {
     "from": "app/api/middleware/request_context.py",
-    "to": "mesaar-backend/app/api/middleware/request_context.py",
+    "to": "logistic-x-backend/app/api/middleware/request_context.py",
     "original_sha256": "5285aee44c5a56a30a268f7349c6f4fbdc440a85022fe8168eeb4b0b5596cfd5",
     "final_sha256": "5285aee44c5a56a30a268f7349c6f4fbdc440a85022fe8168eeb4b0b5596cfd5",
     "changed": false
   },
   {
     "from": "app/api/middleware/__init__.py",
-    "to": "mesaar-backend/app/api/middleware/__init__.py",
+    "to": "logistic-x-backend/app/api/middleware/__init__.py",
     "original_sha256": "c12fbf7e93889e97b998fbcf7061d55ba23df6f9928719a0640838263c80853d",
     "final_sha256": "c12fbf7e93889e97b998fbcf7061d55ba23df6f9928719a0640838263c80853d",
     "changed": false
   },
   {
     "from": "app/api/routes/analytics.py",
-    "to": "mesaar-backend/app/api/routes/analytics.py",
+    "to": "logistic-x-backend/app/api/routes/analytics.py",
     "original_sha256": "899fb8a9c7910d77ac3ebc1a4739037995baa62714cde035f3d9aecaf164370d",
     "final_sha256": "899fb8a9c7910d77ac3ebc1a4739037995baa62714cde035f3d9aecaf164370d",
     "changed": false
   },
   {
     "from": "app/api/routes/auth.py",
-    "to": "mesaar-backend/app/api/routes/auth.py",
+    "to": "logistic-x-backend/app/api/routes/auth.py",
     "original_sha256": "2bca247d3a2468e568476280968b5fa5c05dfdc60741fb1b60e31ff552a78729",
     "final_sha256": "2bca247d3a2468e568476280968b5fa5c05dfdc60741fb1b60e31ff552a78729",
     "changed": false
   },
   {
     "from": "app/api/routes/billing.py",
-    "to": "mesaar-backend/app/api/routes/billing.py",
+    "to": "logistic-x-backend/app/api/routes/billing.py",
     "original_sha256": "592fda79173acbeb92215d589471dbe1dd4061b66296ddd0f033ee7ee6604a14",
     "final_sha256": "592fda79173acbeb92215d589471dbe1dd4061b66296ddd0f033ee7ee6604a14",
     "changed": false
   },
   {
     "from": "app/api/routes/claims.py",
-    "to": "mesaar-backend/app/api/routes/claims.py",
+    "to": "logistic-x-backend/app/api/routes/claims.py",
     "original_sha256": "3c2b600ed97341948725c4dd4fb3885c4ce2a90d07d9ef5db774ebc86250ebf4",
     "final_sha256": "3c2b600ed97341948725c4dd4fb3885c4ce2a90d07d9ef5db774ebc86250ebf4",
     "changed": false
   },
   {
     "from": "app/api/routes/compliance.py",
-    "to": "mesaar-backend/app/api/routes/compliance.py",
+    "to": "logistic-x-backend/app/api/routes/compliance.py",
     "original_sha256": "52ee07a147205525336df81c6d8953958941a6a45c89fe9de1bc773cfa0c5db6",
     "final_sha256": "52ee07a147205525336df81c6d8953958941a6a45c89fe9de1bc773cfa0c5db6",
     "changed": false
   },
   {
     "from": "app/api/routes/customers.py",
-    "to": "mesaar-backend/app/api/routes/customers.py",
+    "to": "logistic-x-backend/app/api/routes/customers.py",
     "original_sha256": "98926f849059f6cc1b941bbe6e3801427a1f8a60c6ddeffce6db7c5518081d90",
     "final_sha256": "98926f849059f6cc1b941bbe6e3801427a1f8a60c6ddeffce6db7c5518081d90",
     "changed": false
   },
   {
     "from": "app/api/routes/drivers.py",
-    "to": "mesaar-backend/app/api/routes/drivers.py",
+    "to": "logistic-x-backend/app/api/routes/drivers.py",
     "original_sha256": "8ed9009e2fc980baff491356ffb16d1441f4bc790fe07b3c0f2bd557a93559ca",
     "final_sha256": "8ed9009e2fc980baff491356ffb16d1441f4bc790fe07b3c0f2bd557a93559ca",
     "changed": false
   },
   {
     "from": "app/api/routes/driver_self.py",
-    "to": "mesaar-backend/app/api/routes/driver_self.py",
+    "to": "logistic-x-backend/app/api/routes/driver_self.py",
     "original_sha256": "9455bd6a4301ea3543b3c7ba19689036bb8502c42ecf8d2c43687a801b98d2c5",
     "final_sha256": "9455bd6a4301ea3543b3c7ba19689036bb8502c42ecf8d2c43687a801b98d2c5",
     "changed": false
   },
   {
     "from": "app/api/routes/equipment.py",
-    "to": "mesaar-backend/app/api/routes/equipment.py",
+    "to": "logistic-x-backend/app/api/routes/equipment.py",
     "original_sha256": "c573b2bdd312b42dea3c4139b2275a667b4291f64b6664bf6b32299022cd37b1",
     "final_sha256": "c573b2bdd312b42dea3c4139b2275a667b4291f64b6664bf6b32299022cd37b1",
     "changed": false
   },
   {
     "from": "app/api/routes/insurance.py",
-    "to": "mesaar-backend/app/api/routes/insurance.py",
+    "to": "logistic-x-backend/app/api/routes/insurance.py",
     "original_sha256": "7d518b0b5a3476f92c234b37f2d53531c1ab4bd064e5305693a5456565878154",
     "final_sha256": "7d518b0b5a3476f92c234b37f2d53531c1ab4bd064e5305693a5456565878154",
     "changed": false
   },
   {
     "from": "app/api/routes/integrations.py",
-    "to": "mesaar-backend/app/api/routes/integrations.py",
+    "to": "logistic-x-backend/app/api/routes/integrations.py",
     "original_sha256": "a9af5bc8b021e261036e3ad061abe130af2d27d8036de62be4cd4b3dbf0e60cf",
     "final_sha256": "a9af5bc8b021e261036e3ad061abe130af2d27d8036de62be4cd4b3dbf0e60cf",
     "changed": false
   },
   {
     "from": "app/api/routes/notifications.py",
-    "to": "mesaar-backend/app/api/routes/notifications.py",
+    "to": "logistic-x-backend/app/api/routes/notifications.py",
     "original_sha256": "7489987e07b88238c73c6a69bf2e50a571fa3fa9dd0a6c455a53690702c01b4a",
     "final_sha256": "7489987e07b88238c73c6a69bf2e50a571fa3fa9dd0a6c455a53690702c01b4a",
     "changed": false
   },
   {
     "from": "app/api/routes/orders.py",
-    "to": "mesaar-backend/app/api/routes/orders.py",
+    "to": "logistic-x-backend/app/api/routes/orders.py",
     "original_sha256": "5244d35b9396c9d85f5753417993c94759873f8e62485ace181760685bcb1f6b",
     "final_sha256": "5244d35b9396c9d85f5753417993c94759873f8e62485ace181760685bcb1f6b",
     "changed": false
   },
   {
     "from": "app/api/routes/shipments.py",
-    "to": "mesaar-backend/app/api/routes/shipments.py",
+    "to": "logistic-x-backend/app/api/routes/shipments.py",
     "original_sha256": "263ee518e7652eeec1ff4f4a42e16280d1ecbd9d3b0a207bc1d33e7f8f3bdcfa",
     "final_sha256": "263ee518e7652eeec1ff4f4a42e16280d1ecbd9d3b0a207bc1d33e7f8f3bdcfa",
     "changed": false
   },
   {
     "from": "app/api/routes/users.py",
-    "to": "mesaar-backend/app/api/routes/users.py",
+    "to": "logistic-x-backend/app/api/routes/users.py",
     "original_sha256": "6a92a95ab4a26ea85f1e76b6df1a428c9b862189eaaca3413bd0a7835bec9093",
     "final_sha256": "6a92a95ab4a26ea85f1e76b6df1a428c9b862189eaaca3413bd0a7835bec9093",
     "changed": false
   },
   {
     "from": "app/api/routes/vehicles.py",
-    "to": "mesaar-backend/app/api/routes/vehicles.py",
+    "to": "logistic-x-backend/app/api/routes/vehicles.py",
     "original_sha256": "cbb478a27f35039566dfe167a5cd21cb28c8bb23a534ea3e2193cadb7fb2c43d",
     "final_sha256": "cbb478a27f35039566dfe167a5cd21cb28c8bb23a534ea3e2193cadb7fb2c43d",
     "changed": false
   },
   {
     "from": "app/api/routes/warehouses.py",
-    "to": "mesaar-backend/app/api/routes/warehouses.py",
+    "to": "logistic-x-backend/app/api/routes/warehouses.py",
     "original_sha256": "985ccfcb4289314dc171a9628bd1afa7d2416208d9bec4db7d343350ce7ecb04",
     "final_sha256": "985ccfcb4289314dc171a9628bd1afa7d2416208d9bec4db7d343350ce7ecb04",
     "changed": false
   },
   {
     "from": "app/api/routes/__init__.py",
-    "to": "mesaar-backend/app/api/routes/__init__.py",
+    "to": "logistic-x-backend/app/api/routes/__init__.py",
     "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "final_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "changed": false
   },
   {
     "from": "app/api/v1/router.py",
-    "to": "mesaar-backend/app/api/v1/router.py",
+    "to": "logistic-x-backend/app/api/v1/router.py",
     "original_sha256": "27b722b8583482989df3c437883160060431594891f25959743d91ff1906b879",
     "final_sha256": "27b722b8583482989df3c437883160060431594891f25959743d91ff1906b879",
     "changed": false
   },
   {
     "from": "app/api/v1/__init__.py",
-    "to": "mesaar-backend/app/api/v1/__init__.py",
+    "to": "logistic-x-backend/app/api/v1/__init__.py",
     "original_sha256": "ee2fa5bffd2e9185f2d0cee4865ee17f7a6895630e54d033028d3baafd1d94cf",
     "final_sha256": "ee2fa5bffd2e9185f2d0cee4865ee17f7a6895630e54d033028d3baafd1d94cf",
     "changed": false
   },
   {
     "from": "app/common/datetime.py",
-    "to": "mesaar-backend/app/common/datetime.py",
+    "to": "logistic-x-backend/app/common/datetime.py",
     "original_sha256": "08b1866b994beefd2fd9056530e9a4fa945d1c5da5260670790251a26e88983e",
     "final_sha256": "08b1866b994beefd2fd9056530e9a4fa945d1c5da5260670790251a26e88983e",
     "changed": false
   },
   {
     "from": "app/common/pagination.py",
-    "to": "mesaar-backend/app/common/pagination.py",
+    "to": "logistic-x-backend/app/common/pagination.py",
     "original_sha256": "3af80e9a86e0c0007baa1067cfc70f104091aaf34821caf266f20ddcf23ac9b7",
     "final_sha256": "3af80e9a86e0c0007baa1067cfc70f104091aaf34821caf266f20ddcf23ac9b7",
     "changed": false
   },
   {
     "from": "app/common/responses.py",
-    "to": "mesaar-backend/app/common/responses.py",
+    "to": "logistic-x-backend/app/common/responses.py",
     "original_sha256": "1ef94936138dd11d430f2d23a18ad5f0feaae65aa88610d8ddafb1cc40e6b913",
     "final_sha256": "1ef94936138dd11d430f2d23a18ad5f0feaae65aa88610d8ddafb1cc40e6b913",
     "changed": false
   },
   {
     "from": "app/common/__init__.py",
-    "to": "mesaar-backend/app/common/__init__.py",
+    "to": "logistic-x-backend/app/common/__init__.py",
     "original_sha256": "0c97351b31582fb18706f663e742a325fbcaf218178a41e4b1292915b336fbc9",
     "final_sha256": "0c97351b31582fb18706f663e742a325fbcaf218178a41e4b1292915b336fbc9",
     "changed": false
   },
   {
     "from": "app/core/config.py",
-    "to": "mesaar-backend/app/core/config.py",
+    "to": "logistic-x-backend/app/core/config.py",
     "original_sha256": "e9339d638c7f949b3d009816e974630825ba3222a20344474b8c41628b47a6bc",
     "final_sha256": "d3fa654932ea95ba9612962c00fdd6f77f283bdbd8119c39c2e19169bba74321",
     "changed": true
   },
   {
     "from": "app/core/exceptions.py",
-    "to": "mesaar-backend/app/core/exceptions.py",
+    "to": "logistic-x-backend/app/core/exceptions.py",
     "original_sha256": "51720bda99ff4184b002ca41fde9210ae6dda278ad3f3cf7abaceddc96c41449",
     "final_sha256": "51720bda99ff4184b002ca41fde9210ae6dda278ad3f3cf7abaceddc96c41449",
     "changed": false
   },
   {
     "from": "app/core/redis.py",
-    "to": "mesaar-backend/app/core/redis.py",
+    "to": "logistic-x-backend/app/core/redis.py",
     "original_sha256": "cafe99d9e3de873faeece32778fb70eeb3856a124b9281e4aa686a9473d713e6",
     "final_sha256": "cafe99d9e3de873faeece32778fb70eeb3856a124b9281e4aa686a9473d713e6",
     "changed": false
   },
   {
     "from": "app/core/security.py",
-    "to": "mesaar-backend/app/core/security.py",
+    "to": "logistic-x-backend/app/core/security.py",
     "original_sha256": "8bb0b79cd9f6bc7e27fbfd8a5064dd6b4296e1b2fe79641c8fdadcdae3c3611a",
     "final_sha256": "8bb0b79cd9f6bc7e27fbfd8a5064dd6b4296e1b2fe79641c8fdadcdae3c3611a",
     "changed": false
   },
   {
     "from": "app/core/token_service.py",
-    "to": "mesaar-backend/app/core/token_service.py",
+    "to": "logistic-x-backend/app/core/token_service.py",
     "original_sha256": "d0240c5b5e41c35da45f528a2a3c2f8681ff6fd5551ecfbe908075bba074a5ef",
     "final_sha256": "d0240c5b5e41c35da45f528a2a3c2f8681ff6fd5551ecfbe908075bba074a5ef",
     "changed": false
   },
   {
     "from": "app/core/__init__.py",
-    "to": "mesaar-backend/app/core/__init__.py",
+    "to": "logistic-x-backend/app/core/__init__.py",
     "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "final_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "changed": false
   },
   {
     "from": "app/db/base.py",
-    "to": "mesaar-backend/app/db/base.py",
+    "to": "logistic-x-backend/app/db/base.py",
     "original_sha256": "c7f7aa2ecabc331ba39c7f78e6f0a4a850bf79e1ee1f858cdf554cc15c7b0812",
     "final_sha256": "c7f7aa2ecabc331ba39c7f78e6f0a4a850bf79e1ee1f858cdf554cc15c7b0812",
     "changed": false
   },
   {
     "from": "app/db/base_model.py",
-    "to": "mesaar-backend/app/db/base_model.py",
+    "to": "logistic-x-backend/app/db/base_model.py",
     "original_sha256": "f746ded4dfeaa668e8ad1abe68a543f7c622adad0e98d1f34dddd42baa747219",
     "final_sha256": "f746ded4dfeaa668e8ad1abe68a543f7c622adad0e98d1f34dddd42baa747219",
     "changed": false
   },
   {
     "from": "app/db/mixins.py",
-    "to": "mesaar-backend/app/db/mixins.py",
+    "to": "logistic-x-backend/app/db/mixins.py",
     "original_sha256": "e849c7eeac04c60858a8b4f2cabc0e7483f3752c6f44b76fb86924ef436517a0",
     "final_sha256": "e849c7eeac04c60858a8b4f2cabc0e7483f3752c6f44b76fb86924ef436517a0",
     "changed": false
   },
   {
     "from": "app/db/session.py",
-    "to": "mesaar-backend/app/db/session.py",
+    "to": "logistic-x-backend/app/db/session.py",
     "original_sha256": "baa11c6d516c8504ea545486ad386027454eb7bece7cc1b60f35744ee4b2cc04",
     "final_sha256": "baa11c6d516c8504ea545486ad386027454eb7bece7cc1b60f35744ee4b2cc04",
     "changed": false
   },
   {
     "from": "app/db/tenant.py",
-    "to": "mesaar-backend/app/db/tenant.py",
+    "to": "logistic-x-backend/app/db/tenant.py",
     "original_sha256": "9d12e88820d2e7b6e9b95911e0e8c253d2714fc07756c36bb84e606ee01580d7",
     "final_sha256": "9d12e88820d2e7b6e9b95911e0e8c253d2714fc07756c36bb84e606ee01580d7",
     "changed": false
   },
   {
     "from": "app/db/uuidv7.py",
-    "to": "mesaar-backend/app/db/uuidv7.py",
+    "to": "logistic-x-backend/app/db/uuidv7.py",
     "original_sha256": "e4dcea047d5ad3ecdbc44360dd519d0e02757e84f518d230cdd2b52b4e7188c9",
     "final_sha256": "e4dcea047d5ad3ecdbc44360dd519d0e02757e84f518d230cdd2b52b4e7188c9",
     "changed": false
   },
   {
     "from": "app/db/__init__.py",
-    "to": "mesaar-backend/app/db/__init__.py",
+    "to": "logistic-x-backend/app/db/__init__.py",
     "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "final_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "changed": false
   },
   {
     "from": "app/events/billing_events.py",
-    "to": "mesaar-backend/app/events/billing_events.py",
+    "to": "logistic-x-backend/app/events/billing_events.py",
     "original_sha256": "8012ff3a0779a7fa00d8a90d4485e59a2a466bfe378ba06b3a4a821ab7826aa2",
     "final_sha256": "8012ff3a0779a7fa00d8a90d4485e59a2a466bfe378ba06b3a4a821ab7826aa2",
     "changed": false
   },
   {
     "from": "app/events/bus.py",
-    "to": "mesaar-backend/app/events/bus.py",
+    "to": "logistic-x-backend/app/events/bus.py",
     "original_sha256": "61d72739b6694a00f4709d1bcb50e892b2fcf1a68bbdf6bd2d004dfbe242ef86",
     "final_sha256": "61d72739b6694a00f4709d1bcb50e892b2fcf1a68bbdf6bd2d004dfbe242ef86",
     "changed": false
   },
   {
     "from": "app/events/compliance_events.py",
-    "to": "mesaar-backend/app/events/compliance_events.py",
+    "to": "logistic-x-backend/app/events/compliance_events.py",
     "original_sha256": "2fe556bc5c5935063b64c4f75e969d3db8ed8454b8f2241618193df5b9a5934a",
     "final_sha256": "2fe556bc5c5935063b64c4f75e969d3db8ed8454b8f2241618193df5b9a5934a",
     "changed": false
   },
   {
     "from": "app/events/customer_events.py",
-    "to": "mesaar-backend/app/events/customer_events.py",
+    "to": "logistic-x-backend/app/events/customer_events.py",
     "original_sha256": "1911d37638c4d74eeb5690252be04796477386a4c1086f4737c9b867c94cb9e4",
     "final_sha256": "1911d37638c4d74eeb5690252be04796477386a4c1086f4737c9b867c94cb9e4",
     "changed": false
   },
   {
     "from": "app/events/dispatcher.py",
-    "to": "mesaar-backend/app/events/dispatcher.py",
+    "to": "logistic-x-backend/app/events/dispatcher.py",
     "original_sha256": "1fc1a4c610cf01d399f44d6526af061f4fb291b624a66ff9d47c7893ef9a5d08",
     "final_sha256": "1fc1a4c610cf01d399f44d6526af061f4fb291b624a66ff9d47c7893ef9a5d08",
     "changed": false
   },
   {
     "from": "app/events/domain_event.py",
-    "to": "mesaar-backend/app/events/domain_event.py",
+    "to": "logistic-x-backend/app/events/domain_event.py",
     "original_sha256": "73c62f7f4f950e1f28fdcb1337bf3522866925daca5de17a416092eb2a7eed1f",
     "final_sha256": "73c62f7f4f950e1f28fdcb1337bf3522866925daca5de17a416092eb2a7eed1f",
     "changed": false
   },
   {
     "from": "app/events/envelope.py",
-    "to": "mesaar-backend/app/events/envelope.py",
+    "to": "logistic-x-backend/app/events/envelope.py",
     "original_sha256": "8eeb2c3b0900f66d88d728ee0fe8a08c3249d326a0eee2074dbc93d56a9baf5c",
     "final_sha256": "8eeb2c3b0900f66d88d728ee0fe8a08c3249d326a0eee2074dbc93d56a9baf5c",
     "changed": false
   },
   {
     "from": "app/events/equipment_events.py",
-    "to": "mesaar-backend/app/events/equipment_events.py",
+    "to": "logistic-x-backend/app/events/equipment_events.py",
     "original_sha256": "7b2d075aeb8a2439b259ea4fb79d26426b700465511e7f6247d4281c6a7538cb",
     "final_sha256": "7b2d075aeb8a2439b259ea4fb79d26426b700465511e7f6247d4281c6a7538cb",
     "changed": false
   },
   {
     "from": "app/events/exceptions.py",
-    "to": "mesaar-backend/app/events/exceptions.py",
+    "to": "logistic-x-backend/app/events/exceptions.py",
     "original_sha256": "8ce7740399cc8f1f644a5d6cca9b736e2eb27d496b14c5cefbb0bff7f7891e04",
     "final_sha256": "8ce7740399cc8f1f644a5d6cca9b736e2eb27d496b14c5cefbb0bff7f7891e04",
     "changed": false
   },
   {
     "from": "app/events/insurance_events.py",
-    "to": "mesaar-backend/app/events/insurance_events.py",
+    "to": "logistic-x-backend/app/events/insurance_events.py",
     "original_sha256": "880eb224f17e8c3227952d04ac9861ffe6c9e2526d64cfeffba07b74d962f7c6",
     "final_sha256": "880eb224f17e8c3227952d04ac9861ffe6c9e2526d64cfeffba07b74d962f7c6",
     "changed": false
   },
   {
     "from": "app/events/integration_events.py",
-    "to": "mesaar-backend/app/events/integration_events.py",
+    "to": "logistic-x-backend/app/events/integration_events.py",
     "original_sha256": "75fc3f3f531df6058a6de1aec8f2ea37dc62168b8eedb6c2ca2396b9c6ee0a96",
     "final_sha256": "75fc3f3f531df6058a6de1aec8f2ea37dc62168b8eedb6c2ca2396b9c6ee0a96",
     "changed": false
   },
   {
     "from": "app/events/metrics.py",
-    "to": "mesaar-backend/app/events/metrics.py",
+    "to": "logistic-x-backend/app/events/metrics.py",
     "original_sha256": "b82edce573b8d337cc40d848724fefc6fb42c7ba3207aeb28ee0c536899b85b8",
     "final_sha256": "b82edce573b8d337cc40d848724fefc6fb42c7ba3207aeb28ee0c536899b85b8",
     "changed": false
   },
   {
     "from": "app/events/notification_events.py",
-    "to": "mesaar-backend/app/events/notification_events.py",
+    "to": "logistic-x-backend/app/events/notification_events.py",
     "original_sha256": "b4b1e8b15cf0ce1433ab3acf612bc86534a820992780e7b853ad28828a4a5581",
     "final_sha256": "b4b1e8b15cf0ce1433ab3acf612bc86534a820992780e7b853ad28828a4a5581",
     "changed": false
   },
   {
     "from": "app/events/order_events.py",
-    "to": "mesaar-backend/app/events/order_events.py",
+    "to": "logistic-x-backend/app/events/order_events.py",
     "original_sha256": "b9810fc15925ae2ddfd529b252de768d60c6db47b9e42da62d3b4c8f859e1b60",
     "final_sha256": "b9810fc15925ae2ddfd529b252de768d60c6db47b9e42da62d3b4c8f859e1b60",
     "changed": false
   },
   {
     "from": "app/events/registry.py",
-    "to": "mesaar-backend/app/events/registry.py",
+    "to": "logistic-x-backend/app/events/registry.py",
     "original_sha256": "a51bd52f802b6c19d5691591e1e046eaab25def16e83f6bb895ead8997b78897",
     "final_sha256": "a51bd52f802b6c19d5691591e1e046eaab25def16e83f6bb895ead8997b78897",
     "changed": false
   },
   {
     "from": "app/events/relay.py",
-    "to": "mesaar-backend/app/events/relay.py",
+    "to": "logistic-x-backend/app/events/relay.py",
     "original_sha256": "69e6bea458c000c52ab8ce3752768398a4e005327eba3d713e270d39592d3f2c",
     "final_sha256": "69e6bea458c000c52ab8ce3752768398a4e005327eba3d713e270d39592d3f2c",
     "changed": false
   },
   {
     "from": "app/events/shipment_events.py",
-    "to": "mesaar-backend/app/events/shipment_events.py",
+    "to": "logistic-x-backend/app/events/shipment_events.py",
     "original_sha256": "dce4f41e3ba87a3569455adb12ef4e8797c2fb6dac7f929149c9aa8c2f51e623",
     "final_sha256": "dce4f41e3ba87a3569455adb12ef4e8797c2fb6dac7f929149c9aa8c2f51e623",
     "changed": false
   },
   {
     "from": "app/events/__init__.py",
-    "to": "mesaar-backend/app/events/__init__.py",
+    "to": "logistic-x-backend/app/events/__init__.py",
     "original_sha256": "8ab0ce8cc0224aebe2055138910e3bc23f919c672140ab8429f23f0b31ea5905",
     "final_sha256": "8ab0ce8cc0224aebe2055138910e3bc23f919c672140ab8429f23f0b31ea5905",
     "changed": false
   },
   {
     "from": "app/integrations/auth.py",
-    "to": "mesaar-backend/app/integrations/auth.py",
+    "to": "logistic-x-backend/app/integrations/auth.py",
     "original_sha256": "89fd35658d3a48cdfb3cd8654c3d5cbe51aac3e567b7a99efe3c7647711462b2",
     "final_sha256": "89fd35658d3a48cdfb3cd8654c3d5cbe51aac3e567b7a99efe3c7647711462b2",
     "changed": false
   },
   {
     "from": "app/integrations/crypto.py",
-    "to": "mesaar-backend/app/integrations/crypto.py",
+    "to": "logistic-x-backend/app/integrations/crypto.py",
     "original_sha256": "befb6ea41eb5055984e3b09d97cc03b5fc122350ea216ceeddd35c95fbc29453",
     "final_sha256": "befb6ea41eb5055984e3b09d97cc03b5fc122350ea216ceeddd35c95fbc29453",
     "changed": false
   },
   {
     "from": "app/integrations/delivery.py",
-    "to": "mesaar-backend/app/integrations/delivery.py",
+    "to": "logistic-x-backend/app/integrations/delivery.py",
     "original_sha256": "f9335bb169f221608ba1b779102e2c9f3135bfe0ead49df897bfa0e17d514535",
     "final_sha256": "f9335bb169f221608ba1b779102e2c9f3135bfe0ead49df897bfa0e17d514535",
     "changed": false
   },
   {
     "from": "app/integrations/encryption.py",
-    "to": "mesaar-backend/app/integrations/encryption.py",
+    "to": "logistic-x-backend/app/integrations/encryption.py",
     "original_sha256": "be181370df6ef000836014f9a624c46b7b45f226869e40ceb9fc31e916b14571",
     "final_sha256": "be181370df6ef000836014f9a624c46b7b45f226869e40ceb9fc31e916b14571",
     "changed": false
   },
   {
     "from": "app/integrations/event_mapping.py",
-    "to": "mesaar-backend/app/integrations/event_mapping.py",
+    "to": "logistic-x-backend/app/integrations/event_mapping.py",
     "original_sha256": "22dc52562bd95c7c227a02fc412b962e4abe9f45a94f7d75dfccc6cac1f80400",
     "final_sha256": "22dc52562bd95c7c227a02fc412b962e4abe9f45a94f7d75dfccc6cac1f80400",
     "changed": false
   },
   {
     "from": "app/integrations/handlers.py",
-    "to": "mesaar-backend/app/integrations/handlers.py",
+    "to": "logistic-x-backend/app/integrations/handlers.py",
     "original_sha256": "fc66b81efaf1e650556ae1ade3d564026848146b4358f8f19a3a39b736ff8d62",
     "final_sha256": "fc66b81efaf1e650556ae1ade3d564026848146b4358f8f19a3a39b736ff8d62",
     "changed": false
   },
   {
     "from": "app/integrations/policies.py",
-    "to": "mesaar-backend/app/integrations/policies.py",
+    "to": "logistic-x-backend/app/integrations/policies.py",
     "original_sha256": "cb9b92f5689426a3f67a8dfe14d0575458aa749c33efd798a8235284ed3dbc5f",
     "final_sha256": "cb9b92f5689426a3f67a8dfe14d0575458aa749c33efd798a8235284ed3dbc5f",
     "changed": false
   },
   {
     "from": "app/integrations/sweep.py",
-    "to": "mesaar-backend/app/integrations/sweep.py",
+    "to": "logistic-x-backend/app/integrations/sweep.py",
     "original_sha256": "f740f4ac780a036ec401622a87519b024fe7c312d59271350834079cd60fe69d",
     "final_sha256": "f740f4ac780a036ec401622a87519b024fe7c312d59271350834079cd60fe69d",
     "changed": false
   },
   {
     "from": "app/integrations/__init__.py",
-    "to": "mesaar-backend/app/integrations/__init__.py",
+    "to": "logistic-x-backend/app/integrations/__init__.py",
     "original_sha256": "d345a9d0413b8061385fc9682f8bc1e1be8572a9535e779333e60c3b26ebf50b",
     "final_sha256": "d345a9d0413b8061385fc9682f8bc1e1be8572a9535e779333e60c3b26ebf50b",
     "changed": false
   },
   {
     "from": "app/models/audit_log.py",
-    "to": "mesaar-backend/app/models/audit_log.py",
+    "to": "logistic-x-backend/app/models/audit_log.py",
     "original_sha256": "b1d60a0017bff1f2de1aef73110f522df15d3af9defc80468751d30be027d368",
     "final_sha256": "b1d60a0017bff1f2de1aef73110f522df15d3af9defc80468751d30be027d368",
     "changed": false
   },
   {
     "from": "app/models/billing.py",
-    "to": "mesaar-backend/app/models/billing.py",
+    "to": "logistic-x-backend/app/models/billing.py",
     "original_sha256": "4c27c30255595d7864e2f427a80b876acce851f798eeef4795609b65ecdd849d",
     "final_sha256": "4c27c30255595d7864e2f427a80b876acce851f798eeef4795609b65ecdd849d",
     "changed": false
   },
   {
     "from": "app/models/compliance.py",
-    "to": "mesaar-backend/app/models/compliance.py",
+    "to": "logistic-x-backend/app/models/compliance.py",
     "original_sha256": "07c3b768f06c083a6f5d1b25bc5999314b4b4724cf783e87d7294c9336ed6df4",
     "final_sha256": "07c3b768f06c083a6f5d1b25bc5999314b4b4724cf783e87d7294c9336ed6df4",
     "changed": false
   },
   {
     "from": "app/models/customer.py",
-    "to": "mesaar-backend/app/models/customer.py",
+    "to": "logistic-x-backend/app/models/customer.py",
     "original_sha256": "ad8dfc207566cfb2b72bb0da0f8c3436bbabd4ba5ed3dee4e4700932d9ed9a63",
     "final_sha256": "ad8dfc207566cfb2b72bb0da0f8c3436bbabd4ba5ed3dee4e4700932d9ed9a63",
     "changed": false
   },
   {
     "from": "app/models/driver.py",
-    "to": "mesaar-backend/app/models/driver.py",
+    "to": "logistic-x-backend/app/models/driver.py",
     "original_sha256": "f0a3603bc88b36fe76bba588faf92a80c4df4a8022426ccbd2f5d28295e2eb5b",
     "final_sha256": "f0a3603bc88b36fe76bba588faf92a80c4df4a8022426ccbd2f5d28295e2eb5b",
     "changed": false
   },
   {
     "from": "app/models/enums.py",
-    "to": "mesaar-backend/app/models/enums.py",
+    "to": "logistic-x-backend/app/models/enums.py",
     "original_sha256": "aae9620ce3f05ef86b778030719c64ef5e251d5aaec26df87d2e88f426ccfce2",
     "final_sha256": "aae9620ce3f05ef86b778030719c64ef5e251d5aaec26df87d2e88f426ccfce2",
     "changed": false
   },
   {
     "from": "app/models/equipment.py",
-    "to": "mesaar-backend/app/models/equipment.py",
+    "to": "logistic-x-backend/app/models/equipment.py",
     "original_sha256": "fec805e9b6aa3d6a2bb216336fe31b4fc75c91ea25a13692c681fd1e70e337e8",
     "final_sha256": "fec805e9b6aa3d6a2bb216336fe31b4fc75c91ea25a13692c681fd1e70e337e8",
     "changed": false
   },
   {
     "from": "app/models/event_store.py",
-    "to": "mesaar-backend/app/models/event_store.py",
+    "to": "logistic-x-backend/app/models/event_store.py",
     "original_sha256": "3a2f37c3a8d33ad15479cbe792c310edc3273c9cca2246477f24b4b272634e05",
     "final_sha256": "3a2f37c3a8d33ad15479cbe792c310edc3273c9cca2246477f24b4b272634e05",
     "changed": false
   },
   {
     "from": "app/models/insurance.py",
-    "to": "mesaar-backend/app/models/insurance.py",
+    "to": "logistic-x-backend/app/models/insurance.py",
     "original_sha256": "476e5290b38f43d85c425efd67f9c83e081712925b200631b79670891369184d",
     "final_sha256": "476e5290b38f43d85c425efd67f9c83e081712925b200631b79670891369184d",
     "changed": false
   },
   {
     "from": "app/models/integration.py",
-    "to": "mesaar-backend/app/models/integration.py",
+    "to": "logistic-x-backend/app/models/integration.py",
     "original_sha256": "4c53154b5cd9ba938229af7fb66ff4ed685becaeb389ea2fff83ea95239983bf",
     "final_sha256": "4c53154b5cd9ba938229af7fb66ff4ed685becaeb389ea2fff83ea95239983bf",
     "changed": false
   },
   {
     "from": "app/models/notification.py",
-    "to": "mesaar-backend/app/models/notification.py",
+    "to": "logistic-x-backend/app/models/notification.py",
     "original_sha256": "e6fc0f164e12ded7d9ec1c8cb9d7332fb08d986cebb23bfbcf65351c1ca75418",
     "final_sha256": "e6fc0f164e12ded7d9ec1c8cb9d7332fb08d986cebb23bfbcf65351c1ca75418",
     "changed": false
   },
   {
     "from": "app/models/order.py",
-    "to": "mesaar-backend/app/models/order.py",
+    "to": "logistic-x-backend/app/models/order.py",
     "original_sha256": "bcb993366f3592f0c5c6091bf1e28c0bd009186f453c955bcb173c72f2853326",
     "final_sha256": "bcb993366f3592f0c5c6091bf1e28c0bd009186f453c955bcb173c72f2853326",
     "changed": false
   },
   {
     "from": "app/models/projection.py",
-    "to": "mesaar-backend/app/models/projection.py",
+    "to": "logistic-x-backend/app/models/projection.py",
     "original_sha256": "1f8650272eb4547e91a8e98e9337b562c447a3e4de69be35e1285f6f12c2c71a",
     "final_sha256": "1f8650272eb4547e91a8e98e9337b562c447a3e4de69be35e1285f6f12c2c71a",
     "changed": false
   },
   {
     "from": "app/models/shipment.py",
-    "to": "mesaar-backend/app/models/shipment.py",
+    "to": "logistic-x-backend/app/models/shipment.py",
     "original_sha256": "28497dcd885734a5912a17f00468becc977c0c95790eaf4f620ef028ff2fe1b9",
     "final_sha256": "28497dcd885734a5912a17f00468becc977c0c95790eaf4f620ef028ff2fe1b9",
     "changed": false
   },
   {
     "from": "app/models/shipment_tracking_event.py",
-    "to": "mesaar-backend/app/models/shipment_tracking_event.py",
+    "to": "logistic-x-backend/app/models/shipment_tracking_event.py",
     "original_sha256": "6e0901b262d7ffefdb282b294b15b23b04bf7fc5134e7dbbe3d63069f0fb57d5",
     "final_sha256": "6e0901b262d7ffefdb282b294b15b23b04bf7fc5134e7dbbe3d63069f0fb57d5",
     "changed": false
   },
   {
     "from": "app/models/tenant.py",
-    "to": "mesaar-backend/app/models/tenant.py",
+    "to": "logistic-x-backend/app/models/tenant.py",
     "original_sha256": "bffda13119763bebe239051bc927bda9037c1ec6ad1107487afa70c088260687",
     "final_sha256": "bffda13119763bebe239051bc927bda9037c1ec6ad1107487afa70c088260687",
     "changed": false
   },
   {
     "from": "app/models/user.py",
-    "to": "mesaar-backend/app/models/user.py",
+    "to": "logistic-x-backend/app/models/user.py",
     "original_sha256": "972edda90bd3e0780decc58e2f52a72838bf426f719991276384cf9baea0b7b4",
     "final_sha256": "972edda90bd3e0780decc58e2f52a72838bf426f719991276384cf9baea0b7b4",
     "changed": false
   },
   {
     "from": "app/models/vehicle.py",
-    "to": "mesaar-backend/app/models/vehicle.py",
+    "to": "logistic-x-backend/app/models/vehicle.py",
     "original_sha256": "ceeac0e67100900e984cc9d99636b164a73e6448aa25809e5ba830da13234a33",
     "final_sha256": "ceeac0e67100900e984cc9d99636b164a73e6448aa25809e5ba830da13234a33",
     "changed": false
   },
   {
     "from": "app/models/warehouse.py",
-    "to": "mesaar-backend/app/models/warehouse.py",
+    "to": "logistic-x-backend/app/models/warehouse.py",
     "original_sha256": "6467f6e59903d1a22180afbf5f47c9819581e85b62f44a686b6ad90e9c2abd60",
     "final_sha256": "6467f6e59903d1a22180afbf5f47c9819581e85b62f44a686b6ad90e9c2abd60",
     "changed": false
   },
   {
     "from": "app/models/__init__.py",
-    "to": "mesaar-backend/app/models/__init__.py",
+    "to": "logistic-x-backend/app/models/__init__.py",
     "original_sha256": "4dddce9287020a55d75693150abff6113c5b77351063db0b27681c6b4e85ddcd",
     "final_sha256": "4dddce9287020a55d75693150abff6113c5b77351063db0b27681c6b4e85ddcd",
     "changed": false
   },
   {
     "from": "app/notifications/handlers.py",
-    "to": "mesaar-backend/app/notifications/handlers.py",
+    "to": "logistic-x-backend/app/notifications/handlers.py",
     "original_sha256": "14f1301f4c2267673f80a01e9bb0d3c0d215034bff3b80b1c1edfa8d7fb0d6af",
     "final_sha256": "14f1301f4c2267673f80a01e9bb0d3c0d215034bff3b80b1c1edfa8d7fb0d6af",
     "changed": false
   },
   {
     "from": "app/notifications/providers.py",
-    "to": "mesaar-backend/app/notifications/providers.py",
+    "to": "logistic-x-backend/app/notifications/providers.py",
     "original_sha256": "5cf6524e6346cabd0ed28a8c82b9c5f298e8410ac2b7f149964bc2dbfb979b6e",
     "final_sha256": "5cf6524e6346cabd0ed28a8c82b9c5f298e8410ac2b7f149964bc2dbfb979b6e",
     "changed": false
   },
   {
     "from": "app/notifications/__init__.py",
-    "to": "mesaar-backend/app/notifications/__init__.py",
+    "to": "logistic-x-backend/app/notifications/__init__.py",
     "original_sha256": "8d9dab082b4bbe8b5631b19f559ad0313a93aeea8ff4d41fa487ef40a6267ed1",
     "final_sha256": "8d9dab082b4bbe8b5631b19f559ad0313a93aeea8ff4d41fa487ef40a6267ed1",
     "changed": false
   },
   {
     "from": "app/observability/health.py",
-    "to": "mesaar-backend/app/observability/health.py",
+    "to": "logistic-x-backend/app/observability/health.py",
     "original_sha256": "e7dd0ecb8c543dea9a08e383b112a6983fa3934243b9b178ecaa3ef4763c66ba",
     "final_sha256": "e7dd0ecb8c543dea9a08e383b112a6983fa3934243b9b178ecaa3ef4763c66ba",
     "changed": false
   },
   {
     "from": "app/observability/logging.py",
-    "to": "mesaar-backend/app/observability/logging.py",
+    "to": "logistic-x-backend/app/observability/logging.py",
     "original_sha256": "40374ac8431dfeb8c8775c79d47c9ec26e35e071b03015538bd1dd1c74d3d864",
     "final_sha256": "40374ac8431dfeb8c8775c79d47c9ec26e35e071b03015538bd1dd1c74d3d864",
     "changed": false
   },
   {
     "from": "app/observability/metrics.py",
-    "to": "mesaar-backend/app/observability/metrics.py",
+    "to": "logistic-x-backend/app/observability/metrics.py",
     "original_sha256": "53659224bce71b436ad6fbd8ed5b79770a3fb401edf905afd8f47d8129db8ddd",
     "final_sha256": "53659224bce71b436ad6fbd8ed5b79770a3fb401edf905afd8f47d8129db8ddd",
     "changed": false
   },
   {
     "from": "app/observability/__init__.py",
-    "to": "mesaar-backend/app/observability/__init__.py",
+    "to": "logistic-x-backend/app/observability/__init__.py",
     "original_sha256": "aeb883d05f2737dd66eef0bebf7fb34300b7a25f2398d8539ebf18bf35826825",
     "final_sha256": "aeb883d05f2737dd66eef0bebf7fb34300b7a25f2398d8539ebf18bf35826825",
     "changed": false
   },
   {
     "from": "app/projections/engine.py",
-    "to": "mesaar-backend/app/projections/engine.py",
+    "to": "logistic-x-backend/app/projections/engine.py",
     "original_sha256": "cabb9ffe92bec186c6f4284a4ab48d9926511ff78be52bd9a9504c7fad219c79",
     "final_sha256": "cabb9ffe92bec186c6f4284a4ab48d9926511ff78be52bd9a9504c7fad219c79",
     "changed": false
   },
   {
     "from": "app/projections/__init__.py",
-    "to": "mesaar-backend/app/projections/__init__.py",
+    "to": "logistic-x-backend/app/projections/__init__.py",
     "original_sha256": "b2494d5c9c8c9727eb8cd9ebed64f0ca4b8e6b6e7fc560ecb6ff6c0eb93fd99e",
     "final_sha256": "b2494d5c9c8c9727eb8cd9ebed64f0ca4b8e6b6e7fc560ecb6ff6c0eb93fd99e",
     "changed": false
   },
   {
     "from": "app/repositories/base.py",
-    "to": "mesaar-backend/app/repositories/base.py",
+    "to": "logistic-x-backend/app/repositories/base.py",
     "original_sha256": "a5a0d0a28fa06521403a213f7c7f8ef0812ecfdb187019d41a54eb8ba504bbc5",
     "final_sha256": "a5a0d0a28fa06521403a213f7c7f8ef0812ecfdb187019d41a54eb8ba504bbc5",
     "changed": false
   },
   {
     "from": "app/repositories/billing_repository.py",
-    "to": "mesaar-backend/app/repositories/billing_repository.py",
+    "to": "logistic-x-backend/app/repositories/billing_repository.py",
     "original_sha256": "3f678d3ca5ea63b1244529f1f090f46d74101991bbe041e10eb5962f417a64a7",
     "final_sha256": "3f678d3ca5ea63b1244529f1f090f46d74101991bbe041e10eb5962f417a64a7",
     "changed": false
   },
   {
     "from": "app/repositories/compliance_repository.py",
-    "to": "mesaar-backend/app/repositories/compliance_repository.py",
+    "to": "logistic-x-backend/app/repositories/compliance_repository.py",
     "original_sha256": "33415779b444debce5af71bef6b29e6270a21509cedb3d00a1328052eb2218ab",
     "final_sha256": "33415779b444debce5af71bef6b29e6270a21509cedb3d00a1328052eb2218ab",
     "changed": false
   },
   {
     "from": "app/repositories/customer_repository.py",
-    "to": "mesaar-backend/app/repositories/customer_repository.py",
+    "to": "logistic-x-backend/app/repositories/customer_repository.py",
     "original_sha256": "3b416b1fe49de26b8d4115417c7c1b26399261171d69fefe3a0514f3cc79c73e",
     "final_sha256": "3b416b1fe49de26b8d4115417c7c1b26399261171d69fefe3a0514f3cc79c73e",
     "changed": false
   },
   {
     "from": "app/repositories/driver_repository.py",
-    "to": "mesaar-backend/app/repositories/driver_repository.py",
+    "to": "logistic-x-backend/app/repositories/driver_repository.py",
     "original_sha256": "e03636d23722c6a4657499514a854e5774df6bd133270f7c96b2797412c6062c",
     "final_sha256": "e03636d23722c6a4657499514a854e5774df6bd133270f7c96b2797412c6062c",
     "changed": false
   },
   {
     "from": "app/repositories/equipment_repository.py",
-    "to": "mesaar-backend/app/repositories/equipment_repository.py",
+    "to": "logistic-x-backend/app/repositories/equipment_repository.py",
     "original_sha256": "0b01730ec01f947c658b5c38a35f8bfa5d6b34b46c6041db5dd7814946f7db7d",
     "final_sha256": "0b01730ec01f947c658b5c38a35f8bfa5d6b34b46c6041db5dd7814946f7db7d",
     "changed": false
   },
   {
     "from": "app/repositories/errors.py",
-    "to": "mesaar-backend/app/repositories/errors.py",
+    "to": "logistic-x-backend/app/repositories/errors.py",
     "original_sha256": "4cca1bc32d560144a945cc51bcf8095877fa4a331548e73c7442cb9e04d67a20",
     "final_sha256": "4cca1bc32d560144a945cc51bcf8095877fa4a331548e73c7442cb9e04d67a20",
     "changed": false
   },
   {
     "from": "app/repositories/event_store_repository.py",
-    "to": "mesaar-backend/app/repositories/event_store_repository.py",
+    "to": "logistic-x-backend/app/repositories/event_store_repository.py",
     "original_sha256": "34214de26ce0fa9ad3431f0220b07bdf0fce18125194e8819bec2a8ac3ec4fef",
     "final_sha256": "34214de26ce0fa9ad3431f0220b07bdf0fce18125194e8819bec2a8ac3ec4fef",
     "changed": false
   },
   {
     "from": "app/repositories/insurance_repository.py",
-    "to": "mesaar-backend/app/repositories/insurance_repository.py",
+    "to": "logistic-x-backend/app/repositories/insurance_repository.py",
     "original_sha256": "75eef9a51b41f3e68a7b9a99a34c4ef33a303e935d4c5d3c8aa0279d5e11b987",
     "final_sha256": "75eef9a51b41f3e68a7b9a99a34c4ef33a303e935d4c5d3c8aa0279d5e11b987",
     "changed": false
   },
   {
     "from": "app/repositories/integration_repository.py",
-    "to": "mesaar-backend/app/repositories/integration_repository.py",
+    "to": "logistic-x-backend/app/repositories/integration_repository.py",
     "original_sha256": "12cd1c2a959900d49847b338d314fad749d5e17329e25856a728fab4a9c0bd85",
     "final_sha256": "12cd1c2a959900d49847b338d314fad749d5e17329e25856a728fab4a9c0bd85",
     "changed": false
   },
   {
     "from": "app/repositories/notification_repository.py",
-    "to": "mesaar-backend/app/repositories/notification_repository.py",
+    "to": "logistic-x-backend/app/repositories/notification_repository.py",
     "original_sha256": "6ac415ce03417f439cd56fa2837cb02b4add2b4c1465a2cb23bd2778045c1991",
     "final_sha256": "6ac415ce03417f439cd56fa2837cb02b4add2b4c1465a2cb23bd2778045c1991",
     "changed": false
   },
   {
     "from": "app/repositories/order_repository.py",
-    "to": "mesaar-backend/app/repositories/order_repository.py",
+    "to": "logistic-x-backend/app/repositories/order_repository.py",
     "original_sha256": "b89f4a988dcba1a1f346f028832597b2fe68169feb0987397210ac8c312a5b1d",
     "final_sha256": "b89f4a988dcba1a1f346f028832597b2fe68169feb0987397210ac8c312a5b1d",
     "changed": false
   },
   {
     "from": "app/repositories/projection_repository.py",
-    "to": "mesaar-backend/app/repositories/projection_repository.py",
+    "to": "logistic-x-backend/app/repositories/projection_repository.py",
     "original_sha256": "4599072c23e0b249c9607d9f224ad1754f139761fe15dde055d8b99afd69185d",
     "final_sha256": "4599072c23e0b249c9607d9f224ad1754f139761fe15dde055d8b99afd69185d",
     "changed": false
   },
   {
     "from": "app/repositories/shipment_repository.py",
-    "to": "mesaar-backend/app/repositories/shipment_repository.py",
+    "to": "logistic-x-backend/app/repositories/shipment_repository.py",
     "original_sha256": "8862f9c674730d04ebacf0d343e137e5d9b8ffc90b45183bd8387e9a5799510d",
     "final_sha256": "8862f9c674730d04ebacf0d343e137e5d9b8ffc90b45183bd8387e9a5799510d",
     "changed": false
   },
   {
     "from": "app/repositories/tenant_repository.py",
-    "to": "mesaar-backend/app/repositories/tenant_repository.py",
+    "to": "logistic-x-backend/app/repositories/tenant_repository.py",
     "original_sha256": "cc4274f15256b3958c5927aa18f5c9a2d6cb9f0a98c3c9d575aad8bb47978b4a",
     "final_sha256": "cc4274f15256b3958c5927aa18f5c9a2d6cb9f0a98c3c9d575aad8bb47978b4a",
     "changed": false
   },
   {
     "from": "app/repositories/tracking_event_repository.py",
-    "to": "mesaar-backend/app/repositories/tracking_event_repository.py",
+    "to": "logistic-x-backend/app/repositories/tracking_event_repository.py",
     "original_sha256": "b5949c1439cc953aece6ad121599230c2d6065134bf2572389bff8023b212a9b",
     "final_sha256": "b5949c1439cc953aece6ad121599230c2d6065134bf2572389bff8023b212a9b",
     "changed": false
   },
   {
     "from": "app/repositories/user_repository.py",
-    "to": "mesaar-backend/app/repositories/user_repository.py",
+    "to": "logistic-x-backend/app/repositories/user_repository.py",
     "original_sha256": "e36ea2b4cf69df4bf628c424d8b4097a114d9227cc91a046c6d273850689184b",
     "final_sha256": "e36ea2b4cf69df4bf628c424d8b4097a114d9227cc91a046c6d273850689184b",
     "changed": false
   },
   {
     "from": "app/repositories/vehicle_repository.py",
-    "to": "mesaar-backend/app/repositories/vehicle_repository.py",
+    "to": "logistic-x-backend/app/repositories/vehicle_repository.py",
     "original_sha256": "3f3b99585e0917bf9042c73eb2d9fd568f42301c46409ead936c4100ce58f8fe",
     "final_sha256": "3f3b99585e0917bf9042c73eb2d9fd568f42301c46409ead936c4100ce58f8fe",
     "changed": false
   },
   {
     "from": "app/repositories/warehouse_repository.py",
-    "to": "mesaar-backend/app/repositories/warehouse_repository.py",
+    "to": "logistic-x-backend/app/repositories/warehouse_repository.py",
     "original_sha256": "caf1834e5feb6bbf00fd0892f8ea007c5fadb7cf7cc39d9b17c4833f95803ea0",
     "final_sha256": "caf1834e5feb6bbf00fd0892f8ea007c5fadb7cf7cc39d9b17c4833f95803ea0",
     "changed": false
   },
   {
     "from": "app/repositories/__init__.py",
-    "to": "mesaar-backend/app/repositories/__init__.py",
+    "to": "logistic-x-backend/app/repositories/__init__.py",
     "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "final_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "changed": false
   },
   {
     "from": "app/schemas/analytics.py",
-    "to": "mesaar-backend/app/schemas/analytics.py",
+    "to": "logistic-x-backend/app/schemas/analytics.py",
     "original_sha256": "e1adcb612948b0962c102fb0ddc3f00f2c88287039efb237420b67a1393a60de",
     "final_sha256": "e1adcb612948b0962c102fb0ddc3f00f2c88287039efb237420b67a1393a60de",
     "changed": false
   },
   {
     "from": "app/schemas/auth.py",
-    "to": "mesaar-backend/app/schemas/auth.py",
+    "to": "logistic-x-backend/app/schemas/auth.py",
     "original_sha256": "27771cfaca36573802b411122767222372ea0e64045553b6aa10d978e82b7a71",
     "final_sha256": "27771cfaca36573802b411122767222372ea0e64045553b6aa10d978e82b7a71",
     "changed": false
   },
   {
     "from": "app/schemas/billing.py",
-    "to": "mesaar-backend/app/schemas/billing.py",
+    "to": "logistic-x-backend/app/schemas/billing.py",
     "original_sha256": "dacfb55d5b96f8f2b164e8b039fd2998beb223f8f0a09b227b6405e85e317bc7",
     "final_sha256": "dacfb55d5b96f8f2b164e8b039fd2998beb223f8f0a09b227b6405e85e317bc7",
     "changed": false
   },
   {
     "from": "app/schemas/common.py",
-    "to": "mesaar-backend/app/schemas/common.py",
+    "to": "logistic-x-backend/app/schemas/common.py",
     "original_sha256": "7959c566f363dcc3bd6b43200984984bb25de9ad4cc2d50746d3e612ec0fdf89",
     "final_sha256": "7959c566f363dcc3bd6b43200984984bb25de9ad4cc2d50746d3e612ec0fdf89",
     "changed": false
   },
   {
     "from": "app/schemas/compliance.py",
-    "to": "mesaar-backend/app/schemas/compliance.py",
+    "to": "logistic-x-backend/app/schemas/compliance.py",
     "original_sha256": "c0a73a226ec8749e87bad72072e0832815f5856bdbdb2c5bba0056fa01febd33",
     "final_sha256": "c0a73a226ec8749e87bad72072e0832815f5856bdbdb2c5bba0056fa01febd33",
     "changed": false
   },
   {
     "from": "app/schemas/customer.py",
-    "to": "mesaar-backend/app/schemas/customer.py",
+    "to": "logistic-x-backend/app/schemas/customer.py",
     "original_sha256": "646aff4df6897a444a560133e825541584ad49df581ffd15574e75ace2bb8d4f",
     "final_sha256": "646aff4df6897a444a560133e825541584ad49df581ffd15574e75ace2bb8d4f",
     "changed": false
   },
   {
     "from": "app/schemas/driver.py",
-    "to": "mesaar-backend/app/schemas/driver.py",
+    "to": "logistic-x-backend/app/schemas/driver.py",
     "original_sha256": "46bc9c0e7e504ccf4a404fc66fc96351b9f0026cf5e4c3dd45c2d50c1a739152",
     "final_sha256": "46bc9c0e7e504ccf4a404fc66fc96351b9f0026cf5e4c3dd45c2d50c1a739152",
     "changed": false
   },
   {
     "from": "app/schemas/driver_self.py",
-    "to": "mesaar-backend/app/schemas/driver_self.py",
+    "to": "logistic-x-backend/app/schemas/driver_self.py",
     "original_sha256": "5e5415b2bed48c28509634ba9709711dc224a0ad9eea7eeab51eedc175c4e1f6",
     "final_sha256": "5e5415b2bed48c28509634ba9709711dc224a0ad9eea7eeab51eedc175c4e1f6",
     "changed": false
   },
   {
     "from": "app/schemas/equipment.py",
-    "to": "mesaar-backend/app/schemas/equipment.py",
+    "to": "logistic-x-backend/app/schemas/equipment.py",
     "original_sha256": "45be5f377d4b6c126daeaab49b7f86ea7b798d224bd5be9dbcb6cdc92f40404d",
     "final_sha256": "45be5f377d4b6c126daeaab49b7f86ea7b798d224bd5be9dbcb6cdc92f40404d",
     "changed": false
   },
   {
     "from": "app/schemas/insurance.py",
-    "to": "mesaar-backend/app/schemas/insurance.py",
+    "to": "logistic-x-backend/app/schemas/insurance.py",
     "original_sha256": "01e1c0c64185478b68a9d6474d599218da56249dbc3bea6248d79f0bd215a762",
     "final_sha256": "01e1c0c64185478b68a9d6474d599218da56249dbc3bea6248d79f0bd215a762",
     "changed": false
   },
   {
     "from": "app/schemas/integration.py",
-    "to": "mesaar-backend/app/schemas/integration.py",
+    "to": "logistic-x-backend/app/schemas/integration.py",
     "original_sha256": "1780193b1bf777772d8164e438e51749020e7654141bee6b709cd1abb87171d8",
     "final_sha256": "1780193b1bf777772d8164e438e51749020e7654141bee6b709cd1abb87171d8",
     "changed": false
   },
   {
     "from": "app/schemas/notification.py",
-    "to": "mesaar-backend/app/schemas/notification.py",
+    "to": "logistic-x-backend/app/schemas/notification.py",
     "original_sha256": "a750440051f0e24926dcd84992c03542eff9c770c1afb8fa43055c880bed752f",
     "final_sha256": "a750440051f0e24926dcd84992c03542eff9c770c1afb8fa43055c880bed752f",
     "changed": false
   },
   {
     "from": "app/schemas/order.py",
-    "to": "mesaar-backend/app/schemas/order.py",
+    "to": "logistic-x-backend/app/schemas/order.py",
     "original_sha256": "480349f6c2097aa3687650b1e6714bac1045c444c848f5d259b61d87dc6ff483",
     "final_sha256": "480349f6c2097aa3687650b1e6714bac1045c444c848f5d259b61d87dc6ff483",
     "changed": false
   },
   {
     "from": "app/schemas/shipment.py",
-    "to": "mesaar-backend/app/schemas/shipment.py",
+    "to": "logistic-x-backend/app/schemas/shipment.py",
     "original_sha256": "c8f53ce84df8d076b861120fa7be1ec40d5c1cdd7b2e2b35b7fdeab3aa3a60b5",
     "final_sha256": "c8f53ce84df8d076b861120fa7be1ec40d5c1cdd7b2e2b35b7fdeab3aa3a60b5",
     "changed": false
   },
   {
     "from": "app/schemas/tracking_event.py",
-    "to": "mesaar-backend/app/schemas/tracking_event.py",
+    "to": "logistic-x-backend/app/schemas/tracking_event.py",
     "original_sha256": "c573489782c362c24b90336141e88a95cad6a1d0fad07e1001450082c50c1b49",
     "final_sha256": "c573489782c362c24b90336141e88a95cad6a1d0fad07e1001450082c50c1b49",
     "changed": false
   },
   {
     "from": "app/schemas/user.py",
-    "to": "mesaar-backend/app/schemas/user.py",
+    "to": "logistic-x-backend/app/schemas/user.py",
     "original_sha256": "9b1826e811d2d7e9c0610de4b918b4c54b610025d9cf07967a5207a98522aad6",
     "final_sha256": "9b1826e811d2d7e9c0610de4b918b4c54b610025d9cf07967a5207a98522aad6",
     "changed": false
   },
   {
     "from": "app/schemas/vehicle.py",
-    "to": "mesaar-backend/app/schemas/vehicle.py",
+    "to": "logistic-x-backend/app/schemas/vehicle.py",
     "original_sha256": "4ca1e37822158e858af5ecd0ccb8e402da1cff659fb2bda772e1909c7e396d12",
     "final_sha256": "4ca1e37822158e858af5ecd0ccb8e402da1cff659fb2bda772e1909c7e396d12",
     "changed": false
   },
   {
     "from": "app/schemas/warehouse.py",
-    "to": "mesaar-backend/app/schemas/warehouse.py",
+    "to": "logistic-x-backend/app/schemas/warehouse.py",
     "original_sha256": "bcdbe706a415e0ab6937466113d0132ebd35653ad5d3da35ffe3be5db3fd019d",
     "final_sha256": "bcdbe706a415e0ab6937466113d0132ebd35653ad5d3da35ffe3be5db3fd019d",
     "changed": false
   },
   {
     "from": "app/schemas/__init__.py",
-    "to": "mesaar-backend/app/schemas/__init__.py",
+    "to": "logistic-x-backend/app/schemas/__init__.py",
     "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "final_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "changed": false
   },
   {
     "from": "app/services/auth_service.py",
-    "to": "mesaar-backend/app/services/auth_service.py",
+    "to": "logistic-x-backend/app/services/auth_service.py",
     "original_sha256": "b02dfa7b068b45e3ab7d3d22d5a825121282387f48eb688997f5a8dc854dd650",
     "final_sha256": "b02dfa7b068b45e3ab7d3d22d5a825121282387f48eb688997f5a8dc854dd650",
     "changed": false
   },
   {
     "from": "app/services/billing_policies.py",
-    "to": "mesaar-backend/app/services/billing_policies.py",
+    "to": "logistic-x-backend/app/services/billing_policies.py",
     "original_sha256": "fd55927badd2924fdc75b29714f459d0a6ced07036451638b03eaf06046363fb",
     "final_sha256": "fd55927badd2924fdc75b29714f459d0a6ced07036451638b03eaf06046363fb",
     "changed": false
   },
   {
     "from": "app/services/billing_service.py",
-    "to": "mesaar-backend/app/services/billing_service.py",
+    "to": "logistic-x-backend/app/services/billing_service.py",
     "original_sha256": "baacffcbfb1dddad4966c15ffa11d7a637ca1e38e15f75f3a7f5b22248e19449",
     "final_sha256": "baacffcbfb1dddad4966c15ffa11d7a637ca1e38e15f75f3a7f5b22248e19449",
     "changed": false
   },
   {
     "from": "app/services/claims_service.py",
-    "to": "mesaar-backend/app/services/claims_service.py",
+    "to": "logistic-x-backend/app/services/claims_service.py",
     "original_sha256": "b1618b7a46fb8c34a0a9fd179f9e3f3b552a3326130897288fb8c9faab20c75c",
     "final_sha256": "b1618b7a46fb8c34a0a9fd179f9e3f3b552a3326130897288fb8c9faab20c75c",
     "changed": false
   },
   {
     "from": "app/services/compliance_policies.py",
-    "to": "mesaar-backend/app/services/compliance_policies.py",
+    "to": "logistic-x-backend/app/services/compliance_policies.py",
     "original_sha256": "401f0d85741c930e2fb4dbf47ffd60bd3e6ea999c79f29018ea64e38fa02a0df",
     "final_sha256": "401f0d85741c930e2fb4dbf47ffd60bd3e6ea999c79f29018ea64e38fa02a0df",
     "changed": false
   },
   {
     "from": "app/services/compliance_service.py",
-    "to": "mesaar-backend/app/services/compliance_service.py",
+    "to": "logistic-x-backend/app/services/compliance_service.py",
     "original_sha256": "b07abc53dd5d8a94ee403e980e0b355a31b0d1ace47a2d60c09589953b538e6a",
     "final_sha256": "b07abc53dd5d8a94ee403e980e0b355a31b0d1ace47a2d60c09589953b538e6a",
     "changed": false
   },
   {
     "from": "app/services/customer_service.py",
-    "to": "mesaar-backend/app/services/customer_service.py",
+    "to": "logistic-x-backend/app/services/customer_service.py",
     "original_sha256": "7fee13ee8a095c417abdf850b4e8718786d477f40985061801ef14d07a360e54",
     "final_sha256": "7fee13ee8a095c417abdf850b4e8718786d477f40985061801ef14d07a360e54",
     "changed": false
   },
   {
     "from": "app/services/driver_service.py",
-    "to": "mesaar-backend/app/services/driver_service.py",
+    "to": "logistic-x-backend/app/services/driver_service.py",
     "original_sha256": "1db8fe7cad78668fd042ccaa4a31ccd3a882dfa1effcdfeb53206d797116eb85",
     "final_sha256": "1db8fe7cad78668fd042ccaa4a31ccd3a882dfa1effcdfeb53206d797116eb85",
     "changed": false
   },
   {
     "from": "app/services/equipment_policies.py",
-    "to": "mesaar-backend/app/services/equipment_policies.py",
+    "to": "logistic-x-backend/app/services/equipment_policies.py",
     "original_sha256": "260d725c3438785628dfb128ce900af97b8491a6b026d6c6fc1e69cfe54ea169",
     "final_sha256": "260d725c3438785628dfb128ce900af97b8491a6b026d6c6fc1e69cfe54ea169",
     "changed": false
   },
   {
     "from": "app/services/equipment_service.py",
-    "to": "mesaar-backend/app/services/equipment_service.py",
+    "to": "logistic-x-backend/app/services/equipment_service.py",
     "original_sha256": "d12ec9ff2d5334dd354fa67902f72c212478c3a1d006b61c003d71caaaf0992b",
     "final_sha256": "d12ec9ff2d5334dd354fa67902f72c212478c3a1d006b61c003d71caaaf0992b",
     "changed": false
   },
   {
     "from": "app/services/exceptions.py",
-    "to": "mesaar-backend/app/services/exceptions.py",
+    "to": "logistic-x-backend/app/services/exceptions.py",
     "original_sha256": "a395a95baee9e8fa9c94dcf33ec7cdfa4be18789407220ca19c57158254bd39e",
     "final_sha256": "a395a95baee9e8fa9c94dcf33ec7cdfa4be18789407220ca19c57158254bd39e",
     "changed": false
   },
   {
     "from": "app/services/insurance_policies.py",
-    "to": "mesaar-backend/app/services/insurance_policies.py",
+    "to": "logistic-x-backend/app/services/insurance_policies.py",
     "original_sha256": "c6cf97bb1ce101d67954e7e3f4acb6f6e37669ebfb2e44dff8d7d81871495832",
     "final_sha256": "c6cf97bb1ce101d67954e7e3f4acb6f6e37669ebfb2e44dff8d7d81871495832",
     "changed": false
   },
   {
     "from": "app/services/insurance_service.py",
-    "to": "mesaar-backend/app/services/insurance_service.py",
+    "to": "logistic-x-backend/app/services/insurance_service.py",
     "original_sha256": "41d953c054fff1c2f3b1d7ccd019e6b43ad5d852fbfe008207fe39589ab8147e",
     "final_sha256": "41d953c054fff1c2f3b1d7ccd019e6b43ad5d852fbfe008207fe39589ab8147e",
     "changed": false
   },
   {
     "from": "app/services/integration_service.py",
-    "to": "mesaar-backend/app/services/integration_service.py",
+    "to": "logistic-x-backend/app/services/integration_service.py",
     "original_sha256": "cdea58aee1b5143b3a3033dd654ee5adb37d5c941288ef9fe0ad76b88bbd4f83",
     "final_sha256": "cdea58aee1b5143b3a3033dd654ee5adb37d5c941288ef9fe0ad76b88bbd4f83",
     "changed": false
   },
   {
     "from": "app/services/notification_policies.py",
-    "to": "mesaar-backend/app/services/notification_policies.py",
+    "to": "logistic-x-backend/app/services/notification_policies.py",
     "original_sha256": "5a05c8beffd6206a1a50bac9f6dc6f8ac58410a63959368d2b8fdd72741259d0",
     "final_sha256": "5a05c8beffd6206a1a50bac9f6dc6f8ac58410a63959368d2b8fdd72741259d0",
     "changed": false
   },
   {
     "from": "app/services/notification_service.py",
-    "to": "mesaar-backend/app/services/notification_service.py",
+    "to": "logistic-x-backend/app/services/notification_service.py",
     "original_sha256": "ef0ed8d574e3fedfe7d129555311c3648a6afd57efc45ddf9e98f6ad5a9a46d7",
     "final_sha256": "ef0ed8d574e3fedfe7d129555311c3648a6afd57efc45ddf9e98f6ad5a9a46d7",
     "changed": false
   },
   {
     "from": "app/services/order_policies.py",
-    "to": "mesaar-backend/app/services/order_policies.py",
+    "to": "logistic-x-backend/app/services/order_policies.py",
     "original_sha256": "61a021d023bba00be2efeaf0cd2ca9f46ca086e173343c8465e1335e7f4c7782",
     "final_sha256": "61a021d023bba00be2efeaf0cd2ca9f46ca086e173343c8465e1335e7f4c7782",
     "changed": false
   },
   {
     "from": "app/services/order_service.py",
-    "to": "mesaar-backend/app/services/order_service.py",
+    "to": "logistic-x-backend/app/services/order_service.py",
     "original_sha256": "5077a5c10da071c124b6e4ab96e01ccb8ff21370839dc3ec5fa73301a2f8ac40",
     "final_sha256": "5077a5c10da071c124b6e4ab96e01ccb8ff21370839dc3ec5fa73301a2f8ac40",
     "changed": false
   },
   {
     "from": "app/services/projection_service.py",
-    "to": "mesaar-backend/app/services/projection_service.py",
+    "to": "logistic-x-backend/app/services/projection_service.py",
     "original_sha256": "ef6b06f41d66d124692a0482ad6f37ce5f901f1e0d38e5635594924b30ad3ca8",
     "final_sha256": "ef6b06f41d66d124692a0482ad6f37ce5f901f1e0d38e5635594924b30ad3ca8",
     "changed": false
   },
   {
     "from": "app/services/settlement_service.py",
-    "to": "mesaar-backend/app/services/settlement_service.py",
+    "to": "logistic-x-backend/app/services/settlement_service.py",
     "original_sha256": "fe6d377b20ebde929d897c744eed3a93105eb3ad3248216d798ffa98a11bac3a",
     "final_sha256": "fe6d377b20ebde929d897c744eed3a93105eb3ad3248216d798ffa98a11bac3a",
     "changed": false
   },
   {
     "from": "app/services/shipment_policies.py",
-    "to": "mesaar-backend/app/services/shipment_policies.py",
+    "to": "logistic-x-backend/app/services/shipment_policies.py",
     "original_sha256": "b1c8d899c2ee4f06e43e8317a21f064885760a36b49feec049e77bf48d007d2c",
     "final_sha256": "b1c8d899c2ee4f06e43e8317a21f064885760a36b49feec049e77bf48d007d2c",
     "changed": false
   },
   {
     "from": "app/services/shipment_service.py",
-    "to": "mesaar-backend/app/services/shipment_service.py",
+    "to": "logistic-x-backend/app/services/shipment_service.py",
     "original_sha256": "5e713a27eb0ad073445de830b37353f57e5b52d344f4a6478ac45e9f12f64be2",
     "final_sha256": "5e713a27eb0ad073445de830b37353f57e5b52d344f4a6478ac45e9f12f64be2",
     "changed": false
   },
   {
     "from": "app/services/__init__.py",
-    "to": "mesaar-backend/app/services/__init__.py",
+    "to": "logistic-x-backend/app/services/__init__.py",
     "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "final_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "changed": false
   },
   {
     "from": "app/workers/celery_app.py",
-    "to": "mesaar-backend/app/workers/celery_app.py",
+    "to": "logistic-x-backend/app/workers/celery_app.py",
     "original_sha256": "5ffa65a831ff8d4b02b56667c04e04e35ebd9e4ae118e3625f0c51df23b79961",
     "final_sha256": "5ffa65a831ff8d4b02b56667c04e04e35ebd9e4ae118e3625f0c51df23b79961",
     "changed": false
   },
   {
     "from": "app/workers/tasks.py",
-    "to": "mesaar-backend/app/workers/tasks.py",
+    "to": "logistic-x-backend/app/workers/tasks.py",
     "original_sha256": "0a5d9bde27271af793213e4b49eefb563cbe03240daa8a5916634af721e33ea4",
     "final_sha256": "0a5d9bde27271af793213e4b49eefb563cbe03240daa8a5916634af721e33ea4",
     "changed": false
   },
   {
     "from": "app/workers/__init__.py",
-    "to": "mesaar-backend/app/workers/__init__.py",
+    "to": "logistic-x-backend/app/workers/__init__.py",
     "original_sha256": "d32708ba477bdf6211612c50ae1862eb121147aa7ee5b3ecdf492dc53e695f42",
     "final_sha256": "d32708ba477bdf6211612c50ae1862eb121147aa7ee5b3ecdf492dc53e695f42",
     "changed": false
   },
   {
     "from": "docker/postgres/init-app-role.sql",
-    "to": "mesaar-backend/docker/postgres/init-app-role.sql",
+    "to": "logistic-x-backend/docker/postgres/init-app-role.sql",
     "original_sha256": "7a8955a9790754d1cdd161fec368a6fccf806db9b885c6f458551c73622ca48e",
     "final_sha256": "7a8955a9790754d1cdd161fec368a6fccf806db9b885c6f458551c73622ca48e",
     "changed": false
   },
   {
     "from": "migrations/env.py",
-    "to": "mesaar-backend/migrations/env.py",
+    "to": "logistic-x-backend/migrations/env.py",
     "original_sha256": "516afddd9d47ff76539f388b87608c9a0dc85d42d282e31963d75fb3874bb9b9",
     "final_sha256": "516afddd9d47ff76539f388b87608c9a0dc85d42d282e31963d75fb3874bb9b9",
     "changed": false
   },
   {
     "from": "migrations/script.py.mako",
-    "to": "mesaar-backend/migrations/script.py.mako",
+    "to": "logistic-x-backend/migrations/script.py.mako",
     "original_sha256": "c0e045e111b5c9ae73001e921fde8f2c67a540869177d044ccdaa08f14ee2c12",
     "final_sha256": "c0e045e111b5c9ae73001e921fde8f2c67a540869177d044ccdaa08f14ee2c12",
     "changed": false
   },
   {
     "from": "migrations/versions/0001_baseline.py",
-    "to": "mesaar-backend/migrations/versions/0001_baseline.py",
+    "to": "logistic-x-backend/migrations/versions/0001_baseline.py",
     "original_sha256": "2bc488351286079c9e57b99f72536e0dd3136c8c384b955b2a3f252116dca760",
     "final_sha256": "2bc488351286079c9e57b99f72536e0dd3136c8c384b955b2a3f252116dca760",
     "changed": false
   },
   {
     "from": "migrations/versions/0002_shipment_offer_fields.py",
-    "to": "mesaar-backend/migrations/versions/0002_shipment_offer_fields.py",
+    "to": "logistic-x-backend/migrations/versions/0002_shipment_offer_fields.py",
     "original_sha256": "dbc70505b406bcfd681813b50514043336a923fc29c935ae87f41df47fca697d",
     "final_sha256": "dbc70505b406bcfd681813b50514043336a923fc29c935ae87f41df47fca697d",
     "changed": false
   },
   {
     "from": "migrations/versions/0003_multi_tenancy_rls.py",
-    "to": "mesaar-backend/migrations/versions/0003_multi_tenancy_rls.py",
+    "to": "logistic-x-backend/migrations/versions/0003_multi_tenancy_rls.py",
     "original_sha256": "537cd6dfebd66264784be468171ed4e1e5acbe910a296e27a1b27ed8beb380b6",
     "final_sha256": "537cd6dfebd66264784be468171ed4e1e5acbe910a296e27a1b27ed8beb380b6",
     "changed": false
   },
   {
     "from": "migrations/versions/0004_lifecycle_audit_columns.py",
-    "to": "mesaar-backend/migrations/versions/0004_lifecycle_audit_columns.py",
+    "to": "logistic-x-backend/migrations/versions/0004_lifecycle_audit_columns.py",
     "original_sha256": "ba14f50b48a91d782817414071479a50528d5fab8e7eecd1e969facca4f4e768",
     "final_sha256": "ba14f50b48a91d782817414071479a50528d5fab8e7eecd1e969facca4f4e768",
     "changed": false
   },
   {
     "from": "migrations/versions/0005_event_backbone.py",
-    "to": "mesaar-backend/migrations/versions/0005_event_backbone.py",
+    "to": "logistic-x-backend/migrations/versions/0005_event_backbone.py",
     "original_sha256": "bb230697f1cbbb8f287631d4d37c427f8461173a6f335da4215e3dbaaf547c14",
     "final_sha256": "bb230697f1cbbb8f287631d4d37c427f8461173a6f335da4215e3dbaaf547c14",
     "changed": false
   },
   {
     "from": "migrations/versions/0006_customer_domain.py",
-    "to": "mesaar-backend/migrations/versions/0006_customer_domain.py",
+    "to": "logistic-x-backend/migrations/versions/0006_customer_domain.py",
     "original_sha256": "93aed42a9e6baa03bcdd2d4b708e0d4ea8c54e6b7ca3e324c8f55a60bd9183e9",
     "final_sha256": "93aed42a9e6baa03bcdd2d4b708e0d4ea8c54e6b7ca3e324c8f55a60bd9183e9",
     "changed": false
   },
   {
     "from": "migrations/versions/0007_order_domain.py",
-    "to": "mesaar-backend/migrations/versions/0007_order_domain.py",
+    "to": "logistic-x-backend/migrations/versions/0007_order_domain.py",
     "original_sha256": "4385833b7906c1ce41dfe5ad7bd2597886c0a7d5b7e0e2bdde2314657f30ad71",
     "final_sha256": "4385833b7906c1ce41dfe5ad7bd2597886c0a7d5b7e0e2bdde2314657f30ad71",
     "changed": false
   },
   {
     "from": "migrations/versions/0008_shipment_domain.py",
-    "to": "mesaar-backend/migrations/versions/0008_shipment_domain.py",
+    "to": "logistic-x-backend/migrations/versions/0008_shipment_domain.py",
     "original_sha256": "a983c7f8a2c97fc1e9d49e17771eb6291686d4f4fccfb40c0aa56ac4caef7142",
     "final_sha256": "a983c7f8a2c97fc1e9d49e17771eb6291686d4f4fccfb40c0aa56ac4caef7142",
     "changed": false
   },
   {
     "from": "migrations/versions/0009_equipment_domain.py",
-    "to": "mesaar-backend/migrations/versions/0009_equipment_domain.py",
+    "to": "logistic-x-backend/migrations/versions/0009_equipment_domain.py",
     "original_sha256": "2f346f241bd92c93fd56859cc3326100e3c407a68b88e3a1ddc2f3510611a1d2",
     "final_sha256": "2f346f241bd92c93fd56859cc3326100e3c407a68b88e3a1ddc2f3510611a1d2",
     "changed": false
   },
   {
     "from": "migrations/versions/0010_compliance_permits_domain.py",
-    "to": "mesaar-backend/migrations/versions/0010_compliance_permits_domain.py",
+    "to": "logistic-x-backend/migrations/versions/0010_compliance_permits_domain.py",
     "original_sha256": "0cfffe0eed6846cf63b5a72dc322b237c12e27269144273832c6250fed47cbd5",
     "final_sha256": "0cfffe0eed6846cf63b5a72dc322b237c12e27269144273832c6250fed47cbd5",
     "changed": false
   },
   {
     "from": "migrations/versions/0011_insurance_claims_domain.py",
-    "to": "mesaar-backend/migrations/versions/0011_insurance_claims_domain.py",
+    "to": "logistic-x-backend/migrations/versions/0011_insurance_claims_domain.py",
     "original_sha256": "9fb5148fd4f5c0e81218e3a41de2f1c50781f48186b8666278ca6bede2aa057b",
     "final_sha256": "9fb5148fd4f5c0e81218e3a41de2f1c50781f48186b8666278ca6bede2aa057b",
     "changed": false
   },
   {
     "from": "migrations/versions/0012_billing_settlements_domain.py",
-    "to": "mesaar-backend/migrations/versions/0012_billing_settlements_domain.py",
+    "to": "logistic-x-backend/migrations/versions/0012_billing_settlements_domain.py",
     "original_sha256": "3b0e06f9f3b6bfa53eb597999bd9937f19023878769e274d38792977c4a0be76",
     "final_sha256": "3b0e06f9f3b6bfa53eb597999bd9937f19023878769e274d38792977c4a0be76",
     "changed": false
   },
   {
     "from": "migrations/versions/0013_notifications_communications_domain.py",
-    "to": "mesaar-backend/migrations/versions/0013_notifications_communications_domain.py",
+    "to": "logistic-x-backend/migrations/versions/0013_notifications_communications_domain.py",
     "original_sha256": "d3743b7312c293bc6e11d29095de0494f81167d2282144beb85f869f2455be47",
     "final_sha256": "d3743b7312c293bc6e11d29095de0494f81167d2282144beb85f869f2455be47",
     "changed": false
   },
   {
     "from": "migrations/versions/0014_reporting_analytics_projections_domain.py",
-    "to": "mesaar-backend/migrations/versions/0014_reporting_analytics_projections_domain.py",
+    "to": "logistic-x-backend/migrations/versions/0014_reporting_analytics_projections_domain.py",
     "original_sha256": "4860912980f892e13216df0ee41202609a8d536b1e386413276365f75869b61d",
     "final_sha256": "4860912980f892e13216df0ee41202609a8d536b1e386413276365f75869b61d",
     "changed": false
   },
   {
     "from": "migrations/versions/0015_event_enrichment_analytics_hardening.py",
-    "to": "mesaar-backend/migrations/versions/0015_event_enrichment_analytics_hardening.py",
+    "to": "logistic-x-backend/migrations/versions/0015_event_enrichment_analytics_hardening.py",
     "original_sha256": "792b732b638a4c6605cf9f016cb9621bab87b5c5e6eb5cbf593f1423e303abf1",
     "final_sha256": "792b732b638a4c6605cf9f016cb9621bab87b5c5e6eb5cbf593f1423e303abf1",
     "changed": false
   },
   {
     "from": "migrations/versions/0016_external_integrations_webhooks_domain.py",
-    "to": "mesaar-backend/migrations/versions/0016_external_integrations_webhooks_domain.py",
+    "to": "logistic-x-backend/migrations/versions/0016_external_integrations_webhooks_domain.py",
     "original_sha256": "65721b82c6494b3b24be6bc3ee612233696247bd023bbf0290d07b22c1f4f627",
     "final_sha256": "65721b82c6494b3b24be6bc3ee612233696247bd023bbf0290d07b22c1f4f627",
     "changed": false
   },
   {
     "from": "migrations/versions/0017_integration_delivery_worker_hardening.py",
-    "to": "mesaar-backend/migrations/versions/0017_integration_delivery_worker_hardening.py",
+    "to": "logistic-x-backend/migrations/versions/0017_integration_delivery_worker_hardening.py",
     "original_sha256": "6c7990f1373ce8922f2ddda649cd4fdadd8eb5198ea5f8197288276dc89a9cd1",
     "final_sha256": "6c7990f1373ce8922f2ddda649cd4fdadd8eb5198ea5f8197288276dc89a9cd1",
     "changed": false
   },
   {
     "from": "migrations/versions/0018_rls_policy_nullif_fail_closed.py",
-    "to": "mesaar-backend/migrations/versions/0018_rls_policy_nullif_fail_closed.py",
+    "to": "logistic-x-backend/migrations/versions/0018_rls_policy_nullif_fail_closed.py",
     "original_sha256": "04a80b61e2a94119399f56db778bfc44829847d9734839e4c05f7460ac99befd",
     "final_sha256": "04a80b61e2a94119399f56db778bfc44829847d9734839e4c05f7460ac99befd",
     "changed": false
   },
   {
     "from": "migrations/versions/0019_shipments_equipment_id_index.py",
-    "to": "mesaar-backend/migrations/versions/0019_shipments_equipment_id_index.py",
+    "to": "logistic-x-backend/migrations/versions/0019_shipments_equipment_id_index.py",
     "original_sha256": "98ae729536f42050ece90b2d8cdb32982b112138c90067a7e524e58bc7a3b5c7",
     "final_sha256": "98ae729536f42050ece90b2d8cdb32982b112138c90067a7e524e58bc7a3b5c7",
     "changed": false
   },
   {
     "from": "mobile/.gitignore",
-    "to": "mesaar-frontend/.gitignore",
+    "to": "logistic-x-frontend/.gitignore",
     "original_sha256": "314df22606590de35e8d66d5e424212a386cb13b09bedfc7832f86f9fa03d46b",
     "final_sha256": "8ba8425ac4e2e315385bbe5fbf2d1d30232ef466fc3adcda2e95750169ec418c",
     "changed": true
   },
   {
     "from": "mobile/app.json",
-    "to": "mesaar-frontend/app.json",
+    "to": "logistic-x-frontend/app.json",
     "original_sha256": "e90667963c0bc68853ae50562e86dbb3da9891c46b1e30f550919d8a651f7892",
     "final_sha256": "792677fc63389c4b260c26217c94d97038a51fb51b908cb8b663657ceb94ef8f",
     "changed": true
   },
   {
     "from": "mobile/babel.config.js",
-    "to": "mesaar-frontend/babel.config.js",
+    "to": "logistic-x-frontend/babel.config.js",
     "original_sha256": "c8933f1624cc086191159a73b5acaa64d6a6e4ccff91b9ec4247d6a011410d50",
     "final_sha256": "c8933f1624cc086191159a73b5acaa64d6a6e4ccff91b9ec4247d6a011410d50",
     "changed": false
   },
   {
     "from": "mobile/expo-env.d.ts",
-    "to": "mesaar-frontend/expo-env.d.ts",
+    "to": "logistic-x-frontend/expo-env.d.ts",
     "original_sha256": "6fc02634da46d3edc5a88eec9173ba6bf709726be3cba83c73ebd8e859d5c147",
     "final_sha256": "6fc02634da46d3edc5a88eec9173ba6bf709726be3cba83c73ebd8e859d5c147",
     "changed": false
   },
   {
     "from": "mobile/metro.config.js",
-    "to": "mesaar-frontend/metro.config.js",
+    "to": "logistic-x-frontend/metro.config.js",
     "original_sha256": "460da3f45cc5b42caea5fa37b2252fcabc6cb2328c202b01f8aed0fe6f8fa329",
     "final_sha256": "460da3f45cc5b42caea5fa37b2252fcabc6cb2328c202b01f8aed0fe6f8fa329",
     "changed": false
   },
   {
     "from": "mobile/package-lock.json",
-    "to": "mesaar-frontend/package-lock.json",
+    "to": "logistic-x-frontend/package-lock.json",
     "original_sha256": "db6edd4368233e1bd1dcafb1e6883e67743f94839398b6eadf61c0e47f053627",
     "final_sha256": "50bcb16c92241d26025cef6d6fbf535502938c6bb59ca9697f26dece6a37f01f",
     "changed": true
   },
   {
     "from": "mobile/package.json",
-    "to": "mesaar-frontend/package.json",
+    "to": "logistic-x-frontend/package.json",
     "original_sha256": "5a0bb856ae862f8fd1ca2a83de32aa651a2ee80e52b604a15baf2afc0f450c71",
     "final_sha256": "212f9b1f90fcd2120cd80fe8b96a437c1c395e62db06375fd0d91ccb3cc33c7e",
     "changed": true
   },
   {
     "from": "mobile/README.md",
-    "to": "mesaar-frontend/README.md",
+    "to": "logistic-x-frontend/README.md",
     "original_sha256": "7a72369be84860af1e459eaed09fda480d6417213a8531407ad6aa3ed99bb71d",
     "final_sha256": "8ae11f58c24ece2c1e7d86b31baf803e959f457ce865aa62f7aa9188ab5a7a32",
     "changed": true
   },
   {
     "from": "mobile/tsconfig.json",
-    "to": "mesaar-frontend/tsconfig.json",
+    "to": "logistic-x-frontend/tsconfig.json",
     "original_sha256": "e263a22fd84c937914ae8981151bc225c50343a7d00b284cbe8d68bb772503df",
     "final_sha256": "e263a22fd84c937914ae8981151bc225c50343a7d00b284cbe8d68bb772503df",
     "changed": false
   },
   {
     "from": "mobile/app/index.tsx",
-    "to": "mesaar-frontend/app/index.tsx",
+    "to": "logistic-x-frontend/app/index.tsx",
     "original_sha256": "3e6d7b3af5e2c74df8053486f04b3667cf727945b4545023eac5416f25313cfd",
     "final_sha256": "3e6d7b3af5e2c74df8053486f04b3667cf727945b4545023eac5416f25313cfd",
     "changed": false
   },
   {
     "from": "mobile/app/_layout.tsx",
-    "to": "mesaar-frontend/app/_layout.tsx",
+    "to": "logistic-x-frontend/app/_layout.tsx",
     "original_sha256": "9300464c73748c592e40bdb3920a6048feaf2a19a5dbd834d7fbb1a26717f70a",
     "final_sha256": "714f10f011bea84bdce37852d64919558a5544eefe1a7220e4b51de64600011f",
     "changed": true
   },
   {
     "from": "mobile/app/auth/login.tsx",
-    "to": "mesaar-frontend/app/auth/login.tsx",
+    "to": "logistic-x-frontend/app/auth/login.tsx",
     "original_sha256": "3320cfecc411a8469d37474fb7d60925b0c708682f80c7f50c3c1285bf3332c4",
     "final_sha256": "f5716972014571ed5c0baae91502d5ad325df05a533690a94acef4f299479054",
     "changed": true
   },
   {
     "from": "mobile/app/driver/home.tsx",
-    "to": "mesaar-frontend/app/driver/home.tsx",
+    "to": "logistic-x-frontend/app/driver/home.tsx",
     "original_sha256": "222a3f77105fd2000b089df5e676701746493a71e0fc7d89c8001193f0c0e057",
     "final_sha256": "8017dd3ae44f2df4e801fe11a8432ec22b7ad4eceaf29004347eba5518951197",
     "changed": true
   },
   {
     "from": "mobile/app/driver/orders/[id].tsx",
-    "to": "mesaar-frontend/app/driver/orders/[id].tsx",
+    "to": "logistic-x-frontend/app/driver/orders/[id].tsx",
     "original_sha256": "004f2321e367b9dd1a5a4a60ad2b03fdb84967d1c716ee9a4c01a73a7c98ddfb",
     "final_sha256": "18f9d7f611870c173c9cd467f3e417c0839f8acddccbf4865dae5b106101816a",
     "changed": true
   },
   {
     "from": "mobile/assets/adaptive-icon.png",
-    "to": "mesaar-frontend/assets/adaptive-icon.png",
+    "to": "logistic-x-frontend/assets/adaptive-icon.png",
     "original_sha256": "f716b16db0cdfcaf738705eb3138f47cd372782faa1050c59f216faadad04d17",
     "final_sha256": "f716b16db0cdfcaf738705eb3138f47cd372782faa1050c59f216faadad04d17",
     "changed": false
   },
   {
     "from": "mobile/assets/favicon.png",
-    "to": "mesaar-frontend/assets/favicon.png",
+    "to": "logistic-x-frontend/assets/favicon.png",
     "original_sha256": "8dcf903bef619e96dfbf6629360383ac873f5517f93e0d194ec57514ab065bfb",
     "final_sha256": "8dcf903bef619e96dfbf6629360383ac873f5517f93e0d194ec57514ab065bfb",
     "changed": false
   },
   {
     "from": "mobile/assets/icon.png",
-    "to": "mesaar-frontend/assets/icon.png",
+    "to": "logistic-x-frontend/assets/icon.png",
     "original_sha256": "f716b16db0cdfcaf738705eb3138f47cd372782faa1050c59f216faadad04d17",
     "final_sha256": "f716b16db0cdfcaf738705eb3138f47cd372782faa1050c59f216faadad04d17",
     "changed": false
   },
   {
     "from": "mobile/assets/splash.png",
-    "to": "mesaar-frontend/assets/splash.png",
+    "to": "logistic-x-frontend/assets/splash.png",
     "original_sha256": "9fb98504af2955847967379202fc8b02a21c22ecf75c67d694dad284f189972e",
     "final_sha256": "9fb98504af2955847967379202fc8b02a21c22ecf75c67d694dad284f189972e",
     "changed": false
   },
   {
     "from": "mobile/src/api/client.ts",
-    "to": "mesaar-frontend/src/api/client.ts",
+    "to": "logistic-x-frontend/src/api/client.ts",
     "original_sha256": "023f777977e956ed91478117e68e22223083c5b12bd959041a698218ff5d2551",
     "final_sha256": "d3898dc874e07529340c155e015f3bbb31f722c7a8844556c56bf5515012ea4b",
     "changed": true
   },
   {
     "from": "mobile/src/api/driverApi.ts",
-    "to": "mesaar-frontend/src/api/driverApi.ts",
+    "to": "logistic-x-frontend/src/api/driverApi.ts",
     "original_sha256": "2f37e410f76af6b6cab0f901c3becc4f19cec32e847cbfa1b899909839e818d9",
     "final_sha256": "36884ec3ad56adb558ccc0435d4b32797309391000a8940001d00420825d0104",
     "changed": true
   },
   {
     "from": "mobile/src/api/index.ts",
-    "to": "mesaar-frontend/src/api/index.ts",
+    "to": "logistic-x-frontend/src/api/index.ts",
     "original_sha256": "61b9c37b5c8522a47159fe911a21400e5000f9aecf46911feaf49b738e11ea31",
     "final_sha256": "9503366240584f883c4d2b8b362d3587d47223f12407e3bed84891ce3739205b",
     "changed": true
   },
   {
     "from": "mobile/src/api/types.ts",
-    "to": "mesaar-frontend/src/api/types.ts",
+    "to": "logistic-x-frontend/src/api/types.ts",
     "original_sha256": "c0e643b3a1d3ab3cb40ea574d3dc6bc263f26763365434b6ba6ffe7ced174cc6",
     "final_sha256": "de9c30acc17dc4ab33dc8d2a8cb9c1d0c99563a402cdbca37c8843544b71c830",
     "changed": true
   },
   {
     "from": "mobile/src/components/AppLayout.tsx",
-    "to": "mesaar-frontend/src/components/AppLayout.tsx",
+    "to": "logistic-x-frontend/src/components/AppLayout.tsx",
     "original_sha256": "851a056a28d9e0e639eb29fece7976b7dfae07df088a9a28fef98e1bb2f253b2",
     "final_sha256": "851a056a28d9e0e639eb29fece7976b7dfae07df088a9a28fef98e1bb2f253b2",
     "changed": false
   },
   {
     "from": "mobile/src/components/AppText.tsx",
-    "to": "mesaar-frontend/src/components/AppText.tsx",
+    "to": "logistic-x-frontend/src/components/AppText.tsx",
     "original_sha256": "3b97228ade83f5cc14306863de5b34d87cc13428c000247f229fb463101d8e60",
     "final_sha256": "3b97228ade83f5cc14306863de5b34d87cc13428c000247f229fb463101d8e60",
     "changed": false
   },
   {
     "from": "mobile/src/components/BottomNav.tsx",
-    "to": "mesaar-frontend/src/components/BottomNav.tsx",
+    "to": "logistic-x-frontend/src/components/BottomNav.tsx",
     "original_sha256": "8825469412dccd179324979089d1686a702c99f4cd04b4d61631a0c55141de3a",
     "final_sha256": "8825469412dccd179324979089d1686a702c99f4cd04b4d61631a0c55141de3a",
     "changed": false
   },
   {
     "from": "mobile/src/components/Card.tsx",
-    "to": "mesaar-frontend/src/components/Card.tsx",
+    "to": "logistic-x-frontend/src/components/Card.tsx",
     "original_sha256": "648d02702d617ed5a29a73a0722bde32fb66bc27ee3448d4bb1c07c957a2689c",
     "final_sha256": "648d02702d617ed5a29a73a0722bde32fb66bc27ee3448d4bb1c07c957a2689c",
     "changed": false
   },
   {
     "from": "mobile/src/components/CountdownBadge.tsx",
-    "to": "mesaar-frontend/src/components/CountdownBadge.tsx",
+    "to": "logistic-x-frontend/src/components/CountdownBadge.tsx",
     "original_sha256": "845e6c3f04acc3a4e91b6b86e192b6e6b476cd223b49702d0b1d308b789b290a",
     "final_sha256": "845e6c3f04acc3a4e91b6b86e192b6e6b476cd223b49702d0b1d308b789b290a",
     "changed": false
   },
   {
     "from": "mobile/src/components/DriverHeader.tsx",
-    "to": "mesaar-frontend/src/components/DriverHeader.tsx",
+    "to": "logistic-x-frontend/src/components/DriverHeader.tsx",
     "original_sha256": "39f40de87128a35f83d5a5a70d9e74e459dd954994d8214b6b227c4ec17414c9",
     "final_sha256": "39f40de87128a35f83d5a5a70d9e74e459dd954994d8214b6b227c4ec17414c9",
     "changed": false
   },
   {
     "from": "mobile/src/components/ErrorBoundary.tsx",
-    "to": "mesaar-frontend/src/components/ErrorBoundary.tsx",
+    "to": "logistic-x-frontend/src/components/ErrorBoundary.tsx",
     "original_sha256": "56196c80dd2b34f3bdc790237295728ed989f75d470b298067b722c43df76669",
     "final_sha256": "56196c80dd2b34f3bdc790237295728ed989f75d470b298067b722c43df76669",
     "changed": false
   },
   {
     "from": "mobile/src/components/index.ts",
-    "to": "mesaar-frontend/src/components/index.ts",
+    "to": "logistic-x-frontend/src/components/index.ts",
     "original_sha256": "8f7b39efaa650780a50093679ef49af19cf521a0af925d61206eb248938b5b2f",
     "final_sha256": "8f7b39efaa650780a50093679ef49af19cf521a0af925d61206eb248938b5b2f",
     "changed": false
   },
   {
     "from": "mobile/src/components/KPIBox.tsx",
-    "to": "mesaar-frontend/src/components/KPIBox.tsx",
+    "to": "logistic-x-frontend/src/components/KPIBox.tsx",
     "original_sha256": "33f761fdc300def20422f62c072c46efbba04c8446b1ac757eaf7ff5044004bb",
     "final_sha256": "33f761fdc300def20422f62c072c46efbba04c8446b1ac757eaf7ff5044004bb",
     "changed": false
   },
   {
     "from": "mobile/src/components/MapPreview.tsx",
-    "to": "mesaar-frontend/src/components/MapPreview.tsx",
+    "to": "logistic-x-frontend/src/components/MapPreview.tsx",
     "original_sha256": "f005b176dc3d1964864f287659641906a3f13888db549c342395e25d3d780b21",
     "final_sha256": "f005b176dc3d1964864f287659641906a3f13888db549c342395e25d3d780b21",
     "changed": false
   },
   {
     "from": "mobile/src/components/OrderBottomSheet.tsx",
-    "to": "mesaar-frontend/src/components/OrderBottomSheet.tsx",
+    "to": "logistic-x-frontend/src/components/OrderBottomSheet.tsx",
     "original_sha256": "2e01a45ff22fb94496ad70de2c461a0910e0f102805ed38d1c12868dcb101f11",
     "final_sha256": "1799e84f6a8cc5c2d0bb52e8d58626b7f3b9947d58be1e01e4198c48fe992265",
     "changed": true
   },
   {
     "from": "mobile/src/components/PhoneInput.tsx",
-    "to": "mesaar-frontend/src/components/PhoneInput.tsx",
+    "to": "logistic-x-frontend/src/components/PhoneInput.tsx",
     "original_sha256": "87311e13bf9c3e4257920305e832ff92d5ff96a9e6ea34615c32a019901b187d",
     "final_sha256": "87311e13bf9c3e4257920305e832ff92d5ff96a9e6ea34615c32a019901b187d",
     "changed": false
   },
   {
     "from": "mobile/src/components/PrimaryButton.tsx",
-    "to": "mesaar-frontend/src/components/PrimaryButton.tsx",
+    "to": "logistic-x-frontend/src/components/PrimaryButton.tsx",
     "original_sha256": "8716932d54c79500913293c635d07554f9da89666516279dcb055b3d3956f6c1",
     "final_sha256": "8716932d54c79500913293c635d07554f9da89666516279dcb055b3d3956f6c1",
     "changed": false
   },
   {
     "from": "mobile/src/components/RouteMap.tsx",
-    "to": "mesaar-frontend/src/components/RouteMap.tsx",
+    "to": "logistic-x-frontend/src/components/RouteMap.tsx",
     "original_sha256": "3ce6f2ad83d3f9d1e2fe99783735bde2b21209efa96dc68a2c31215ec47feafe",
     "final_sha256": "3ce6f2ad83d3f9d1e2fe99783735bde2b21209efa96dc68a2c31215ec47feafe",
     "changed": false
   },
   {
     "from": "mobile/src/components/SecondaryButton.tsx",
-    "to": "mesaar-frontend/src/components/SecondaryButton.tsx",
+    "to": "logistic-x-frontend/src/components/SecondaryButton.tsx",
     "original_sha256": "af45bf049d5fe86a37499de0fcc4a7dad8332c5630fedef53fcb2a622809464a",
     "final_sha256": "af45bf049d5fe86a37499de0fcc4a7dad8332c5630fedef53fcb2a622809464a",
     "changed": false
   },
   {
     "from": "mobile/src/components/ShipmentRequestCard.tsx",
-    "to": "mesaar-frontend/src/components/ShipmentRequestCard.tsx",
+    "to": "logistic-x-frontend/src/components/ShipmentRequestCard.tsx",
     "original_sha256": "9ef890c65e01e3a2b27f7f14ddde1136ae64ebe08e5b7db60d074d067ee0b701",
     "final_sha256": "1626d76a2a1f1ba64d80528940b5db487bc46a92e20f73a7621672de36a9900d",
     "changed": true
   },
   {
     "from": "mobile/src/components/StatusCard.tsx",
-    "to": "mesaar-frontend/src/components/StatusCard.tsx",
+    "to": "logistic-x-frontend/src/components/StatusCard.tsx",
     "original_sha256": "c6f87af7915b82813cdcb4091777d68ad28e7483587078a70f0c0e3fe752603b",
     "final_sha256": "c6f87af7915b82813cdcb4091777d68ad28e7483587078a70f0c0e3fe752603b",
     "changed": false
   },
   {
     "from": "mobile/src/components/Toggle.tsx",
-    "to": "mesaar-frontend/src/components/Toggle.tsx",
+    "to": "logistic-x-frontend/src/components/Toggle.tsx",
     "original_sha256": "b87d18449ef871bb607a5d5dd280b537e51762bc8eba7cbcfd92768d76d86e34",
     "final_sha256": "b87d18449ef871bb607a5d5dd280b537e51762bc8eba7cbcfd92768d76d86e34",
     "changed": false
   },
   {
     "from": "mobile/src/hooks/useAppBootstrap.ts",
-    "to": "mesaar-frontend/src/hooks/useAppBootstrap.ts",
+    "to": "logistic-x-frontend/src/hooks/useAppBootstrap.ts",
     "original_sha256": "2e6215b91c9ddc01b3d4b33fb0c5d94ce6cb01fb5dc21894f3848e9ef5687f59",
     "final_sha256": "f538a450f5bc032aec7fc01ccd8f7317af24420bd944582d9b801d747fbf4980",
     "changed": true
   },
   {
     "from": "mobile/src/hooks/useCountdown.ts",
-    "to": "mesaar-frontend/src/hooks/useCountdown.ts",
+    "to": "logistic-x-frontend/src/hooks/useCountdown.ts",
     "original_sha256": "c352f1240ca10b122118b14bbe20bca2ba794da554416f45fe49c238d3c86483",
     "final_sha256": "91cf311b52a8e3269549990f24095365943dc78d5cb706cdc174387cef9df46c",
     "changed": true
   },
   {
     "from": "mobile/src/mock/driver.ts",
-    "to": "mesaar-frontend/src/mock/driver.ts",
+    "to": "logistic-x-frontend/src/mock/driver.ts",
     "original_sha256": "97385e609a601356a98464be735e66d05a13e4a73666c9a6499f691d00c12b7d",
     "final_sha256": "97385e609a601356a98464be735e66d05a13e4a73666c9a6499f691d00c12b7d",
     "changed": false
   },
   {
     "from": "mobile/src/mock/orders.ts",
-    "to": "mesaar-frontend/src/mock/orders.ts",
+    "to": "logistic-x-frontend/src/mock/orders.ts",
     "original_sha256": "a5cbae21d5345f71a490292a8dd2ff323537b58012293ddc6339c5815394dc6c",
     "final_sha256": "a5cbae21d5345f71a490292a8dd2ff323537b58012293ddc6339c5815394dc6c",
     "changed": false
   },
   {
     "from": "mobile/src/mock/requests.ts",
-    "to": "mesaar-frontend/src/mock/requests.ts",
+    "to": "logistic-x-frontend/src/mock/requests.ts",
     "original_sha256": "b690cb5020adc22f883fe3bca11296fe7c1e8a14786b1a32ab281db462e3148d",
     "final_sha256": "b690cb5020adc22f883fe3bca11296fe7c1e8a14786b1a32ab281db462e3148d",
     "changed": false
   },
   {
     "from": "mobile/src/store/authStorage.ts",
-    "to": "mesaar-frontend/src/store/authStorage.ts",
+    "to": "logistic-x-frontend/src/store/authStorage.ts",
     "original_sha256": "dbbf288eaf090387a00ac41958f2febe3ed18c209b373b59e13717655686e769",
     "final_sha256": "897f4605a2967dc264e8584b9213df7968e3c5ccf8c0749dff2be8e8d42412b1",
     "changed": true
   },
   {
     "from": "mobile/src/store/session.tsx",
-    "to": "mesaar-frontend/src/store/session.tsx",
+    "to": "logistic-x-frontend/src/store/session.tsx",
     "original_sha256": "11f9d6f5a7a6e52f4a3091c68e469602ec4176851703abbe513f28aa0db66c70",
     "final_sha256": "1dfdabeca9a07c9680ea0a018a4d6f7c98bb49f3cc12bd742a88127427033a42",
     "changed": true
   },
   {
     "from": "mobile/src/theme/colors.ts",
-    "to": "mesaar-frontend/src/theme/colors.ts",
+    "to": "logistic-x-frontend/src/theme/colors.ts",
     "original_sha256": "25005402ab44483a162b1abe7886f275248388a36128a1ab70b32676c2dfb4e1",
     "final_sha256": "25005402ab44483a162b1abe7886f275248388a36128a1ab70b32676c2dfb4e1",
     "changed": false
   },
   {
     "from": "mobile/src/theme/index.ts",
-    "to": "mesaar-frontend/src/theme/index.ts",
+    "to": "logistic-x-frontend/src/theme/index.ts",
     "original_sha256": "920838c2783ac50e4bf160955a8a5e13f89b959ed5e95cc1a2b1a56a503d1c6a",
     "final_sha256": "920838c2783ac50e4bf160955a8a5e13f89b959ed5e95cc1a2b1a56a503d1c6a",
     "changed": false
   },
   {
     "from": "mobile/src/theme/spacing.ts",
-    "to": "mesaar-frontend/src/theme/spacing.ts",
+    "to": "logistic-x-frontend/src/theme/spacing.ts",
     "original_sha256": "2915f26c7c872bb18e770c50bcb5f1ad43d891d5a1655a6e0c80076568473766",
     "final_sha256": "2915f26c7c872bb18e770c50bcb5f1ad43d891d5a1655a6e0c80076568473766",
     "changed": false
   },
   {
     "from": "mobile/src/theme/typography.ts",
-    "to": "mesaar-frontend/src/theme/typography.ts",
+    "to": "logistic-x-frontend/src/theme/typography.ts",
     "original_sha256": "c6c5e05c31169fc86584bed08b3152cbd19e6d5cbe29a0a2827146a441480723",
     "final_sha256": "c6c5e05c31169fc86584bed08b3152cbd19e6d5cbe29a0a2827146a441480723",
     "changed": false
   },
   {
     "from": "mobile/src/utils/format.ts",
-    "to": "mesaar-frontend/src/utils/format.ts",
+    "to": "logistic-x-frontend/src/utils/format.ts",
     "original_sha256": "18821ed63c026927b0d75cb48b4ea210f4c51d5321637ce700eef79e67c86fce",
     "final_sha256": "d8dfeb4340241f0565b841ebcfa6eb122b24d6ebede5b3baddac04c0fd0d6cfa",
     "changed": true
   },
   {
     "from": "mobile/src/utils/mapProjection.ts",
-    "to": "mesaar-frontend/src/utils/mapProjection.ts",
+    "to": "logistic-x-frontend/src/utils/mapProjection.ts",
     "original_sha256": "51d9cbf97d93f3f9816f38f8520005f3db43bac9334ff4b8a44f13e1d74df07d",
     "final_sha256": "51d9cbf97d93f3f9816f38f8520005f3db43bac9334ff4b8a44f13e1d74df07d",
     "changed": false
   },
   {
     "from": "mobile/src/utils/validation.ts",
-    "to": "mesaar-frontend/src/utils/validation.ts",
+    "to": "logistic-x-frontend/src/utils/validation.ts",
     "original_sha256": "006feb160f7a15c9648d0cd04bc181315250fc33791d04cabfc59fd19db088b5",
     "final_sha256": "006feb160f7a15c9648d0cd04bc181315250fc33791d04cabfc59fd19db088b5",
     "changed": false
   },
   {
     "from": "tests/billing_sqlite.py",
-    "to": "mesaar-backend/tests/billing_sqlite.py",
+    "to": "logistic-x-backend/tests/billing_sqlite.py",
     "original_sha256": "4c45746160a78cfc5212e6ebdb826ade2b552cbb30ba4e6a89086f45b88cb5bf",
     "final_sha256": "4c45746160a78cfc5212e6ebdb826ade2b552cbb30ba4e6a89086f45b88cb5bf",
     "changed": false
   },
   {
     "from": "tests/compliance_sqlite.py",
-    "to": "mesaar-backend/tests/compliance_sqlite.py",
+    "to": "logistic-x-backend/tests/compliance_sqlite.py",
     "original_sha256": "a5d85a756681a6af84cef6500f5dcdbf76258347c39f84ae9499e9c83969b549",
     "final_sha256": "a5d85a756681a6af84cef6500f5dcdbf76258347c39f84ae9499e9c83969b549",
     "changed": false
   },
   {
     "from": "tests/conftest.py",
-    "to": "mesaar-backend/tests/conftest.py",
+    "to": "logistic-x-backend/tests/conftest.py",
     "original_sha256": "705a0c6d47031f291a28228934159b2238af949da3de2533a561a8cebadcd0c4",
     "final_sha256": "705a0c6d47031f291a28228934159b2238af949da3de2533a561a8cebadcd0c4",
     "changed": false
   },
   {
     "from": "tests/equipment_sqlite.py",
-    "to": "mesaar-backend/tests/equipment_sqlite.py",
+    "to": "logistic-x-backend/tests/equipment_sqlite.py",
     "original_sha256": "e6b9e7f801e2b9ed1af5ef0394a029439e1329f21b6e90579f77b4d2931aa0be",
     "final_sha256": "e6b9e7f801e2b9ed1af5ef0394a029439e1329f21b6e90579f77b4d2931aa0be",
     "changed": false
   },
   {
     "from": "tests/insurance_sqlite.py",
-    "to": "mesaar-backend/tests/insurance_sqlite.py",
+    "to": "logistic-x-backend/tests/insurance_sqlite.py",
     "original_sha256": "54ab1a986401d517549dadfb6ee4abfa2923ed306234d67672a8bbca082070cc",
     "final_sha256": "54ab1a986401d517549dadfb6ee4abfa2923ed306234d67672a8bbca082070cc",
     "changed": false
   },
   {
     "from": "tests/integrations_sqlite.py",
-    "to": "mesaar-backend/tests/integrations_sqlite.py",
+    "to": "logistic-x-backend/tests/integrations_sqlite.py",
     "original_sha256": "96940152c5216e5002e6bdace4ae1fe4f0183dbb6f60c65453d684aa62590df6",
     "final_sha256": "96940152c5216e5002e6bdace4ae1fe4f0183dbb6f60c65453d684aa62590df6",
     "changed": false
   },
   {
     "from": "tests/notifications_sqlite.py",
-    "to": "mesaar-backend/tests/notifications_sqlite.py",
+    "to": "logistic-x-backend/tests/notifications_sqlite.py",
     "original_sha256": "e20bb44f31bdeadfd264159fc8c2433cf60377ae080d9931e1c2033460fab5a8",
     "final_sha256": "e20bb44f31bdeadfd264159fc8c2433cf60377ae080d9931e1c2033460fab5a8",
     "changed": false
   },
   {
     "from": "tests/reporting_sqlite.py",
-    "to": "mesaar-backend/tests/reporting_sqlite.py",
+    "to": "logistic-x-backend/tests/reporting_sqlite.py",
     "original_sha256": "139fc57004922d50d8a163fba087eac4c927a7fd959e7a5bed901ae0c7784093",
     "final_sha256": "139fc57004922d50d8a163fba087eac4c927a7fd959e7a5bed901ae0c7784093",
     "changed": false
   },
   {
     "from": "tests/shipment_sqlite.py",
-    "to": "mesaar-backend/tests/shipment_sqlite.py",
+    "to": "logistic-x-backend/tests/shipment_sqlite.py",
     "original_sha256": "efee84177f14ebcccf235b3680c84e2a5a77654a71b1d3292a034de2b21525ed",
     "final_sha256": "efee84177f14ebcccf235b3680c84e2a5a77654a71b1d3292a034de2b21525ed",
     "changed": false
   },
   {
     "from": "tests/sqlite_support.py",
-    "to": "mesaar-backend/tests/sqlite_support.py",
+    "to": "logistic-x-backend/tests/sqlite_support.py",
     "original_sha256": "a9245ad0b722e3cc8d7843d520687077a04dbe5b0fc0430fdba2bcc62be4ba67",
     "final_sha256": "a9245ad0b722e3cc8d7843d520687077a04dbe5b0fc0430fdba2bcc62be4ba67",
     "changed": false
   },
   {
     "from": "tests/test_auth_context_propagation.py",
-    "to": "mesaar-backend/tests/test_auth_context_propagation.py",
+    "to": "logistic-x-backend/tests/test_auth_context_propagation.py",
     "original_sha256": "e965bcd7ed2fe7b1bdc058eed8fc3e81bec6903cb231cc600182529052d6795d",
     "final_sha256": "e965bcd7ed2fe7b1bdc058eed8fc3e81bec6903cb231cc600182529052d6795d",
     "changed": false
   },
   {
     "from": "tests/test_auth_routes.py",
-    "to": "mesaar-backend/tests/test_auth_routes.py",
+    "to": "logistic-x-backend/tests/test_auth_routes.py",
     "original_sha256": "d05639f13349349de97451903d18463309981917c36009fc7bf7e9ed42dfe108",
     "final_sha256": "d05639f13349349de97451903d18463309981917c36009fc7bf7e9ed42dfe108",
     "changed": false
   },
   {
     "from": "tests/test_auth_service.py",
-    "to": "mesaar-backend/tests/test_auth_service.py",
+    "to": "logistic-x-backend/tests/test_auth_service.py",
     "original_sha256": "8fad2dd5792966d30a27fb5781ab35336e6cbbe1f5ec1d0f065726d2f55a16bb",
     "final_sha256": "8fad2dd5792966d30a27fb5781ab35336e6cbbe1f5ec1d0f065726d2f55a16bb",
     "changed": false
   },
   {
     "from": "tests/test_billing_claims_integration.py",
-    "to": "mesaar-backend/tests/test_billing_claims_integration.py",
+    "to": "logistic-x-backend/tests/test_billing_claims_integration.py",
     "original_sha256": "f26137c7c699b536345ac7e0df4b83938f38775f8752ae92c6ea1439d450bf1c",
     "final_sha256": "f26137c7c699b536345ac7e0df4b83938f38775f8752ae92c6ea1439d450bf1c",
     "changed": false
   },
   {
     "from": "tests/test_billing_events.py",
-    "to": "mesaar-backend/tests/test_billing_events.py",
+    "to": "logistic-x-backend/tests/test_billing_events.py",
     "original_sha256": "8e597ce0127d51c155c7bfe503701372df51fbd78f9b588db358a4bfdbe6f709",
     "final_sha256": "8e597ce0127d51c155c7bfe503701372df51fbd78f9b588db358a4bfdbe6f709",
     "changed": false
   },
   {
     "from": "tests/test_billing_model.py",
-    "to": "mesaar-backend/tests/test_billing_model.py",
+    "to": "logistic-x-backend/tests/test_billing_model.py",
     "original_sha256": "a901324c6fded66863483423a9603876e95583ee86dd00cbe418fc6a17bf8c46",
     "final_sha256": "a901324c6fded66863483423a9603876e95583ee86dd00cbe418fc6a17bf8c46",
     "changed": false
   },
   {
     "from": "tests/test_billing_order_shipment_integration.py",
-    "to": "mesaar-backend/tests/test_billing_order_shipment_integration.py",
+    "to": "logistic-x-backend/tests/test_billing_order_shipment_integration.py",
     "original_sha256": "2b9f15860ef3ebed1f542ffa4ca23966f599da620ce3c1cb64a1038087f8b8bf",
     "final_sha256": "2b9f15860ef3ebed1f542ffa4ca23966f599da620ce3c1cb64a1038087f8b8bf",
     "changed": false
   },
   {
     "from": "tests/test_billing_repository.py",
-    "to": "mesaar-backend/tests/test_billing_repository.py",
+    "to": "logistic-x-backend/tests/test_billing_repository.py",
     "original_sha256": "c21a9e87c912aef5bae60faa802775cc37557295a8a1008e9893794d684a09a7",
     "final_sha256": "c21a9e87c912aef5bae60faa802775cc37557295a8a1008e9893794d684a09a7",
     "changed": false
   },
   {
     "from": "tests/test_billing_routes.py",
-    "to": "mesaar-backend/tests/test_billing_routes.py",
+    "to": "logistic-x-backend/tests/test_billing_routes.py",
     "original_sha256": "f1145e6e1748103dc97e7717fe372f27aec13729032887da1fc96366db46072f",
     "final_sha256": "f1145e6e1748103dc97e7717fe372f27aec13729032887da1fc96366db46072f",
     "changed": false
   },
   {
     "from": "tests/test_billing_service.py",
-    "to": "mesaar-backend/tests/test_billing_service.py",
+    "to": "logistic-x-backend/tests/test_billing_service.py",
     "original_sha256": "a48cc1d592af67779d6206f3741706a65d6fa564031a8b275ad37a271cb73744",
     "final_sha256": "a48cc1d592af67779d6206f3741706a65d6fa564031a8b275ad37a271cb73744",
     "changed": false
   },
   {
     "from": "tests/test_claims_compliance_integration.py",
-    "to": "mesaar-backend/tests/test_claims_compliance_integration.py",
+    "to": "logistic-x-backend/tests/test_claims_compliance_integration.py",
     "original_sha256": "dccbaa3a18d667ba2ef4b4946d51884775d3431ac92a1555901c627b1759e342",
     "final_sha256": "dccbaa3a18d667ba2ef4b4946d51884775d3431ac92a1555901c627b1759e342",
     "changed": false
   },
   {
     "from": "tests/test_claims_equipment_integration.py",
-    "to": "mesaar-backend/tests/test_claims_equipment_integration.py",
+    "to": "logistic-x-backend/tests/test_claims_equipment_integration.py",
     "original_sha256": "3c1ed3c15eb83cd07dfef4b29da1f279b808ee1512343b52268a1d56b3e56d64",
     "final_sha256": "3c1ed3c15eb83cd07dfef4b29da1f279b808ee1512343b52268a1d56b3e56d64",
     "changed": false
   },
   {
     "from": "tests/test_claims_shipment_integration.py",
-    "to": "mesaar-backend/tests/test_claims_shipment_integration.py",
+    "to": "logistic-x-backend/tests/test_claims_shipment_integration.py",
     "original_sha256": "a185e5bacd96dd123edc0954f0e026c8aae299cbe7787fb2d219b1fe60577311",
     "final_sha256": "a185e5bacd96dd123edc0954f0e026c8aae299cbe7787fb2d219b1fe60577311",
     "changed": false
   },
   {
     "from": "tests/test_claim_state_machine.py",
-    "to": "mesaar-backend/tests/test_claim_state_machine.py",
+    "to": "logistic-x-backend/tests/test_claim_state_machine.py",
     "original_sha256": "75a4eb1c481d9fe7673f2406fd6b4b076dbb32bcf1e358b481fad7c426335ae6",
     "final_sha256": "75a4eb1c481d9fe7673f2406fd6b4b076dbb32bcf1e358b481fad7c426335ae6",
     "changed": false
   },
   {
     "from": "tests/test_compliance_events.py",
-    "to": "mesaar-backend/tests/test_compliance_events.py",
+    "to": "logistic-x-backend/tests/test_compliance_events.py",
     "original_sha256": "e02084a71af05ef0e89181a2aeb501770f8015d11a3e5e07d7cba5beb0ca8618",
     "final_sha256": "e02084a71af05ef0e89181a2aeb501770f8015d11a3e5e07d7cba5beb0ca8618",
     "changed": false
   },
   {
     "from": "tests/test_compliance_model.py",
-    "to": "mesaar-backend/tests/test_compliance_model.py",
+    "to": "logistic-x-backend/tests/test_compliance_model.py",
     "original_sha256": "4c21313921acb5650fc58d0a8033dc6fab2402fb5f44dd21dba811e7b9cac1c3",
     "final_sha256": "4c21313921acb5650fc58d0a8033dc6fab2402fb5f44dd21dba811e7b9cac1c3",
     "changed": false
   },
   {
     "from": "tests/test_compliance_repository.py",
-    "to": "mesaar-backend/tests/test_compliance_repository.py",
+    "to": "logistic-x-backend/tests/test_compliance_repository.py",
     "original_sha256": "1d062b8a6eaf85060ddb1de0d7fef917e2c931b85748b8575be855e62b7a0040",
     "final_sha256": "1d062b8a6eaf85060ddb1de0d7fef917e2c931b85748b8575be855e62b7a0040",
     "changed": false
   },
   {
     "from": "tests/test_compliance_routes.py",
-    "to": "mesaar-backend/tests/test_compliance_routes.py",
+    "to": "logistic-x-backend/tests/test_compliance_routes.py",
     "original_sha256": "1bae6c263e6b9cfc3c6c5e4a8c93e39cd340da4d202888422a7d5611d6993d11",
     "final_sha256": "1bae6c263e6b9cfc3c6c5e4a8c93e39cd340da4d202888422a7d5611d6993d11",
     "changed": false
   },
   {
     "from": "tests/test_compliance_service.py",
-    "to": "mesaar-backend/tests/test_compliance_service.py",
+    "to": "logistic-x-backend/tests/test_compliance_service.py",
     "original_sha256": "1984d5c7ff8e2692c2d6e425c056ef6194a44b1c846e64b9a3995ca394249831",
     "final_sha256": "1984d5c7ff8e2692c2d6e425c056ef6194a44b1c846e64b9a3995ca394249831",
     "changed": false
   },
   {
     "from": "tests/test_config.py",
-    "to": "mesaar-backend/tests/test_config.py",
+    "to": "logistic-x-backend/tests/test_config.py",
     "original_sha256": "6cc2675e132d94a2b7e2c91478a314a13b45526a1a296e16d818bc2e51ebd985",
     "final_sha256": "6cc2675e132d94a2b7e2c91478a314a13b45526a1a296e16d818bc2e51ebd985",
     "changed": false
   },
   {
     "from": "tests/test_customer_events.py",
-    "to": "mesaar-backend/tests/test_customer_events.py",
+    "to": "logistic-x-backend/tests/test_customer_events.py",
     "original_sha256": "7fd0f1140c85787114703378b46fa8185e1cf9ec03e61a45986fa87eb92b843f",
     "final_sha256": "7fd0f1140c85787114703378b46fa8185e1cf9ec03e61a45986fa87eb92b843f",
     "changed": false
   },
   {
     "from": "tests/test_customer_model.py",
-    "to": "mesaar-backend/tests/test_customer_model.py",
+    "to": "logistic-x-backend/tests/test_customer_model.py",
     "original_sha256": "403d1313fc188f7c17a2c69c654eababc66e3f704da2d15aec439330016c6318",
     "final_sha256": "403d1313fc188f7c17a2c69c654eababc66e3f704da2d15aec439330016c6318",
     "changed": false
   },
   {
     "from": "tests/test_customer_routes.py",
-    "to": "mesaar-backend/tests/test_customer_routes.py",
+    "to": "logistic-x-backend/tests/test_customer_routes.py",
     "original_sha256": "b709a93c690eabea89dae04e8cfdd7fb94507dc73ee6f3d52d81d2a8249ec09a",
     "final_sha256": "b709a93c690eabea89dae04e8cfdd7fb94507dc73ee6f3d52d81d2a8249ec09a",
     "changed": false
   },
   {
     "from": "tests/test_customer_service.py",
-    "to": "mesaar-backend/tests/test_customer_service.py",
+    "to": "logistic-x-backend/tests/test_customer_service.py",
     "original_sha256": "7dd5ab213b28ca3e4309ae962283a8dd71f7a4304f2255631a3f22732df62bc4",
     "final_sha256": "7dd5ab213b28ca3e4309ae962283a8dd71f7a4304f2255631a3f22732df62bc4",
     "changed": false
   },
   {
     "from": "tests/test_datetime_utils.py",
-    "to": "mesaar-backend/tests/test_datetime_utils.py",
+    "to": "logistic-x-backend/tests/test_datetime_utils.py",
     "original_sha256": "e6cf7c00dd2b0a78538b396166b25feb1d78ef878ff8c0e1d8196c36ee1e6a56",
     "final_sha256": "e6cf7c00dd2b0a78538b396166b25feb1d78ef878ff8c0e1d8196c36ee1e6a56",
     "changed": false
   },
   {
     "from": "tests/test_dispatch_gate.py",
-    "to": "mesaar-backend/tests/test_dispatch_gate.py",
+    "to": "logistic-x-backend/tests/test_dispatch_gate.py",
     "original_sha256": "60788a103eea8ee7c2400d739d3ec87f7c17d15356b8887169017958f1038ec0",
     "final_sha256": "60788a103eea8ee7c2400d739d3ec87f7c17d15356b8887169017958f1038ec0",
     "changed": false
   },
   {
     "from": "tests/test_domain_event.py",
-    "to": "mesaar-backend/tests/test_domain_event.py",
+    "to": "logistic-x-backend/tests/test_domain_event.py",
     "original_sha256": "74b54a3e7f873fe13e961afb478e4646aa753eb395d5b9f70c3af198f3d72718",
     "final_sha256": "74b54a3e7f873fe13e961afb478e4646aa753eb395d5b9f70c3af198f3d72718",
     "changed": false
   },
   {
     "from": "tests/test_driver_login_gate.py",
-    "to": "mesaar-backend/tests/test_driver_login_gate.py",
+    "to": "logistic-x-backend/tests/test_driver_login_gate.py",
     "original_sha256": "67be9ca62d1c028124ee5fad6e9f625c71bde98c413513a8e6311172010ccab2",
     "final_sha256": "67be9ca62d1c028124ee5fad6e9f625c71bde98c413513a8e6311172010ccab2",
     "changed": false
   },
   {
     "from": "tests/test_equipment_events.py",
-    "to": "mesaar-backend/tests/test_equipment_events.py",
+    "to": "logistic-x-backend/tests/test_equipment_events.py",
     "original_sha256": "9e9e43be5ca9c0634fe676ac236f78d20d2b5da95738306c3c4653c79c707eb1",
     "final_sha256": "9e9e43be5ca9c0634fe676ac236f78d20d2b5da95738306c3c4653c79c707eb1",
     "changed": false
   },
   {
     "from": "tests/test_equipment_model.py",
-    "to": "mesaar-backend/tests/test_equipment_model.py",
+    "to": "logistic-x-backend/tests/test_equipment_model.py",
     "original_sha256": "6eb99bc308bbc6f88374d6f4f7934c84b88562155c01f5b9184e3c62e2aee878",
     "final_sha256": "6eb99bc308bbc6f88374d6f4f7934c84b88562155c01f5b9184e3c62e2aee878",
     "changed": false
   },
   {
     "from": "tests/test_equipment_repository.py",
-    "to": "mesaar-backend/tests/test_equipment_repository.py",
+    "to": "logistic-x-backend/tests/test_equipment_repository.py",
     "original_sha256": "ec09141522164ab3d513ee79d666af6313d838249dd2483447c3c456cc83bf7a",
     "final_sha256": "ec09141522164ab3d513ee79d666af6313d838249dd2483447c3c456cc83bf7a",
     "changed": false
   },
   {
     "from": "tests/test_equipment_routes.py",
-    "to": "mesaar-backend/tests/test_equipment_routes.py",
+    "to": "logistic-x-backend/tests/test_equipment_routes.py",
     "original_sha256": "9116caa9c7aedcf1103b137039a91034d374a29ab7622b09aee86ff9e4545809",
     "final_sha256": "9116caa9c7aedcf1103b137039a91034d374a29ab7622b09aee86ff9e4545809",
     "changed": false
   },
   {
     "from": "tests/test_equipment_service.py",
-    "to": "mesaar-backend/tests/test_equipment_service.py",
+    "to": "logistic-x-backend/tests/test_equipment_service.py",
     "original_sha256": "d2f78965f75f2183aac340ead75ddfc272d6f5ed0815e83afdf991b7c125c918",
     "final_sha256": "d2f78965f75f2183aac340ead75ddfc272d6f5ed0815e83afdf991b7c125c918",
     "changed": false
   },
   {
     "from": "tests/test_equipment_state_machine.py",
-    "to": "mesaar-backend/tests/test_equipment_state_machine.py",
+    "to": "logistic-x-backend/tests/test_equipment_state_machine.py",
     "original_sha256": "354e18f11f47eb431e5400d89218d41b8604049f1058f7ab3f67e7ccc9550c8a",
     "final_sha256": "354e18f11f47eb431e5400d89218d41b8604049f1058f7ab3f67e7ccc9550c8a",
     "changed": false
   },
   {
     "from": "tests/test_event_backbone_pg.py",
-    "to": "mesaar-backend/tests/test_event_backbone_pg.py",
+    "to": "logistic-x-backend/tests/test_event_backbone_pg.py",
     "original_sha256": "0d6fce262ec4f109875d5b71c27e140204ca4ebc31dc28373d0096a85f53d1db",
     "final_sha256": "0d6fce262ec4f109875d5b71c27e140204ca4ebc31dc28373d0096a85f53d1db",
     "changed": false
   },
   {
     "from": "tests/test_event_bus.py",
-    "to": "mesaar-backend/tests/test_event_bus.py",
+    "to": "logistic-x-backend/tests/test_event_bus.py",
     "original_sha256": "a4d1dfb7ecd188e7a8f62a3ce83ac7dc36be2991a659bb3f2f62085e791f3e5a",
     "final_sha256": "a4d1dfb7ecd188e7a8f62a3ce83ac7dc36be2991a659bb3f2f62085e791f3e5a",
     "changed": false
   },
   {
     "from": "tests/test_event_dispatcher.py",
-    "to": "mesaar-backend/tests/test_event_dispatcher.py",
+    "to": "logistic-x-backend/tests/test_event_dispatcher.py",
     "original_sha256": "2bdcc08a618fef1e9c4d5bf23da72fce67f2bff8bce8312fb97f8a19b242a8b6",
     "final_sha256": "2bdcc08a618fef1e9c4d5bf23da72fce67f2bff8bce8312fb97f8a19b242a8b6",
     "changed": false
   },
   {
     "from": "tests/test_event_enrichment_sprint12.py",
-    "to": "mesaar-backend/tests/test_event_enrichment_sprint12.py",
+    "to": "logistic-x-backend/tests/test_event_enrichment_sprint12.py",
     "original_sha256": "38bd18ca22e51fdd3cb1dacd9274378a345e8ed7b5adddb5f61557149fbd4dab",
     "final_sha256": "38bd18ca22e51fdd3cb1dacd9274378a345e8ed7b5adddb5f61557149fbd4dab",
     "changed": false
   },
   {
     "from": "tests/test_event_envelope.py",
-    "to": "mesaar-backend/tests/test_event_envelope.py",
+    "to": "logistic-x-backend/tests/test_event_envelope.py",
     "original_sha256": "70ba739e2cadae39579742608b2bf0ef65a293f4a2a60c2d6e597d8735a4391e",
     "final_sha256": "70ba739e2cadae39579742608b2bf0ef65a293f4a2a60c2d6e597d8735a4391e",
     "changed": false
   },
   {
     "from": "tests/test_event_models_metadata.py",
-    "to": "mesaar-backend/tests/test_event_models_metadata.py",
+    "to": "logistic-x-backend/tests/test_event_models_metadata.py",
     "original_sha256": "edf4659348e4c8358d28c0f483a93ba417898194def45fb363ac33f812f230c1",
     "final_sha256": "edf4659348e4c8358d28c0f483a93ba417898194def45fb363ac33f812f230c1",
     "changed": false
   },
   {
     "from": "tests/test_event_registry.py",
-    "to": "mesaar-backend/tests/test_event_registry.py",
+    "to": "logistic-x-backend/tests/test_event_registry.py",
     "original_sha256": "c856f67819f5dc2a022858c8e18c316ecfa7cd6eadb1df81144f3996ea8ccf88",
     "final_sha256": "c856f67819f5dc2a022858c8e18c316ecfa7cd6eadb1df81144f3996ea8ccf88",
     "changed": false
   },
   {
     "from": "tests/test_exceptions.py",
-    "to": "mesaar-backend/tests/test_exceptions.py",
+    "to": "logistic-x-backend/tests/test_exceptions.py",
     "original_sha256": "6e5b2173b4666cea67a8934e5909f747039daa21142c184eb05c846faeea8b34",
     "final_sha256": "6e5b2173b4666cea67a8934e5909f747039daa21142c184eb05c846faeea8b34",
     "changed": false
   },
   {
     "from": "tests/test_fleet_create_routes.py",
-    "to": "mesaar-backend/tests/test_fleet_create_routes.py",
+    "to": "logistic-x-backend/tests/test_fleet_create_routes.py",
     "original_sha256": "4ec239a8a98bc8633172fa0b275729ee0e6700cfa903511d58ee29446486b475",
     "final_sha256": "4ec239a8a98bc8633172fa0b275729ee0e6700cfa903511d58ee29446486b475",
     "changed": false
   },
   {
     "from": "tests/test_inbound_integrations.py",
-    "to": "mesaar-backend/tests/test_inbound_integrations.py",
+    "to": "logistic-x-backend/tests/test_inbound_integrations.py",
     "original_sha256": "943138629adfd67af5cb94e5b839f5ad5e521e88f4e8cd4dc50fa8f6db159cf6",
     "final_sha256": "943138629adfd67af5cb94e5b839f5ad5e521e88f4e8cd4dc50fa8f6db159cf6",
     "changed": false
   },
   {
     "from": "tests/test_insurance_events.py",
-    "to": "mesaar-backend/tests/test_insurance_events.py",
+    "to": "logistic-x-backend/tests/test_insurance_events.py",
     "original_sha256": "fe2ebf494936e8a3171956de11065e2d91c3ec7f7b65bf3657161eb84d0d743c",
     "final_sha256": "fe2ebf494936e8a3171956de11065e2d91c3ec7f7b65bf3657161eb84d0d743c",
     "changed": false
   },
   {
     "from": "tests/test_insurance_model.py",
-    "to": "mesaar-backend/tests/test_insurance_model.py",
+    "to": "logistic-x-backend/tests/test_insurance_model.py",
     "original_sha256": "ac53e4b91b8c9c8f74a42f238d825e867404e06f2b3a061ac3bd409b34adada1",
     "final_sha256": "ac53e4b91b8c9c8f74a42f238d825e867404e06f2b3a061ac3bd409b34adada1",
     "changed": false
   },
   {
     "from": "tests/test_insurance_repository.py",
-    "to": "mesaar-backend/tests/test_insurance_repository.py",
+    "to": "logistic-x-backend/tests/test_insurance_repository.py",
     "original_sha256": "1f92e3d0a030f89571d7bac439aadcf3763a7cd8d9428bdbee8fc703271f2553",
     "final_sha256": "1f92e3d0a030f89571d7bac439aadcf3763a7cd8d9428bdbee8fc703271f2553",
     "changed": false
   },
   {
     "from": "tests/test_insurance_routes.py",
-    "to": "mesaar-backend/tests/test_insurance_routes.py",
+    "to": "logistic-x-backend/tests/test_insurance_routes.py",
     "original_sha256": "a699593b39b116066765961239ec416bbe60796d218ed54ad7390b554a27ebec",
     "final_sha256": "a699593b39b116066765961239ec416bbe60796d218ed54ad7390b554a27ebec",
     "changed": false
   },
   {
     "from": "tests/test_insurance_service.py",
-    "to": "mesaar-backend/tests/test_insurance_service.py",
+    "to": "logistic-x-backend/tests/test_insurance_service.py",
     "original_sha256": "62b1d9d91b0eebf6b897cc508498e5879e2f2e981b87248ce989f947fa1c4b4a",
     "final_sha256": "62b1d9d91b0eebf6b897cc508498e5879e2f2e981b87248ce989f947fa1c4b4a",
     "changed": false
   },
   {
     "from": "tests/test_integrations_events.py",
-    "to": "mesaar-backend/tests/test_integrations_events.py",
+    "to": "logistic-x-backend/tests/test_integrations_events.py",
     "original_sha256": "48287ad086ac86f72596f2dc4da718b197d305ce2e4af7c3b53156e80b64fac1",
     "final_sha256": "48287ad086ac86f72596f2dc4da718b197d305ce2e4af7c3b53156e80b64fac1",
     "changed": false
   },
   {
     "from": "tests/test_integrations_model.py",
-    "to": "mesaar-backend/tests/test_integrations_model.py",
+    "to": "logistic-x-backend/tests/test_integrations_model.py",
     "original_sha256": "9030ff7ca2633ebe7c380b1f0a4e64acc9971e421c7efcdb686fc8194e7b8fc6",
     "final_sha256": "9030ff7ca2633ebe7c380b1f0a4e64acc9971e421c7efcdb686fc8194e7b8fc6",
     "changed": false
   },
   {
     "from": "tests/test_integrations_repository.py",
-    "to": "mesaar-backend/tests/test_integrations_repository.py",
+    "to": "logistic-x-backend/tests/test_integrations_repository.py",
     "original_sha256": "d93b47c24282558707de0aa38fd9e90dc49081829d2d8e265a7ee98458c9363f",
     "final_sha256": "d93b47c24282558707de0aa38fd9e90dc49081829d2d8e265a7ee98458c9363f",
     "changed": false
   },
   {
     "from": "tests/test_integrations_routes.py",
-    "to": "mesaar-backend/tests/test_integrations_routes.py",
+    "to": "logistic-x-backend/tests/test_integrations_routes.py",
     "original_sha256": "63a8c4c3621226fbd68e5453efd1fa330d4ecb185ec503b6b574d2ee39fcfa0f",
     "final_sha256": "63a8c4c3621226fbd68e5453efd1fa330d4ecb185ec503b6b574d2ee39fcfa0f",
     "changed": false
   },
   {
     "from": "tests/test_integrations_security.py",
-    "to": "mesaar-backend/tests/test_integrations_security.py",
+    "to": "logistic-x-backend/tests/test_integrations_security.py",
     "original_sha256": "209fca2e338275fe7a0be0e41a1332e072164fb2f2076483e5b0e0484dd4fd67",
     "final_sha256": "209fca2e338275fe7a0be0e41a1332e072164fb2f2076483e5b0e0484dd4fd67",
     "changed": false
   },
   {
     "from": "tests/test_integrations_service.py",
-    "to": "mesaar-backend/tests/test_integrations_service.py",
+    "to": "logistic-x-backend/tests/test_integrations_service.py",
     "original_sha256": "398e204908f836c0dc1e09ef27200abf7ba0df5fb20d874c06c1f5977fe719fb",
     "final_sha256": "398e204908f836c0dc1e09ef27200abf7ba0df5fb20d874c06c1f5977fe719fb",
     "changed": false
   },
   {
     "from": "tests/test_integration_hardening.py",
-    "to": "mesaar-backend/tests/test_integration_hardening.py",
+    "to": "logistic-x-backend/tests/test_integration_hardening.py",
     "original_sha256": "c7f384aded6fe24a6f08b69224eed52c7f49c53eb9c5e8642d309e27b2337a98",
     "final_sha256": "c7f384aded6fe24a6f08b69224eed52c7f49c53eb9c5e8642d309e27b2337a98",
     "changed": false
   },
   {
     "from": "tests/test_integration_idempotency.py",
-    "to": "mesaar-backend/tests/test_integration_idempotency.py",
+    "to": "logistic-x-backend/tests/test_integration_idempotency.py",
     "original_sha256": "e1b57849d10bb38218ccc7536b20234b9bb2f90c315964ac029cae18cd8ed4c8",
     "final_sha256": "e1b57849d10bb38218ccc7536b20234b9bb2f90c315964ac029cae18cd8ed4c8",
     "changed": false
   },
   {
     "from": "tests/test_invoice_state_machine.py",
-    "to": "mesaar-backend/tests/test_invoice_state_machine.py",
+    "to": "logistic-x-backend/tests/test_invoice_state_machine.py",
     "original_sha256": "a25aa8279e441f18737c998d06d48890a0a043dd3a0ec2dffc8b06365bb89f15",
     "final_sha256": "a25aa8279e441f18737c998d06d48890a0a043dd3a0ec2dffc8b06365bb89f15",
     "changed": false
   },
   {
     "from": "tests/test_migrations_postgresql.py",
-    "to": "mesaar-backend/tests/test_migrations_postgresql.py",
+    "to": "logistic-x-backend/tests/test_migrations_postgresql.py",
     "original_sha256": "31871e367462b8b9f485cfaab7c441f9c8d3aec362cd3d4b3f4e88e955fc77f2",
     "final_sha256": "31871e367462b8b9f485cfaab7c441f9c8d3aec362cd3d4b3f4e88e955fc77f2",
     "changed": false
   },
   {
     "from": "tests/test_mixins.py",
-    "to": "mesaar-backend/tests/test_mixins.py",
+    "to": "logistic-x-backend/tests/test_mixins.py",
     "original_sha256": "a8acec027995ef6b087dadbb359b0f6bab250f161446403b194a3fb55b211919",
     "final_sha256": "a8acec027995ef6b087dadbb359b0f6bab250f161446403b194a3fb55b211919",
     "changed": false
   },
   {
     "from": "tests/test_notifications_events.py",
-    "to": "mesaar-backend/tests/test_notifications_events.py",
+    "to": "logistic-x-backend/tests/test_notifications_events.py",
     "original_sha256": "df443f47a2b2c2af0e54c9307abaf229a0cbc83ef92aa0322a5d1ef754b82574",
     "final_sha256": "df443f47a2b2c2af0e54c9307abaf229a0cbc83ef92aa0322a5d1ef754b82574",
     "changed": false
   },
   {
     "from": "tests/test_notifications_model.py",
-    "to": "mesaar-backend/tests/test_notifications_model.py",
+    "to": "logistic-x-backend/tests/test_notifications_model.py",
     "original_sha256": "ae4fb6b2a1a11d031a8472c3822471c17044e376bd8b5bd23a0b3febfd3babef",
     "final_sha256": "ae4fb6b2a1a11d031a8472c3822471c17044e376bd8b5bd23a0b3febfd3babef",
     "changed": false
   },
   {
     "from": "tests/test_notifications_repository.py",
-    "to": "mesaar-backend/tests/test_notifications_repository.py",
+    "to": "logistic-x-backend/tests/test_notifications_repository.py",
     "original_sha256": "dbded20757020ddae1c18768f5f736a815bc6ffb27866ec9c61305c96e5cafdf",
     "final_sha256": "dbded20757020ddae1c18768f5f736a815bc6ffb27866ec9c61305c96e5cafdf",
     "changed": false
   },
   {
     "from": "tests/test_notifications_routes.py",
-    "to": "mesaar-backend/tests/test_notifications_routes.py",
+    "to": "logistic-x-backend/tests/test_notifications_routes.py",
     "original_sha256": "3a8bbe447d8333cc1f472f5fe61bbf90948ab891fa82f759f564b005bdd2e29f",
     "final_sha256": "3a8bbe447d8333cc1f472f5fe61bbf90948ab891fa82f759f564b005bdd2e29f",
     "changed": false
   },
   {
     "from": "tests/test_notifications_service.py",
-    "to": "mesaar-backend/tests/test_notifications_service.py",
+    "to": "logistic-x-backend/tests/test_notifications_service.py",
     "original_sha256": "c2fed3709a4fadc26bf7293c49877f13d92becc09f240cf0a4a52c9f3bacf354",
     "final_sha256": "c2fed3709a4fadc26bf7293c49877f13d92becc09f240cf0a4a52c9f3bacf354",
     "changed": false
   },
   {
     "from": "tests/test_notification_delivery.py",
-    "to": "mesaar-backend/tests/test_notification_delivery.py",
+    "to": "logistic-x-backend/tests/test_notification_delivery.py",
     "original_sha256": "815e86047182d5653d050204608448ad3cbc1f27da6a3fe903d79d556afbaf2b",
     "final_sha256": "815e86047182d5653d050204608448ad3cbc1f27da6a3fe903d79d556afbaf2b",
     "changed": false
   },
   {
     "from": "tests/test_notification_event_handlers.py",
-    "to": "mesaar-backend/tests/test_notification_event_handlers.py",
+    "to": "logistic-x-backend/tests/test_notification_event_handlers.py",
     "original_sha256": "32ca7702456d3b80a6ac6a728ff7a85ec45d3638129c72cbbc8a3cce2c0fdde7",
     "final_sha256": "32ca7702456d3b80a6ac6a728ff7a85ec45d3638129c72cbbc8a3cce2c0fdde7",
     "changed": false
   },
   {
     "from": "tests/test_notification_idempotency.py",
-    "to": "mesaar-backend/tests/test_notification_idempotency.py",
+    "to": "logistic-x-backend/tests/test_notification_idempotency.py",
     "original_sha256": "6ff4c89438f3cd97883ac86496307cc3b25972b11cb5523f46da2550039b052f",
     "final_sha256": "6ff4c89438f3cd97883ac86496307cc3b25972b11cb5523f46da2550039b052f",
     "changed": false
   },
   {
     "from": "tests/test_notification_template_rendering.py",
-    "to": "mesaar-backend/tests/test_notification_template_rendering.py",
+    "to": "logistic-x-backend/tests/test_notification_template_rendering.py",
     "original_sha256": "c3584d0f64c5ddf8d54891af245dbbcc1dfe9bde34f15d215e22480af7bca944",
     "final_sha256": "c3584d0f64c5ddf8d54891af245dbbcc1dfe9bde34f15d215e22480af7bca944",
     "changed": false
   },
   {
     "from": "tests/test_observability_metrics.py",
-    "to": "mesaar-backend/tests/test_observability_metrics.py",
+    "to": "logistic-x-backend/tests/test_observability_metrics.py",
     "original_sha256": "811100c615ef0a62a41bcc7d58848dd87bc7a9363409afbfd43cc96a285aac30",
     "final_sha256": "811100c615ef0a62a41bcc7d58848dd87bc7a9363409afbfd43cc96a285aac30",
     "changed": false
   },
   {
     "from": "tests/test_order_events.py",
-    "to": "mesaar-backend/tests/test_order_events.py",
+    "to": "logistic-x-backend/tests/test_order_events.py",
     "original_sha256": "33e16b4593929ac49eba496a8a0b4216fd6b40be7549bdc01ca760fcc8a18fba",
     "final_sha256": "33e16b4593929ac49eba496a8a0b4216fd6b40be7549bdc01ca760fcc8a18fba",
     "changed": false
   },
   {
     "from": "tests/test_order_model.py",
-    "to": "mesaar-backend/tests/test_order_model.py",
+    "to": "logistic-x-backend/tests/test_order_model.py",
     "original_sha256": "e4fe86fc649bcd82cbeb2031517acca755be9d39623730d2c2d3e599a7274f7f",
     "final_sha256": "e4fe86fc649bcd82cbeb2031517acca755be9d39623730d2c2d3e599a7274f7f",
     "changed": false
   },
   {
     "from": "tests/test_order_routes.py",
-    "to": "mesaar-backend/tests/test_order_routes.py",
+    "to": "logistic-x-backend/tests/test_order_routes.py",
     "original_sha256": "ce6d31057c703e019f0081ec0374e8acf86d9e25245148e1fc5e29a04a6021b9",
     "final_sha256": "ce6d31057c703e019f0081ec0374e8acf86d9e25245148e1fc5e29a04a6021b9",
     "changed": false
   },
   {
     "from": "tests/test_order_service.py",
-    "to": "mesaar-backend/tests/test_order_service.py",
+    "to": "logistic-x-backend/tests/test_order_service.py",
     "original_sha256": "91ba6686098f8a32f3f9f18a0fc2d01b1733de388b64b8d748e415ab66d7f1b3",
     "final_sha256": "91ba6686098f8a32f3f9f18a0fc2d01b1733de388b64b8d748e415ab66d7f1b3",
     "changed": false
   },
   {
     "from": "tests/test_pagination.py",
-    "to": "mesaar-backend/tests/test_pagination.py",
+    "to": "logistic-x-backend/tests/test_pagination.py",
     "original_sha256": "1e5e795173773cff859de9e9712ec255dcb45aed8d3fe28d0e8455e7adf9aebe",
     "final_sha256": "1e5e795173773cff859de9e9712ec255dcb45aed8d3fe28d0e8455e7adf9aebe",
     "changed": false
   },
   {
     "from": "tests/test_permit_state_machine.py",
-    "to": "mesaar-backend/tests/test_permit_state_machine.py",
+    "to": "logistic-x-backend/tests/test_permit_state_machine.py",
     "original_sha256": "d44e87e17cda343420e4e2ddb252bc57bbd7842fff1ed90e86c2fdc82bad2ee3",
     "final_sha256": "d44e87e17cda343420e4e2ddb252bc57bbd7842fff1ed90e86c2fdc82bad2ee3",
     "changed": false
   },
   {
     "from": "tests/test_projection_engine.py",
-    "to": "mesaar-backend/tests/test_projection_engine.py",
+    "to": "logistic-x-backend/tests/test_projection_engine.py",
     "original_sha256": "f12d8c36d6a16ac2d26249c7882d36ed46881e358ae21c3bb5868a88ba16f410",
     "final_sha256": "f12d8c36d6a16ac2d26249c7882d36ed46881e358ae21c3bb5868a88ba16f410",
     "changed": false
   },
   {
     "from": "tests/test_quote_state_machine.py",
-    "to": "mesaar-backend/tests/test_quote_state_machine.py",
+    "to": "logistic-x-backend/tests/test_quote_state_machine.py",
     "original_sha256": "f11e0434f8da9c2f4981185b2dbbe940eaa3aaf1f6773fbdaf0ee8b5e1299eaf",
     "final_sha256": "f11e0434f8da9c2f4981185b2dbbe940eaa3aaf1f6773fbdaf0ee8b5e1299eaf",
     "changed": false
   },
   {
     "from": "tests/test_reporting_handlers.py",
-    "to": "mesaar-backend/tests/test_reporting_handlers.py",
+    "to": "logistic-x-backend/tests/test_reporting_handlers.py",
     "original_sha256": "1c9d9b8ef1f778b2f814c32c077a281136f81b4415097fc2570f526bef608586",
     "final_sha256": "1c9d9b8ef1f778b2f814c32c077a281136f81b4415097fc2570f526bef608586",
     "changed": false
   },
   {
     "from": "tests/test_reporting_idempotency.py",
-    "to": "mesaar-backend/tests/test_reporting_idempotency.py",
+    "to": "logistic-x-backend/tests/test_reporting_idempotency.py",
     "original_sha256": "fd5d17f3b1373e4eb298d5fe42dd36bbf709426330d2cc0b4b2feddcca82fe02",
     "final_sha256": "fd5d17f3b1373e4eb298d5fe42dd36bbf709426330d2cc0b4b2feddcca82fe02",
     "changed": false
   },
   {
     "from": "tests/test_reporting_model.py",
-    "to": "mesaar-backend/tests/test_reporting_model.py",
+    "to": "logistic-x-backend/tests/test_reporting_model.py",
     "original_sha256": "19b7a565ec638dfb71710c9b6d18861b40fddaf3d296c49479c6d6abc6c34ca8",
     "final_sha256": "19b7a565ec638dfb71710c9b6d18861b40fddaf3d296c49479c6d6abc6c34ca8",
     "changed": false
   },
   {
     "from": "tests/test_reporting_rebuild.py",
-    "to": "mesaar-backend/tests/test_reporting_rebuild.py",
+    "to": "logistic-x-backend/tests/test_reporting_rebuild.py",
     "original_sha256": "db8c4107b5f3c7e065ba6b6ab6acdc6428072b6bb02d27a8486de802de6ae35c",
     "final_sha256": "db8c4107b5f3c7e065ba6b6ab6acdc6428072b6bb02d27a8486de802de6ae35c",
     "changed": false
   },
   {
     "from": "tests/test_reporting_repository.py",
-    "to": "mesaar-backend/tests/test_reporting_repository.py",
+    "to": "logistic-x-backend/tests/test_reporting_repository.py",
     "original_sha256": "083f3c4e093830e8eca53fa6dccfb98e71d428a34af337cff0521ca606a971f7",
     "final_sha256": "083f3c4e093830e8eca53fa6dccfb98e71d428a34af337cff0521ca606a971f7",
     "changed": false
   },
   {
     "from": "tests/test_reporting_routes.py",
-    "to": "mesaar-backend/tests/test_reporting_routes.py",
+    "to": "logistic-x-backend/tests/test_reporting_routes.py",
     "original_sha256": "64467336f0b73f27fc8c06b62ba9eba473ba46432ce393281cbde95cdbd4a49f",
     "final_sha256": "64467336f0b73f27fc8c06b62ba9eba473ba46432ce393281cbde95cdbd4a49f",
     "changed": false
   },
   {
     "from": "tests/test_reporting_security.py",
-    "to": "mesaar-backend/tests/test_reporting_security.py",
+    "to": "logistic-x-backend/tests/test_reporting_security.py",
     "original_sha256": "c11ea91020cb888387135e7a41c0f3f11c3bb4e64cb27ecbb7e71a44bf10af45",
     "final_sha256": "c11ea91020cb888387135e7a41c0f3f11c3bb4e64cb27ecbb7e71a44bf10af45",
     "changed": false
   },
   {
     "from": "tests/test_reporting_service.py",
-    "to": "mesaar-backend/tests/test_reporting_service.py",
+    "to": "logistic-x-backend/tests/test_reporting_service.py",
     "original_sha256": "5e71b274f38ee2a609bcf72df7dbe9a07f4b02164167ea03dc69afae3a4c8f74",
     "final_sha256": "5e71b274f38ee2a609bcf72df7dbe9a07f4b02164167ea03dc69afae3a4c8f74",
     "changed": false
   },
   {
     "from": "tests/test_responses.py",
-    "to": "mesaar-backend/tests/test_responses.py",
+    "to": "logistic-x-backend/tests/test_responses.py",
     "original_sha256": "31c64c508aba6ff951cce6d6e6805f00204cb435c1b9efa32fe471fa14f8e588",
     "final_sha256": "31c64c508aba6ff951cce6d6e6805f00204cb435c1b9efa32fe471fa14f8e588",
     "changed": false
   },
   {
     "from": "tests/test_secret_encryption.py",
-    "to": "mesaar-backend/tests/test_secret_encryption.py",
+    "to": "logistic-x-backend/tests/test_secret_encryption.py",
     "original_sha256": "015948f229d491b67abaa1f122291af8a78549f335a9e347ca6f187ae4105ce2",
     "final_sha256": "015948f229d491b67abaa1f122291af8a78549f335a9e347ca6f187ae4105ce2",
     "changed": false
   },
   {
     "from": "tests/test_session_guc.py",
-    "to": "mesaar-backend/tests/test_session_guc.py",
+    "to": "logistic-x-backend/tests/test_session_guc.py",
     "original_sha256": "61b018873ee2c880bbe2b946a41c0c126dee3d7a4850f8d69eec922fc04a61d5",
     "final_sha256": "61b018873ee2c880bbe2b946a41c0c126dee3d7a4850f8d69eec922fc04a61d5",
     "changed": false
   },
   {
     "from": "tests/test_settlement_state_machine.py",
-    "to": "mesaar-backend/tests/test_settlement_state_machine.py",
+    "to": "logistic-x-backend/tests/test_settlement_state_machine.py",
     "original_sha256": "d2fbd653e693fd2b03483d5825adc9df88341e2a0db63eb50ab5b726583082b0",
     "final_sha256": "d2fbd653e693fd2b03483d5825adc9df88341e2a0db63eb50ab5b726583082b0",
     "changed": false
   },
   {
     "from": "tests/test_shipment_compliance_integration.py",
-    "to": "mesaar-backend/tests/test_shipment_compliance_integration.py",
+    "to": "logistic-x-backend/tests/test_shipment_compliance_integration.py",
     "original_sha256": "cf5fa75168a06ffe6fa25bf01ef4eb02887019803ed201100d4e71ea0d75ecdd",
     "final_sha256": "cf5fa75168a06ffe6fa25bf01ef4eb02887019803ed201100d4e71ea0d75ecdd",
     "changed": false
   },
   {
     "from": "tests/test_shipment_equipment_integration.py",
-    "to": "mesaar-backend/tests/test_shipment_equipment_integration.py",
+    "to": "logistic-x-backend/tests/test_shipment_equipment_integration.py",
     "original_sha256": "569773a9a4c0cdc227aed0775a81c5895e0bbf405c5e19286f3f55d43494e941",
     "final_sha256": "569773a9a4c0cdc227aed0775a81c5895e0bbf405c5e19286f3f55d43494e941",
     "changed": false
   },
   {
     "from": "tests/test_shipment_events.py",
-    "to": "mesaar-backend/tests/test_shipment_events.py",
+    "to": "logistic-x-backend/tests/test_shipment_events.py",
     "original_sha256": "10ff64658fa986f4b8344463f6f9a99b3710ab753f385d141174d0e3bcb20c5f",
     "final_sha256": "10ff64658fa986f4b8344463f6f9a99b3710ab753f385d141174d0e3bcb20c5f",
     "changed": false
   },
   {
     "from": "tests/test_shipment_model.py",
-    "to": "mesaar-backend/tests/test_shipment_model.py",
+    "to": "logistic-x-backend/tests/test_shipment_model.py",
     "original_sha256": "b890cb10895da68ab7b6965ef1048f92c19faea833ad69036ee46a347d38d671",
     "final_sha256": "b890cb10895da68ab7b6965ef1048f92c19faea833ad69036ee46a347d38d671",
     "changed": false
   },
   {
     "from": "tests/test_shipment_repository.py",
-    "to": "mesaar-backend/tests/test_shipment_repository.py",
+    "to": "logistic-x-backend/tests/test_shipment_repository.py",
     "original_sha256": "e4dbd7651ce5ff009ba3fcf1157dbbdc9fa08de963f0ff979c80921418626d7d",
     "final_sha256": "e4dbd7651ce5ff009ba3fcf1157dbbdc9fa08de963f0ff979c80921418626d7d",
     "changed": false
   },
   {
     "from": "tests/test_shipment_routes.py",
-    "to": "mesaar-backend/tests/test_shipment_routes.py",
+    "to": "logistic-x-backend/tests/test_shipment_routes.py",
     "original_sha256": "f6a644bfb002ab5b1cedc4d65efda66dad95b552708b9007b0e449e0d72438ed",
     "final_sha256": "f6a644bfb002ab5b1cedc4d65efda66dad95b552708b9007b0e449e0d72438ed",
     "changed": false
   },
   {
     "from": "tests/test_shipment_service.py",
-    "to": "mesaar-backend/tests/test_shipment_service.py",
+    "to": "logistic-x-backend/tests/test_shipment_service.py",
     "original_sha256": "d84a05032ccc5fbff333e11fe487f60a765c7fbdca2b13cf5a4a08f2816b71b6",
     "final_sha256": "d84a05032ccc5fbff333e11fe487f60a765c7fbdca2b13cf5a4a08f2816b71b6",
     "changed": false
   },
   {
     "from": "tests/test_shipment_state_machine.py",
-    "to": "mesaar-backend/tests/test_shipment_state_machine.py",
+    "to": "logistic-x-backend/tests/test_shipment_state_machine.py",
     "original_sha256": "77b63553e584b254094fb31181392c0091d974179e05747e9fbe95b03658a108",
     "final_sha256": "77b63553e584b254094fb31181392c0091d974179e05747e9fbe95b03658a108",
     "changed": false
   },
   {
     "from": "tests/test_tenant_isolation_pg.py",
-    "to": "mesaar-backend/tests/test_tenant_isolation_pg.py",
+    "to": "logistic-x-backend/tests/test_tenant_isolation_pg.py",
     "original_sha256": "034f3bfda37c3b2f558d01363b5f79105d251b2ca5671f5de207b5e25742d7f2",
     "final_sha256": "034f3bfda37c3b2f558d01363b5f79105d251b2ca5671f5de207b5e25742d7f2",
     "changed": false
   },
   {
     "from": "tests/test_tenant_model.py",
-    "to": "mesaar-backend/tests/test_tenant_model.py",
+    "to": "logistic-x-backend/tests/test_tenant_model.py",
     "original_sha256": "17b17489e341c16004f9f4ab278ccaadcff70403e133f94438a48a8ccf3104ae",
     "final_sha256": "17b17489e341c16004f9f4ab278ccaadcff70403e133f94438a48a8ccf3104ae",
     "changed": false
   },
   {
     "from": "tests/test_token_service.py",
-    "to": "mesaar-backend/tests/test_token_service.py",
+    "to": "logistic-x-backend/tests/test_token_service.py",
     "original_sha256": "c0737319bc78a534e92bade646d0a6ba8eda80423a7c7ac097a627448e72f205",
     "final_sha256": "c0737319bc78a534e92bade646d0a6ba8eda80423a7c7ac097a627448e72f205",
     "changed": false
   },
   {
     "from": "tests/test_uuidv7.py",
-    "to": "mesaar-backend/tests/test_uuidv7.py",
+    "to": "logistic-x-backend/tests/test_uuidv7.py",
     "original_sha256": "11b70a85d6c62635f2d7902ae8297376b9ba536cd41c76d48320f75910cd7cec",
     "final_sha256": "11b70a85d6c62635f2d7902ae8297376b9ba536cd41c76d48320f75910cd7cec",
     "changed": false
   },
   {
     "from": "tests/test_webhook_delivery.py",
-    "to": "mesaar-backend/tests/test_webhook_delivery.py",
+    "to": "logistic-x-backend/tests/test_webhook_delivery.py",
     "original_sha256": "6a46e6867709df4239459a0373238a5e296d3b82df66b2508afeb1e5fc9485ae",
     "final_sha256": "6a46e6867709df4239459a0373238a5e296d3b82df66b2508afeb1e5fc9485ae",
     "changed": false
   },
   {
     "from": "tests/test_webhook_delivery_sweep.py",
-    "to": "mesaar-backend/tests/test_webhook_delivery_sweep.py",
+    "to": "logistic-x-backend/tests/test_webhook_delivery_sweep.py",
     "original_sha256": "1b268494333e34d7d20b56b233af54880d623e375fbed410fc45dd90ac2b5b68",
     "final_sha256": "1b268494333e34d7d20b56b233af54880d623e375fbed410fc45dd90ac2b5b68",
     "changed": false
   },
   {
     "from": "tests/test_webhook_event_handlers.py",
-    "to": "mesaar-backend/tests/test_webhook_event_handlers.py",
+    "to": "logistic-x-backend/tests/test_webhook_event_handlers.py",
     "original_sha256": "7bfbde0aa77b3b95075aa1b1108e6babdacdc8f5b1c8cfc759cb7381d2a3b43e",
     "final_sha256": "7bfbde0aa77b3b95075aa1b1108e6babdacdc8f5b1c8cfc759cb7381d2a3b43e",
     "changed": false
   },
   {
     "from": "tests/test_webhook_http_provider.py",
-    "to": "mesaar-backend/tests/test_webhook_http_provider.py",
+    "to": "logistic-x-backend/tests/test_webhook_http_provider.py",
     "original_sha256": "461bc11d4a318df820d4a90bcfb1af4af0f8ed93b12af5c6f89e1a593a950db0",
     "final_sha256": "461bc11d4a318df820d4a90bcfb1af4af0f8ed93b12af5c6f89e1a593a950db0",
     "changed": false
   },
   {
     "from": "tests/test_webhook_signing.py",
-    "to": "mesaar-backend/tests/test_webhook_signing.py",
+    "to": "logistic-x-backend/tests/test_webhook_signing.py",
     "original_sha256": "509221e5f162dd55c737520d26e8cd164af889904ca33ac6ccc482c4ef8a1257",
     "final_sha256": "509221e5f162dd55c737520d26e8cd164af889904ca33ac6ccc482c4ef8a1257",
     "changed": false

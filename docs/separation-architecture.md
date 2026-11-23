@@ -49,13 +49,13 @@ the backend to preserve the working environment. No frontend receives those valu
 
 ```mermaid
 flowchart LR
-  subgraph Frontend[mesaar-frontend — independent build/release]
+  subgraph Frontend[logistic-x-frontend — independent build/release]
     U[Expo Router / Arabic RTL UI] --> V[View adapters]
     V --> H[Typed HTTP client / JWT / errors]
     J[Local released OpenAPI JSON] --> T[Generated TypeScript]
     T -. compile time .-> H
   end
-  subgraph Backend[mesaar-backend — independent build/release]
+  subgraph Backend[logistic-x-backend — independent build/release]
     A[FastAPI /v1 / auth / tenant context] --> S[Existing services / state machines]
     S --> R[Existing repositories / models]
     R --> P[(PostgreSQL / RLS / outbox / audit)]

@@ -7,14 +7,14 @@ Alembic revisions remain byte-identical; deployment still applies them independe
 
 | Previous path | Authoritative new path |
 | --- | --- |
-| `app/` | `mesaar-backend/app/` (same Python import package) |
-| `migrations/`, `alembic.ini` | `mesaar-backend/migrations/`, `mesaar-backend/alembic.ini` |
-| `tests/`, `pytest.ini` | `mesaar-backend/tests/`, `mesaar-backend/pytest.ini` |
-| Python manifests, backend Dockerfile | `mesaar-backend/` |
-| `docker/postgres/` | `mesaar-backend/docker/postgres/` |
-| `api/openapi.yaml` | `mesaar-backend/api/openapi.yaml` (historical) |
-| `mobile/` source, assets and manifests | `mesaar-frontend/` |
-| Root `.env` | Kept untouched; privately copied to `mesaar-backend/.env` for local continuity |
+| `app/` | `logistic-x-backend/app/` (same Python import package) |
+| `migrations/`, `alembic.ini` | `logistic-x-backend/migrations/`, `logistic-x-backend/alembic.ini` |
+| `tests/`, `pytest.ini` | `logistic-x-backend/tests/`, `logistic-x-backend/pytest.ini` |
+| Python manifests, backend Dockerfile | `logistic-x-backend/` |
+| `docker/postgres/` | `logistic-x-backend/docker/postgres/` |
+| `api/openapi.yaml` | `logistic-x-backend/api/openapi.yaml` (historical) |
+| `mobile/` source, assets and manifests | `logistic-x-frontend/` |
+| Root `.env` | Kept untouched; privately copied to `logistic-x-backend/.env` for local continuity |
 | Root Compose/Makefile/CI | Updated optional orchestration/independent application jobs |
 | Docs/design system/screen specifications | Remain at root; current source links updated |
 
@@ -28,7 +28,7 @@ preserved in the copies. There is no Git reset, clean, commit, or history rewrit
 
 1. Preserve the existing database volumes, JWT signing secret, database role, and
    private environment values. Do not overwrite an existing `.env` with examples.
-2. Set backend configuration in `mesaar-backend/.env`; root `.env` is now only for
+2. Set backend configuration in `logistic-x-backend/.env`; root `.env` is now only for
    Compose interpolation. Ensure the backend application role cannot bypass RLS.
 3. Change IDE/terminal working directories and deployment build contexts to the
    respective application directory. Recreate Python virtual environments after
@@ -40,7 +40,7 @@ preserved in the copies. There is no Git reset, clean, commit, or history rewrit
    retain their contract.
 6. Retain PostgreSQL/Redis volumes and use normal `docker compose down` to stop;
    there is no reason to remove volumes. The development Compose project remains
-   named `mesaar` to retain original named volume identities.
+   named `logistic_x` to retain original named volume identities.
 
 ## Reproducible disposable integration stack
 
@@ -48,10 +48,10 @@ Compose 2.24.4+ is required for the verification override's port replacement syn
 The explicit project name separates containers, images and volumes from development.
 
 ```bash
-docker compose -p mesaar-separation-verify -f docker-compose.yml -f compose.verify.yml build api frontend
-docker compose -p mesaar-separation-verify -f docker-compose.yml -f compose.verify.yml up -d --wait db redis
-docker compose -p mesaar-separation-verify -f docker-compose.yml -f compose.verify.yml run --rm --no-deps api python -m alembic upgrade head
-docker compose -p mesaar-separation-verify -f docker-compose.yml -f compose.verify.yml up -d --no-build api worker beat frontend
+docker compose -p logistic-x-separation-verify -f docker-compose.yml -f compose.verify.yml build api frontend
+docker compose -p logistic-x-separation-verify -f docker-compose.yml -f compose.verify.yml up -d --wait db redis
+docker compose -p logistic-x-separation-verify -f docker-compose.yml -f compose.verify.yml run --rm --no-deps api python -m alembic upgrade head
+docker compose -p logistic-x-separation-verify -f docker-compose.yml -f compose.verify.yml up -d --no-build api worker beat frontend
 ```
 
 Test frontend: `http://127.0.0.1:18081`; API: `http://127.0.0.1:18000`.
@@ -69,5 +69,5 @@ back backend code. Avoid `git reset --hard`: this working tree includes earlier
 uncommitted work that is unrelated to separation.
 
 For local recovery, the exact original tree and pre-separation OpenAPI were saved at
-`C:/Users/abdul/AppData/Local/Temp/mesaar-separation-praqicln/` for this execution.
+`C:/Users/abdul/AppData/Local/Temp/logistic-x-separation-praqicln/` for this execution.
 Private `.env` files remain in the working directory and are excluded from that ZIP.

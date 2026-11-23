@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Mesaar Logistics Operations API",
+    "title": "Logistic X Logistics Operations API",
     "description": "Land-freight logistics platform API. RBAC via JWT, multi-tenant request scoping, structured logging, and Prometheus metrics. See docs/ for ADRs.",
     "version": "1.0.0"
   },
@@ -16056,7 +16056,7 @@
         "operationId": "receive_inbound_event_v1_integrations_inbound_events_post",
         "parameters": [
           {
-            "name": "x-mesaar-signature",
+            "name": "x-logistic-x-signature",
             "in": "header",
             "required": false,
             "schema": {
@@ -16068,11 +16068,11 @@
                   "type": "null"
                 }
               ],
-              "title": "X-Mesaar-Signature"
+              "title": "X-Logistic-X-Signature"
             }
           },
           {
-            "name": "x-mesaar-timestamp",
+            "name": "x-logistic-x-timestamp",
             "in": "header",
             "required": false,
             "schema": {
@@ -16084,7 +16084,7 @@
                   "type": "null"
                 }
               ],
-              "title": "X-Mesaar-Timestamp"
+              "title": "X-Logistic-X-Timestamp"
             }
           },
           {

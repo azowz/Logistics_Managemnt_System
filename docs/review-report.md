@@ -1,4 +1,4 @@
-# تقرير مراجعة وتنظيف Mesaar
+# تقرير مراجعة وتنظيف Logistic X
 
 تاريخ الإكمال والتحقق: 2026-10-18. نقطة البداية: `c5eeae2976f2b99efcbbde3ca447d3d49da1fe16`.
 يشمل الحصر الملفات المتتبعة والملفات غير المتتبعة الموجودة عند بدء المهمة، ويستثني البيئة
@@ -16,8 +16,8 @@ Order وShipment وEquipment وCompliance وBilling.
   تظل كتابة التواريخ خاضعة لتحقق المخططات، ولا تُقبل التواريخ دون منطقة زمنية تلقائيًا على API.
 - فُصلت اعتماديات التطوير في `requirements-dev.txt`، ووُحّدت إعدادات الجودة في
   `pyproject.toml` وMakefile وCI. أصبح فحص Mypy مطلوبًا في CI بعد إصلاح أخطائه.
-- يستخدم API وWorker وBeat في Compose دور `mesaar_app` غير القادر على تجاوز RLS.
-  دور `mesaar` الإداري يبقى لتهيئة PostgreSQL فقط. تعليمات ترقية المجلدات القائمة في
+- يستخدم API وWorker وBeat في Compose دور `logistic_x_app` غير القادر على تجاوز RLS.
+  دور `logistic_x` الإداري يبقى لتهيئة PostgreSQL فقط. تعليمات ترقية المجلدات القائمة في
   [التشغيل](operations.md).
 
 لم يُعدَّل أي ملف من سلسلة الترحيلات التاريخية، ولم يتطلب العمل Migration جديدة.
@@ -59,7 +59,7 @@ Order وShipment وEquipment وCompliance وBilling.
 | MERGE | أربع نسخ `_aware` في Billing/Compliance/Integrations/Projections | تنفيذ مشترك واحد؛ لم تُدمج ملفات المجالات نفسها |
 | ARCHIVE | 32 ملف Markdown تاريخيًا + ملف Word غير فارغ | حفظ التصميم والتقارير الأصلية بعيدًا عن دليل التشغيل الحالي؛ القائمة في [فهرس الأرشيف](archive/README.md) |
 | DELETE | `docs/Word file/Phase 2 __Architecture & Domain Overview.docx` | صفر بايت، دون محتوى أو إحالات مستخدمة |
-| DELETE | `docs/Word file/Phase 3 _PostgreSQL Database Architecture (Mesaar).docx` | صفر بايت، دون محتوى أو إحالات مستخدمة |
+| DELETE | `docs/Word file/Phase 3 _PostgreSQL Database Architecture (Logistic X).docx` | صفر بايت، دون محتوى أو إحالات مستخدمة |
 
 أضيف تجاهل نواتج Expo وNode القابلة لإعادة التوليد. لم تُحذف بيانات مستخدم أو بيئة
 افتراضية أو ملفات `mobile` المعدلة في الجلسة الأخرى. استُبعدت الاختبارات واعتماديات التطوير
@@ -156,7 +156,7 @@ api/ design-system/ ui/          # عقود التصميم ومواصفات ال
 
 أعادت جلسة أخرى المستودع الأصلي بـ`reset --hard` وعمليات تنظيف أثناء العمل. حُفظت نقطة
 البداية خارج المشروع في `before.zip`، ثم استعيدت الإصلاحات في worktree
-`C:/me/project/Mesaar_cleanup_review` على `audit/mesaar-cleanup`، وأُعيد التحقق منها.
+`C:/me/project/Logistic X_cleanup_review` على `audit/logistic-x-cleanup`، وأُعيد التحقق منها.
 أُعيدت التغييرات إلى المشروع الأصلي بعد فحص التعارضات، مع الحفاظ على تعديلات `mobile`
 الأخرى وملف `.env`. أُعيد تشغيل الحزمة هناك: **1562 اختبارًا ناجحًا**، وفحوص Ruff وBlack
 وMypy ناجحة، وتشغيل Uvicorn ومقارنة OpenAPI ناجحان. نُقلت 122 نسخة ملف، وأُزيلت

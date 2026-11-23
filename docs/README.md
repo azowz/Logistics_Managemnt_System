@@ -4,7 +4,7 @@
 
 أحدث تغيير: [جرد الفصل ومخططاته](separation-architecture.md)،
 [الترحيل والتراجع](separation-migration.md)، و[نتائج الفصل الفعلية](../SEPARATION_REPORT.md).
-مسارات `app/` و`tests/` في المراجع الخلفية أصبحت داخل `mesaar-backend/`.
+مسارات `app/` و`tests/` في المراجع الخلفية أصبحت داخل `logistic-x-backend/`.
 
 | الملف | متى تقرؤه |
 | --- | --- |
@@ -25,7 +25,7 @@
 | [archive/](archive/README.md) | وثائق التصميم وتقارير المراحل التاريخية (ليست وصفًا للحالة الحالية) |
 
 مواصفات الواجهات: [design-system/](../design-system/) و[ui/screen-map.md](../ui/screen-map.md)،
-وتطبيق السائق المستقل: [mesaar-frontend/README.md](../mesaar-frontend/README.md).
+وتطبيق السائق المستقل: [logistic-x-frontend/README.md](../logistic-x-frontend/README.md).
 
 **قاعدة التحديث:** التوثيق يصف الكود الفعلي. أي ميزة لا توجد في `app/` تُصنَّف Planned في
 [status.md](status.md) حتى لو كانت مصممة بالتفصيل في الأرشيف.

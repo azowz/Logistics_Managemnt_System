@@ -4,8 +4,8 @@
 
 ## Area
 
-- [ ] Backend (`mesaar-backend`)
-- [ ] Frontend / driver app (`mesaar-frontend`)
+- [ ] Backend (`logistic-x-backend`)
+- [ ] Frontend / driver app (`logistic-x-frontend`)
 - [ ] API contract (`contracts`)
 - [ ] Design (`design-system`, `ui`)
 - [ ] Docs (`docs`)
